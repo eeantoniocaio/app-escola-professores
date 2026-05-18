@@ -3,10 +3,12 @@ import React, { useState } from 'react'
 export default function Configuracoes({
   setView,
   tiposEvento, setTiposEvento,
-  tiposEvidencia, setTiposEvidencia
+  tiposEvidencia, setTiposEvidencia,
+  professores, setProfessores
 }) {
   const [novoTipoEvento, setNovoTipoEvento] = useState('')
   const [novoTipoEvidencia, setNovoTipoEvidencia] = useState('')
+  const [novoProfessor, setNovoProfessor] = useState('')
 
   const handleAddTipoEvento = (e) => {
     e.preventDefault()
@@ -32,6 +34,19 @@ export default function Configuracoes({
 
   const handleDeleteTipoEvidencia = (tipo) => {
     setTiposEvidencia(tiposEvidencia.filter(t => t !== tipo))
+  }
+
+  const handleAddProfessor = (e) => {
+    e.preventDefault()
+    if (!novoProfessor.trim()) return
+    if (!professores.includes(novoProfessor.trim())) {
+      setProfessores([...professores, novoProfessor.trim()])
+    }
+    setNovoProfessor('')
+  }
+
+  const handleDeleteProfessor = (prof) => {
+    setProfessores(professores.filter(p => p !== prof))
   }
 
   return (
@@ -118,6 +133,41 @@ export default function Configuracoes({
               placeholder="Novo tipo de evidência" 
               value={novoTipoEvidencia}
               onChange={(e) => setNovoTipoEvidencia(e.target.value)}
+              style={{ flex: 1, margin: 0 }}
+            />
+            <button type="submit" className="btn btn-primary" style={{ margin: 0 }}>Adicionar</button>
+          </form>
+        </div>
+
+        {/* Professores */}
+        <div style={{ background: 'var(--bg-primary)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>👩‍🏫</span> Corpo Docente
+          </h3>
+          
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {professores.map(prof => (
+              <li key={prof} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{prof}</span>
+                <button className="btn-icon delete" onClick={() => handleDeleteProfessor(prof)} title="Excluir">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                  </svg>
+                </button>
+              </li>
+            ))}
+            {professores.length === 0 && (
+              <li style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Nenhum professor cadastrado.</li>
+            )}
+          </ul>
+
+          <form onSubmit={handleAddProfessor} style={{ display: 'flex', gap: '0.5rem' }}>
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="Nome do professor (Ex: Profa. Maria)" 
+              value={novoProfessor}
+              onChange={(e) => setNovoProfessor(e.target.value)}
               style={{ flex: 1, margin: 0 }}
             />
             <button type="submit" className="btn btn-primary" style={{ margin: 0 }}>Adicionar</button>

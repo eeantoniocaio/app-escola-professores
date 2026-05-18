@@ -109,6 +109,15 @@ export default function App() {
     ]
   })
 
+  const [professores, setProfessores] = useState(() => {
+    const saved = localStorage.getItem('escola_professores')
+    return saved ? JSON.parse(saved) : [
+      'Prof. Carlos Silva',
+      'Profa. Regina Mendes',
+      'Prof. Marcos Aurelio'
+    ]
+  })
+
   // Toast Notification State
   const [toast, setToast] = useState(null)
 
@@ -128,6 +137,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('escola_tipos_evidencia', JSON.stringify(tiposEvidencia))
   }, [tiposEvidencia])
+
+  useEffect(() => {
+    localStorage.setItem('escola_professores', JSON.stringify(professores))
+  }, [professores])
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -272,6 +285,7 @@ export default function App() {
             records={records} 
             events={events}
             tiposEvidencia={tiposEvidencia}
+            professores={professores}
             addRecord={handleAddRecord}
             updateRecord={handleUpdateRecord}
             deleteRecord={handleDeleteRecord}
@@ -283,6 +297,7 @@ export default function App() {
             setView={setView}
             tiposEvento={tiposEvento} setTiposEvento={setTiposEvento}
             tiposEvidencia={tiposEvidencia} setTiposEvidencia={setTiposEvidencia}
+            professores={professores} setProfessores={setProfessores}
           />
         )}
       </main>

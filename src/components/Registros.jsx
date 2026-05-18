@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 
-export default function Registros({ setView, records, events, tiposEvidencia, addRecord, updateRecord, deleteRecord }) {
+export default function Registros({ setView, records, events, tiposEvidencia, professores = [], addRecord, updateRecord, deleteRecord }) {
   const [filterTeacher, setFilterTeacher] = useState('todos')
   const [filterDate, setFilterDate] = useState('')
   const [filterTipo, setFilterTipo] = useState('todos')
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [selectedRecord, setSelectedRecord] = useState(null)
 
   const [title, setTitle] = useState('')
   const [teacher, setTeacher] = useState('')
@@ -19,9 +17,6 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
   const [mockFileSize, setMockFileSize] = useState('')
   const [status, setStatus] = useState('pendente')
   const [feedback, setFeedback] = useState('')
-
-  const [evaluatorFeedback, setEvaluatorFeedback] = useState('')
-  const [evaluatorStatus, setEvaluatorStatus] = useState('pendente')
 
   const formFirstInputRef = useRef(null)
 
@@ -36,7 +31,6 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         setIsFormModalOpen(false)
-        setIsDetailModalOpen(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -44,13 +38,13 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
   }, [])
 
   useEffect(() => {
-    if (isFormModalOpen || isDetailModalOpen) {
+    if (isFormModalOpen) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'
     }
     return () => { document.body.style.overflow = 'unset' }
-  }, [isFormModalOpen, isDetailModalOpen])
+  }, [isFormModalOpen])
 
   const openAddModal = () => {
     setTitle('')
@@ -76,9 +70,9 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!title || !teacher || !eventId || !date) return
+    if (!teacher || !date) return
     addRecord({
-      title, teacher, eventId: Number(eventId), date, tipo,
+      title: tipo, teacher, eventId: null, date, tipo,
       description,
       fileName: mockFileName || 'documento.pdf',
       fileSize: mockFileSize || '1.0 MB',
@@ -87,22 +81,9 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
     setIsFormModalOpen(false)
   }
 
-  const openDetailModal = (record) => {
-    setSelectedRecord(record)
-    setEvaluatorStatus(record.status)
-    setEvaluatorFeedback(record.feedback || '')
-    setIsDetailModalOpen(true)
-  }
 
-  const handleReviewSubmit = (e) => {
-    e.preventDefault()
-    if (!selectedRecord) return
-    updateRecord({ ...selectedRecord, status: evaluatorStatus, feedback: evaluatorFeedback })
-    setIsDetailModalOpen(false)
-  }
 
-  // Unique teachers list
-  const uniqueTeachers = [...new Set(records.map(r => r.teacher))].sort()
+
 
   // Filter logic
   const filteredRecords = records.filter(rec => {
@@ -113,10 +94,6 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
   })
 
   const total = records.length
-  const aprovados = records.filter(r => r.status === 'aprovado').length
-  const pendentes = records.filter(r => r.status === 'pendente').length
-  const revisao = records.filter(r => r.status === 'revisao').length
-  const getPercent = (count) => total === 0 ? 0 : Math.round((count / total) * 100)
 
   const getStatusLabel = (s) => {
     if (s === 'aprovado') return 'Aprovado'
@@ -149,12 +126,6 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
             </p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAddModal} disabled={events.length === 0}>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
-          Novo Registro
-        </button>
       </div>
 
       {events.length === 0 && (
@@ -163,110 +134,88 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
         </div>
       )}
 
-      <div className="records-layout">
-        {/* Sidebar */}
-        <div className="records-sidebar">
-          {/* Analytics */}
-          <div className="sidebar-analytics">
-            <h3>Visão Geral</h3>
-            <div className="analytics-list">
-              {[
-                { label: 'Aprovados', count: aprovados, cls: 'status-aprovado', color: 'var(--pastel-green-dark)' },
-                { label: 'Pendentes', count: pendentes, cls: 'status-pendente', color: 'var(--pastel-yellow-dark)' },
-                { label: 'Sob Revisão', count: revisao, cls: 'status-revisao', color: 'var(--pastel-pink-dark)' },
-              ].map(item => (
-                <div key={item.label}>
-                  <div className="analytics-item">
-                    <span>{item.label} ({item.count})</span>
-                    <span className={`analytics-badge ${item.cls}`}>{getPercent(item.count)}%</span>
-                  </div>
-                  <div className="analytics-bar-bg">
-                    <div className="analytics-bar-fill" style={{ width: `${getPercent(item.count)}%`, backgroundColor: item.color }}></div>
-                  </div>
-                </div>
+      {/* Controls Panel (Filters & Add Button) */}
+      <div className="controls-panel" style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flex: 1, alignItems: 'flex-end' }}>
+          {/* Professor filter */}
+          <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+              👤 Professor(a)
+            </label>
+            <select
+              className="select-filter"
+              style={{ width: '100%' }}
+              value={filterTeacher}
+              onChange={(e) => setFilterTeacher(e.target.value)}
+            >
+              <option value="todos">Todos os professores</option>
+              {professores.map(t => (
+                <option key={t} value={t}>{t}</option>
               ))}
-            </div>
-            <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-              ℹ️ Evidências são avaliadas pela coordenação para compor a pontuação anual de progressão docente.
-            </div>
+            </select>
           </div>
 
-          {/* Filters Panel */}
-          <div className="sidebar-analytics">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h3 style={{ margin: 0 }}>Filtros</h3>
-              {hasActiveFilters && (
-                <button
-                  onClick={clearFilters}
-                  style={{ fontSize: '0.75rem', color: 'var(--pastel-blue-dark)', background: 'var(--pastel-blue)', border: 'none', borderRadius: '6px', padding: '0.2rem 0.6rem', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  Limpar
-                </button>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* Professor filter */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
-                  👤 Professor(a)
-                </label>
-                <select
-                  className="select-filter"
-                  style={{ width: '100%' }}
-                  value={filterTeacher}
-                  onChange={(e) => setFilterTeacher(e.target.value)}
-                >
-                  <option value="todos">Todos os professores</option>
-                  {uniqueTeachers.map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Date filter */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
-                  📅 Data
-                </label>
-                <input
-                  type="date"
-                  className="select-filter"
-                  style={{ width: '100%', paddingRight: '0.75rem' }}
-                  value={filterDate}
-                  onChange={(e) => setFilterDate(e.target.value)}
-                />
-              </div>
-
-              {/* Tipo filter */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
-                  🏷️ Tipo
-                </label>
-                <select
-                  className="select-filter"
-                  style={{ width: '100%' }}
-                  value={filterTipo}
-                  onChange={(e) => setFilterTipo(e.target.value)}
-                >
-                  <option value="todos">Todos os tipos</option>
-                  {tiposEvidencia.map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {hasActiveFilters && (
-              <div style={{ marginTop: '1rem', padding: '0.65rem', background: 'var(--pastel-blue)', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--pastel-blue-dark)', fontWeight: 600 }}>
-                🔍 Mostrando {filteredRecords.length} de {total} registros
-              </div>
-            )}
+          {/* Date filter */}
+          <div style={{ flex: '1 1 150px' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+              📅 Data
+            </label>
+            <input
+              type="date"
+              className="select-filter"
+              style={{ width: '100%', paddingRight: '0.75rem' }}
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+            />
           </div>
+
+          {/* Tipo filter */}
+          <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+              🏷️ Tipo
+            </label>
+            <select
+              className="select-filter"
+              style={{ width: '100%' }}
+              value={filterTipo}
+              onChange={(e) => setFilterTipo(e.target.value)}
+            >
+              <option value="todos">Todos os tipos</option>
+              {tiposEvidencia.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="btn btn-secondary"
+              style={{ padding: '0.65rem 1rem', height: 'fit-content' }}
+            >
+              Limpar Filtros
+            </button>
+          )}
         </div>
 
-        {/* Records List */}
-        <div className="records-list-wrapper">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button className="btn btn-primary" onClick={openAddModal} disabled={events.length === 0} style={{ padding: '0.85rem 1.5rem', fontSize: '1rem' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Novo Registro
+          </button>
+        </div>
+      </div>
+
+      {hasActiveFilters && (
+        <div style={{ marginBottom: '1.5rem', padding: '0.65rem', background: 'var(--pastel-blue)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--pastel-blue-dark)', fontWeight: 600, display: 'inline-block' }}>
+          🔍 Mostrando {filteredRecords.length} de {total} registros
+        </div>
+      )}
+
+      {/* Records List */}
+      <div>
           {filteredRecords.length === 0 ? (
             <div className="no-records">
               <div className="no-records-icon">📁</div>
@@ -317,9 +266,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
                     </div>
 
                     <div className="record-footer">
-                      <button className="btn btn-secondary" style={{ padding: '0.45rem 1rem', width: '100%', fontSize: '0.85rem' }} onClick={() => openDetailModal(rec)}>
-                        Avaliar Evidência
-                      </button>
+
                       <button className="btn-icon delete" style={{ marginLeft: '0.5rem' }} onClick={() => deleteRecord(rec.id)} title="Excluir">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                           <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
@@ -332,7 +279,6 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
             </div>
           )}
         </div>
-      </div>
 
       {/* Add Record Modal */}
       {isFormModalOpen && (
@@ -349,15 +295,15 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden', margin: 0 }}>
               <div className="modal-body" style={{ overflowY: 'auto', flexGrow: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Título da Evidência *</label>
-                  <input ref={formFirstInputRef} type="text" className="form-control" placeholder="Ex: Portfólio de atividades práticas do 1º Bimestre" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                </div>
+
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1rem' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Professor(a) *</label>
-                    <input type="text" className="form-control" placeholder="Ex: Profa. Juliana Lima" value={teacher} onChange={(e) => setTeacher(e.target.value)} required />
+                    <select ref={formFirstInputRef} className="form-control" value={teacher} onChange={(e) => setTeacher(e.target.value)} required>
+                      <option value="">Selecione um professor</option>
+                      {professores.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Data da Evidência *</label>
@@ -372,14 +318,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
                   </select>
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Associar ao Evento Pedagógico *</label>
-                  <select className="form-control" value={eventId} onChange={(e) => setEventId(e.target.value)} required>
-                    {events.map(ev => (
-                      <option key={ev.id} value={ev.id}>{ev.evento} ({ev.quemSolicitou})</option>
-                    ))}
-                  </select>
-                </div>
+
 
                 <div className="form-group" style={{ margin: 0 }}>
                   <label>Descrição e Contexto</label>
@@ -408,94 +347,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, ad
         </div>
       )}
 
-      {/* Detail / Evaluation Modal */}
-      {isDetailModalOpen && selectedRecord && (
-        <div className="modal-overlay" onClick={() => setIsDetailModalOpen(false)}>
-          <div className="modal-content" style={{ maxWidth: '750px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header" style={{ flexShrink: 0 }}>
-              <h3>Ficha Técnica da Evidência</h3>
-              <button className="btn-icon" onClick={() => setIsDetailModalOpen(false)}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handleReviewSubmit} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden', margin: 0 }}>
-              <div className="modal-body" style={{ overflowY: 'auto', flexGrow: 1, padding: '1.5rem' }}>
-                <div className="record-detail-grid">
-                  <div className="detail-main">
-                    <div>
-                      {selectedRecord.tipo && (
-                        <span style={{ display: 'inline-block', fontSize: '0.75rem', color: 'var(--pastel-purple-dark)', background: 'var(--pastel-purple)', padding: '0.2rem 0.65rem', borderRadius: '4px', marginBottom: '0.4rem', fontWeight: 600 }}>
-                          🏷️ {selectedRecord.tipo}
-                        </span>
-                      )}
-                      <span className="record-associated-event" style={{ display: 'block', fontSize: '0.8rem', padding: '0.25rem 0.65rem' }}>
-                        🔗 Evento: {events.find(e => e.id === selectedRecord.eventId)?.evento || 'Não identificado'}
-                      </span>
-                      <h2 style={{ fontSize: '1.5rem', marginTop: '0.5rem', marginBottom: '0.75rem', lineHeight: '1.25' }}>
-                        {selectedRecord.title}
-                      </h2>
-                    </div>
 
-                    <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '1.25rem' }}>
-                      <strong>Descrição:</strong>
-                      <p style={{ marginTop: '0.5rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                        {selectedRecord.description || 'Sem detalhes descritos.'}
-                      </p>
-                    </div>
-
-                    <div className="detail-attachment-preview">
-                      <div className="attachment-thumbnail-placeholder">📁</div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{selectedRecord.fileName}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{selectedRecord.fileSize}</div>
-                      <button type="button" className="btn btn-secondary" style={{ marginTop: '0.75rem', padding: '0.4rem 1rem', fontSize: '0.8rem' }} onClick={() => alert('Simulação: Download concluído!')}>
-                        📥 Download
-                      </button>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div className="detail-meta-card">
-                      <div className="detail-meta-row"><span>Professor</span><span>{selectedRecord.teacher}</span></div>
-                      <div className="detail-meta-row"><span>Data</span><span>{new Date(selectedRecord.date + 'T00:00:00').toLocaleDateString('pt-BR')}</span></div>
-                      <div className="detail-meta-row" style={{ border: 'none', padding: '0' }}>
-                        <span>Status</span>
-                        <span className={`record-status-badge status-${selectedRecord.status}`} style={{ margin: 0 }}>
-                          {getStatusLabel(selectedRecord.status)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div style={{ background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', padding: '1.25rem', border: '1px solid var(--border-light)' }}>
-                      <h4 style={{ fontSize: '0.95rem', fontFamily: 'Outfit', color: 'var(--text-main)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-                        Avaliação Pedagógica
-                      </h4>
-                      <div className="form-group">
-                        <label style={{ fontSize: '0.75rem' }}>Definir Status</label>
-                        <select className="form-control" value={evaluatorStatus} onChange={(e) => setEvaluatorStatus(e.target.value)}>
-                          <option value="pendente">Pendente de Avaliação</option>
-                          <option value="aprovado">Aprovado (Válido)</option>
-                          <option value="revisao">Solicitar Revisão</option>
-                        </select>
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontSize: '0.75rem' }}>Parecer do Avaliador</label>
-                        <textarea className="form-control" rows="4" placeholder="Digite o feedback detalhado..." value={evaluatorFeedback} onChange={(e) => setEvaluatorFeedback(e.target.value)} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="modal-footer" style={{ flexShrink: 0, padding: '1.25rem 1.5rem', display: 'flex', gap: '0.75rem', borderTop: '1px solid var(--border-light)', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsDetailModalOpen(false)}>Voltar</button>
-                <button type="submit" className="btn btn-primary">Registrar Avaliação</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

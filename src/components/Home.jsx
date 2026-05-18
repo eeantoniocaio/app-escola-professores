@@ -2,10 +2,84 @@ import React from 'react';
 
 export default function Home({ setView, openEventModal }) {
   return (
-    <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
-      <div className="welcome-section" style={{ marginBottom: '3rem' }}>
-        <h2>Painel de Evidências</h2>
-        <p>Utilize o menu superior para navegar entre Eventos e Registros.</p>
+    <div style={{ animation: 'fadeIn 0.5s ease-out', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+      <div className="welcome-section" style={{ marginBottom: '3rem', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>Painel de Evidências</h2>
+        <p style={{ color: 'var(--text-muted)' }}>Acesse rapidamente as principais áreas do sistema.</p>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <button 
+          onClick={() => openEventModal()}
+          style={{ 
+            padding: '2rem', 
+            borderRadius: 'var(--radius-lg)', 
+            border: 'none', 
+            background: 'var(--pastel-green)', 
+            color: 'var(--pastel-green-dark)',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+            width: '200px',
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'transform 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <span style={{ fontSize: '2.5rem' }}>➕</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Novo Evento</span>
+        </button>
+
+        <button 
+          onClick={() => setView('eventos')}
+          style={{ 
+            padding: '2rem', 
+            borderRadius: 'var(--radius-lg)', 
+            border: 'none', 
+            background: 'var(--pastel-blue)', 
+            color: 'var(--pastel-blue-dark)',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+            width: '200px',
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'transform 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <span style={{ fontSize: '2.5rem' }}>📅</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Eventos</span>
+        </button>
+
+        <button 
+          onClick={() => setView('registros')}
+          style={{ 
+            padding: '2rem', 
+            borderRadius: 'var(--radius-lg)', 
+            border: 'none', 
+            background: 'var(--pastel-purple)', 
+            color: 'var(--pastel-purple-dark)',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+            width: '200px',
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'transform 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <span style={{ fontSize: '2.5rem' }}>📁</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Registros</span>
+        </button>
       </div>
     </div>
   );
