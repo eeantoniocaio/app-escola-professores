@@ -220,12 +220,14 @@ export default function App() {
         )}
         
         {view === 'eventos' && (
-          <Eventos 
-            setView={setView} 
-            events={events} 
+          <Eventos
+            setView={setView}
+            events={events}
+            records={records}
             deleteEvent={handleDeleteEvent}
             openEventModal={handleOpenEventModal}
             toggleEventFinalizado={toggleEventFinalizado}
+            updateEvent={handleUpdateEvent}
           />
         )}
 

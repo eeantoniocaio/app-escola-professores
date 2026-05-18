@@ -1135,3 +1135,77 @@ textarea.form-control {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
 }
+
+/* Event card clickable hover state */
+.event-card {
+  cursor: pointer;
+}
+
+.event-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* Teacher late delivery checklist */
+.teacher-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.teacher-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  user-select: none;
+}
+
+.teacher-check-item:hover {
+  border-color: hsl(340, 70%, 80%);
+  background: hsl(340, 70%, 98%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .teacher-check-item:hover {
+    background: hsl(340, 25%, 16%);
+    border-color: hsl(340, 45%, 40%);
+  }
+}
+
+.teacher-check-item.selected {
+  border-color: hsl(340, 70%, 75%);
+  background: var(--pastel-pink);
+}
+
+@media (prefers-color-scheme: dark) {
+  .teacher-check-item.selected {
+    background: hsl(340, 30%, 18%);
+    border-color: hsl(340, 50%, 45%);
+  }
+}
+
+.teacher-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--border-light);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+  color: white;
+}
+
+.teacher-checkbox.checked {
+  background: var(--pastel-pink-dark);
+  border-color: var(--pastel-pink-dark);
+}
+
