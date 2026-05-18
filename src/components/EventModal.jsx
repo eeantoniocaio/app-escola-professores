@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
 
-export default function EventModal({ isOpen, eventToEdit, onClose, onSave }) {
+export default function EventModal({ isOpen, eventToEdit, tiposEvento, onClose, onSave }) {
   // Input states
   const [dataSolicitacao, setDataSolicitacao] = useState('')
   const [evento, setEvento] = useState('')
-  const [tipo, setTipo] = useState('formulário')
+  const [tipo, setTipo] = useState(tiposEvento[0] || '')
   const [quemSolicitou, setQuemSolicitou] = useState('')
   const [dataEntrega, setDataEntrega] = useState('')
 
@@ -15,13 +15,13 @@ export default function EventModal({ isOpen, eventToEdit, onClose, onSave }) {
     if (eventToEdit) {
       setDataSolicitacao(eventToEdit.dataSolicitacao || '')
       setEvento(eventToEdit.evento || '')
-      setTipo(eventToEdit.tipo || 'formulário')
+      setTipo(eventToEdit.tipo || tiposEvento[0] || '')
       setQuemSolicitou(eventToEdit.quemSolicitou || '')
       setDataEntrega(eventToEdit.dataEntrega || '')
     } else {
       setDataSolicitacao('')
       setEvento('')
-      setTipo('formulário')
+      setTipo(tiposEvento[0] || '')
       setQuemSolicitou('')
       setDataEntrega('')
     }
@@ -147,9 +147,9 @@ export default function EventModal({ isOpen, eventToEdit, onClose, onSave }) {
                 required
                 style={{ width: '100%', height: '42px', paddingRight: '2rem' }}
               >
-                <option value="formulário">Formulário</option>
-                <option value="email">E-mail</option>
-                <option value="físico">Físico</option>
+                {tiposEvento.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
               </select>
             </div>
 

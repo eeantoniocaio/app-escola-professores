@@ -3,6 +3,7 @@ import Home from './components/Home'
 import Eventos from './components/Eventos'
 import Registros from './components/Registros'
 import EventModal from './components/EventModal'
+import Configuracoes from './components/Configuracoes'
 
 // Default high-fidelity mock data to match the new Events schema
 const initialEvents = [
@@ -39,6 +40,7 @@ const initialRecords = [
     teacher: "Prof. Carlos Silva",
     eventId: 1,
     date: "2026-05-13",
+    tipo: "Envolvimento nas atividades da comunidade escolar",
     description: "Documento contendo o roteiro da prática de laboratório, objetivos pedagógicos, materiais utilizados e fotos das anotações dos grupos de estudantes durante o experimento de ciências.",
     fileName: "relatorio_aula_ciencias.pdf",
     fileSize: "2.4 MB",
@@ -51,6 +53,7 @@ const initialRecords = [
     teacher: "Profa. Regina Mendes",
     eventId: 2,
     date: "2026-05-16",
+    tipo: "Respeito às regras e combinados coletivos",
     description: "Ata de deliberações do conselho de classe, listando as dificuldades mapeadas por disciplina, os alunos elegíveis para o plano de reforço e as metodologias de engajamento acordadas.",
     fileName: "ata_conselho_1EM.pdf",
     fileSize: "1.2 MB",
@@ -63,6 +66,7 @@ const initialRecords = [
     teacher: "Prof. Marcos Aurelio",
     eventId: 3,
     date: "2026-05-17",
+    tipo: "Aplicação da proibição de celular em sala de aula",
     description: "Planilha de distribuição de orientadores e cronograma de entregas semanais dos protótipos para a Feira de Inovação Científica.",
     fileName: "cronograma_feira_inovacao.xlsx",
     fileSize: "850 KB",
@@ -90,6 +94,21 @@ export default function App() {
     return saved ? JSON.parse(saved) : initialRecords
   })
 
+  const [tiposEvento, setTiposEvento] = useState(() => {
+    const saved = localStorage.getItem('escola_tipos_evento')
+    return saved ? JSON.parse(saved) : ['formulário', 'email', 'físico']
+  })
+
+  const [tiposEvidencia, setTiposEvidencia] = useState(() => {
+    const saved = localStorage.getItem('escola_tipos_evidencia')
+    return saved ? JSON.parse(saved) : [
+      'Respeito às regras e combinados coletivos',
+      'Cuidado com o patrimônio e materiais da escola',
+      'Aplicação da proibição de celular em sala de aula',
+      'Envolvimento nas atividades da comunidade escolar',
+    ]
+  })
+
   // Toast Notification State
   const [toast, setToast] = useState(null)
 
@@ -101,6 +120,14 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('escola_records', JSON.stringify(records))
   }, [records])
+
+  useEffect(() => {
+    localStorage.setItem('escola_tipos_evento', JSON.stringify(tiposEvento))
+  }, [tiposEvento])
+
+  useEffect(() => {
+    localStorage.setItem('escola_tipos_evidencia', JSON.stringify(tiposEvidencia))
+  }, [tiposEvidencia])
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -207,6 +234,14 @@ export default function App() {
           >
             Registros
           </button>
+          <button 
+            className={`btn ${view === 'configuracoes' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setView('configuracoes')}
+            title="Configurações"
+            style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '40px' }}
+          >
+            ⚙️
+          </button>
         </div>
       </header>
 
@@ -236,9 +271,18 @@ export default function App() {
             setView={setView} 
             records={records} 
             events={events}
+            tiposEvidencia={tiposEvidencia}
             addRecord={handleAddRecord}
             updateRecord={handleUpdateRecord}
             deleteRecord={handleDeleteRecord}
+          />
+        )}
+
+        {view === 'configuracoes' && (
+          <Configuracoes 
+            setView={setView}
+            tiposEvento={tiposEvento} setTiposEvento={setTiposEvento}
+            tiposEvidencia={tiposEvidencia} setTiposEvidencia={setTiposEvidencia}
           />
         )}
       </main>
@@ -253,6 +297,7 @@ export default function App() {
         <EventModal 
           isOpen={isEventModalOpen}
           eventToEdit={eventToEdit}
+          tiposEvento={tiposEvento}
           onClose={handleCloseEventModal}
           onSave={(eventData) => {
             if (eventToEdit) {
