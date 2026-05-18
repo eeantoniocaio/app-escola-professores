@@ -6,6 +6,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
   const [filterTipo, setFilterTipo] = useState('todos')
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState(null)
 
   const [title, setTitle] = useState('')
   const [teacher, setTeacher] = useState('')
@@ -47,6 +48,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
   }, [isFormModalOpen])
 
   const openAddModal = () => {
+    setEditingId(null)
     setTitle('')
     setTeacher('')
     setEventId(events[0]?.id || '')
@@ -57,6 +59,21 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
     setMockFileSize('')
     setStatus('pendente')
     setFeedback('')
+    setIsFormModalOpen(true)
+  }
+
+  const openEditModal = (rec) => {
+    setEditingId(rec.id)
+    setTitle(rec.title || '')
+    setTeacher(rec.teacher || '')
+    setEventId(rec.eventId || '')
+    setDate(rec.date || '')
+    setTipo(rec.tipo || tiposEvidencia[0] || '')
+    setDescription(rec.description || '')
+    setMockFileName(rec.fileName || '')
+    setMockFileSize(rec.fileSize || '')
+    setStatus(rec.status || 'pendente')
+    setFeedback(rec.feedback || '')
     setIsFormModalOpen(true)
   }
 
@@ -71,13 +88,19 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!teacher || !date) return
-    addRecord({
+    const recordData = {
       title: tipo, teacher, eventId: null, date, tipo,
       description,
       fileName: mockFileName || 'documento.pdf',
       fileSize: mockFileSize || '1.0 MB',
       status, feedback
-    })
+    }
+
+    if (editingId) {
+      updateRecord({ ...recordData, id: editingId })
+    } else {
+      addRecord(recordData)
+    }
     setIsFormModalOpen(false)
   }
 
@@ -94,12 +117,6 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
   })
 
   const total = records.length
-
-  const getStatusLabel = (s) => {
-    if (s === 'aprovado') return 'Aprovado'
-    if (s === 'revisao') return 'Revisão Solicitada'
-    return 'Pendente de Avaliação'
-  }
 
   const hasActiveFilters = filterTeacher !== 'todos' || filterDate !== '' || filterTipo !== 'todos'
 
@@ -239,9 +256,6 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
                           <span className="record-teacher">{rec.teacher}</span>
                           <span>{new Date(rec.date + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                         </div>
-                        <span className={`record-status-badge status-${rec.status}`}>
-                          {getStatusLabel(rec.status)}
-                        </span>
                       </div>
 
                       <div className="record-body">
@@ -267,6 +281,11 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
 
                     <div className="record-footer">
 
+                      <button className="btn-icon" onClick={() => openEditModal(rec)} title="Editar">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.995.995 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                      </button>
                       <button className="btn-icon delete" style={{ marginLeft: '0.5rem' }} onClick={() => deleteRecord(rec.id)} title="Excluir">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                           <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
@@ -285,7 +304,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
         <div className="modal-overlay" onClick={() => setIsFormModalOpen(false)}>
           <div className="modal-content" style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header" style={{ flexShrink: 0 }}>
-              <h3>Novo Registro de Evidência</h3>
+              <h3>{editingId ? 'Editar Registro de Evidência' : 'Novo Registro de Evidência'}</h3>
               <button className="btn-icon" onClick={() => setIsFormModalOpen(false)}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                   <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -340,7 +359,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
 
               <div className="modal-footer" style={{ flexShrink: 0, padding: '1.25rem 1.5rem', display: 'flex', gap: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
                 <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setIsFormModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Registrar Evidência</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>{editingId ? 'Salvar Alterações' : 'Registrar Evidência'}</button>
               </div>
             </form>
           </div>

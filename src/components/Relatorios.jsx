@@ -1,0 +1,218 @@
+import React, { useState } from 'react'
+
+export default function Relatorios({ setView, records, events, professores, tiposEvidencia }) {
+  // filters
+  const [filterEvent, setFilterEvent] = useState('todos')
+  const [filterTeacher, setFilterTeacher] = useState('todos')
+  const [filterDate, setFilterDate] = useState('')
+  const [filterSolicitante, setFilterSolicitante] = useState('todos')
+  const [filterDataSolicitacao, setFilterDataSolicitacao] = useState('')
+  const [filterPrazoEntrega, setFilterPrazoEntrega] = useState('')
+  const [filterTipo, setFilterTipo] = useState('todos')
+
+  // Derive solicitantes
+  const solicitantes = [...new Set(events.map(e => e.quemSolicitou).filter(Boolean))]
+
+  const filteredRecords = records.filter(rec => {
+    const associatedEvent = events.find(e => e.id === rec.eventId)
+
+    const matchEvent = filterEvent === 'todos' || rec.eventId?.toString() === filterEvent
+    const matchTeacher = filterTeacher === 'todos' || rec.teacher === filterTeacher
+    const matchDate = !filterDate || rec.date === filterDate
+    
+    const matchSolicitante = filterSolicitante === 'todos' || (associatedEvent && associatedEvent.quemSolicitou === filterSolicitante)
+    const matchDataSolicitacao = !filterDataSolicitacao || (associatedEvent && associatedEvent.dataSolicitacao === filterDataSolicitacao)
+    const matchPrazoEntrega = !filterPrazoEntrega || (associatedEvent && associatedEvent.dataEntrega === filterPrazoEntrega)
+    
+    const matchTipo = filterTipo === 'todos' || rec.tipo === filterTipo
+
+    return matchEvent && matchTeacher && matchDate && matchSolicitante && matchDataSolicitacao && matchPrazoEntrega && matchTipo
+  })
+
+  const hasActiveFilters = filterEvent !== 'todos' || filterTeacher !== 'todos' || filterDate !== '' || filterSolicitante !== 'todos' || filterDataSolicitacao !== '' || filterPrazoEntrega !== '' || filterTipo !== 'todos'
+
+  const clearFilters = () => {
+    setFilterEvent('todos')
+    setFilterTeacher('todos')
+    setFilterDate('')
+    setFilterSolicitante('todos')
+    setFilterDataSolicitacao('')
+    setFilterPrazoEntrega('')
+    setFilterTipo('todos')
+  }
+
+  const exportCSV = () => {
+    const headers = ['Professor(a)', 'Evento', 'Tipo', 'Data', 'Solicitante', 'Solicitado Em', 'Prazo de Entrega'];
+    
+    const rows = filteredRecords.map(rec => {
+      const ev = events.find(e => e.id === rec.eventId);
+      return [
+        `"${rec.teacher}"`,
+        `"${ev ? ev.evento : '-'}"`,
+        `"${rec.tipo}"`,
+        `"${new Date(rec.date + 'T00:00:00').toLocaleDateString('pt-BR')}"`,
+        `"${ev && ev.quemSolicitou ? ev.quemSolicitou : '-'}"`,
+        `"${ev && ev.dataSolicitacao ? new Date(ev.dataSolicitacao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`,
+        `"${ev && ev.dataEntrega ? new Date(ev.dataEntrega + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`
+      ].join(',');
+    });
+    
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "relatorio_evidencias.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+      <style>
+        {`
+          @media print {
+            .header, .dashboard-header, .controls-panel, footer {
+              display: none !important;
+            }
+            body {
+              background: white !important;
+            }
+            .app-container, .main-content {
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+            .print-area {
+              box-shadow: none !important;
+              padding: 0 !important;
+            }
+          }
+        `}
+      </style>
+      <div className="dashboard-header">
+        <div className="dashboard-title-section">
+          <button className="btn-back-home" onClick={() => setView('home')} title="Voltar ao início">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          </button>
+          <div>
+            <h2 style={{ marginBottom: '0.1rem' }}>Relatórios</h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+              Filtre e visualize dados detalhados.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="controls-panel" style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
+        <div style={{ flex: '1 1 200px' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Eventos</label>
+          <select className="select-filter" style={{ width: '100%' }} value={filterEvent} onChange={e => setFilterEvent(e.target.value)}>
+            <option value="todos">Todos</option>
+            {events.map(ev => <option key={ev.id} value={ev.id}>{ev.evento}</option>)}
+          </select>
+        </div>
+
+        <div style={{ flex: '1 1 200px' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Professor(a)</label>
+          <select className="select-filter" style={{ width: '100%' }} value={filterTeacher} onChange={e => setFilterTeacher(e.target.value)}>
+            <option value="todos">Todos</option>
+            {professores.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+
+        <div style={{ flex: '1 1 150px' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Data</label>
+          <input type="date" className="select-filter" style={{ width: '100%' }} value={filterDate} onChange={e => setFilterDate(e.target.value)} />
+        </div>
+
+        <div style={{ flex: '1 1 200px' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Solicitante</label>
+          <select className="select-filter" style={{ width: '100%' }} value={filterSolicitante} onChange={e => setFilterSolicitante(e.target.value)}>
+            <option value="todos">Todos</option>
+            {solicitantes.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        <div style={{ flex: '1 1 150px' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Solicitado Em</label>
+          <input type="date" className="select-filter" style={{ width: '100%' }} value={filterDataSolicitacao} onChange={e => setFilterDataSolicitacao(e.target.value)} />
+        </div>
+
+        <div style={{ flex: '1 1 150px' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Prazo de Entrega</label>
+          <input type="date" className="select-filter" style={{ width: '100%' }} value={filterPrazoEntrega} onChange={e => setFilterPrazoEntrega(e.target.value)} />
+        </div>
+
+        <div style={{ flex: '1 1 200px' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Tipo</label>
+          <select className="select-filter" style={{ width: '100%' }} value={filterTipo} onChange={e => setFilterTipo(e.target.value)}>
+            <option value="todos">Todos</option>
+            {tiposEvidencia.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+
+        {hasActiveFilters && (
+          <button onClick={clearFilters} className="btn btn-secondary" style={{ padding: '0.65rem 1rem', height: 'fit-content' }}>
+            Limpar Filtros
+          </button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }} className="print-area">
+        <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Resultados ({filteredRecords.length})</h3>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button onClick={exportCSV} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            Baixar CSV
+          </button>
+          <button onClick={() => window.print()} className="btn btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+              <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+            </svg>
+            Imprimir / PDF
+          </button>
+        </div>
+      </div>
+
+      <div style={{ overflowX: 'auto', background: '#fff', borderRadius: '8px', padding: '1rem', boxShadow: 'var(--shadow-sm)' }} className="print-area">
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid var(--border-light)' }}>
+              <th style={{ padding: '0.75rem' }}>Professor(a)</th>
+              <th style={{ padding: '0.75rem' }}>Evento</th>
+              <th style={{ padding: '0.75rem' }}>Tipo</th>
+              <th style={{ padding: '0.75rem' }}>Data</th>
+              <th style={{ padding: '0.75rem' }}>Solicitante</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRecords.length > 0 ? filteredRecords.map(rec => {
+              const ev = events.find(e => e.id === rec.eventId)
+              return (
+                <tr key={rec.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                  <td style={{ padding: '0.75rem' }}>{rec.teacher}</td>
+                  <td style={{ padding: '0.75rem' }}>{ev ? ev.evento : '-'}</td>
+                  <td style={{ padding: '0.75rem' }}>{rec.tipo}</td>
+                  <td style={{ padding: '0.75rem' }}>{new Date(rec.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                  <td style={{ padding: '0.75rem' }}>{ev ? ev.quemSolicitou : '-'}</td>
+                </tr>
+              )
+            }) : (
+              <tr>
+                <td colSpan="5" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Nenhum registro encontrado com estes filtros.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

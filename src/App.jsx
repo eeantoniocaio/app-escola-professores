@@ -4,6 +4,7 @@ import Eventos from './components/Eventos'
 import Registros from './components/Registros'
 import EventModal from './components/EventModal'
 import Configuracoes from './components/Configuracoes'
+import Relatorios from './components/Relatorios'
 
 // Default high-fidelity mock data to match the new Events schema
 const initialEvents = [
@@ -248,6 +249,12 @@ export default function App() {
             Registros
           </button>
           <button 
+            className={`btn ${view === 'relatorios' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setView('relatorios')}
+          >
+            Relatórios
+          </button>
+          <button 
             className={`btn ${view === 'configuracoes' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setView('configuracoes')}
             title="Configurações"
@@ -289,6 +296,17 @@ export default function App() {
             addRecord={handleAddRecord}
             updateRecord={handleUpdateRecord}
             deleteRecord={handleDeleteRecord}
+          />
+        )}
+
+        {view === 'relatorios' && (
+          <Relatorios 
+            setView={setView} 
+            records={records} 
+            events={events}
+            professores={professores}
+            tiposEvento={tiposEvento}
+            tiposEvidencia={tiposEvidencia}
           />
         )}
 
