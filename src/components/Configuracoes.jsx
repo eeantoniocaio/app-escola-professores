@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 
 export default function Configuracoes({
   setView,
-  tiposEvento, setTiposEvento,
-  tiposEvidencia, setTiposEvidencia,
-  professores, setProfessores
+  tiposEvento, addTipoEvento, removeTipoEvento,
+  tiposEvidencia, addTipoEvidencia, removeTipoEvidencia,
+  professores, addProfessor, removeProfessor, importProfessores
 }) {
   const [novoTipoEvento, setNovoTipoEvento] = useState('')
   const [novoTipoEvidencia, setNovoTipoEvidencia] = useState('')
@@ -14,39 +14,53 @@ export default function Configuracoes({
     e.preventDefault()
     if (!novoTipoEvento.trim()) return
     if (!tiposEvento.includes(novoTipoEvento.trim())) {
-      setTiposEvento([...tiposEvento, novoTipoEvento.trim()])
+      addTipoEvento(novoTipoEvento.trim())
     }
     setNovoTipoEvento('')
-  }
-
-  const handleDeleteTipoEvento = (tipo) => {
-    setTiposEvento(tiposEvento.filter(t => t !== tipo))
   }
 
   const handleAddTipoEvidencia = (e) => {
     e.preventDefault()
     if (!novoTipoEvidencia.trim()) return
     if (!tiposEvidencia.includes(novoTipoEvidencia.trim())) {
-      setTiposEvidencia([...tiposEvidencia, novoTipoEvidencia.trim()])
+      addTipoEvidencia(novoTipoEvidencia.trim())
     }
     setNovoTipoEvidencia('')
-  }
-
-  const handleDeleteTipoEvidencia = (tipo) => {
-    setTiposEvidencia(tiposEvidencia.filter(t => t !== tipo))
   }
 
   const handleAddProfessor = (e) => {
     e.preventDefault()
     if (!novoProfessor.trim()) return
     if (!professores.includes(novoProfessor.trim())) {
-      setProfessores([...professores, novoProfessor.trim()])
+      addProfessor(novoProfessor.trim())
     }
     setNovoProfessor('')
   }
 
-  const handleDeleteProfessor = (prof) => {
-    setProfessores(professores.filter(p => p !== prof))
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target.result
+      const lines = text.split(/\r?\n/)
+      
+      const novosProfessores = []
+      lines.forEach(line => {
+        let name = line.split(',')[0].replace(/^["']|["']$/g, '').trim()
+        if (name.toLowerCase() === 'nome' || name.toLowerCase() === 'professor' || name.toLowerCase() === 'professores') return;
+        if (name && !professores.includes(name) && !novosProfessores.includes(name)) {
+          novosProfessores.push(name)
+        }
+      })
+
+      if (novosProfessores.length > 0) {
+        importProfessores(novosProfessores)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
   }
 
   return (
@@ -61,7 +75,7 @@ export default function Configuracoes({
           <div>
             <h2 style={{ marginBottom: '0.1rem' }}>Configurações do Sistema</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-              Gerencie as opções de campos personalizados
+              Gerencie as opções de campos personalizados na Nuvem
             </p>
           </div>
         </div>
@@ -79,7 +93,7 @@ export default function Configuracoes({
             {tiposEvento.map(tipo => (
               <li key={tipo} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)' }}>
                 <span style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{tipo}</span>
-                <button className="btn-icon delete" onClick={() => handleDeleteTipoEvento(tipo)} title="Excluir">
+                <button className="btn-icon delete" onClick={() => removeTipoEvento(tipo)} title="Excluir">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                   </svg>
@@ -114,7 +128,7 @@ export default function Configuracoes({
             {tiposEvidencia.map(tipo => (
               <li key={tipo} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)' }}>
                 <span style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{tipo}</span>
-                <button className="btn-icon delete" onClick={() => handleDeleteTipoEvidencia(tipo)} title="Excluir">
+                <button className="btn-icon delete" onClick={() => removeTipoEvidencia(tipo)} title="Excluir">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                   </svg>
@@ -149,7 +163,7 @@ export default function Configuracoes({
             {professores.map(prof => (
               <li key={prof} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)' }}>
                 <span style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{prof}</span>
-                <button className="btn-icon delete" onClick={() => handleDeleteProfessor(prof)} title="Excluir">
+                <button className="btn-icon delete" onClick={() => removeProfessor(prof)} title="Excluir">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                   </svg>
@@ -161,7 +175,7 @@ export default function Configuracoes({
             )}
           </ul>
 
-          <form onSubmit={handleAddProfessor} style={{ display: 'flex', gap: '0.5rem' }}>
+          <form onSubmit={handleAddProfessor} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
             <input 
               type="text" 
               className="form-control" 
@@ -172,6 +186,18 @@ export default function Configuracoes({
             />
             <button type="submit" className="btn btn-primary" style={{ margin: 0 }}>Adicionar</button>
           </form>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-light)' }}>
+            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600 }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+              </svg>
+              Importar de CSV
+              <input type="file" accept=".csv" onChange={handleFileUpload} style={{ display: 'none' }} />
+            </label>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>— Selecione um arquivo com nomes (um por linha)</span>
+          </div>
         </div>
 
       </div>

@@ -145,11 +145,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
         </div>
       </div>
 
-      {events.length === 0 && (
-        <div className="toast toast-success" style={{ background: 'var(--pastel-orange-dark)', position: 'relative', right: '0', bottom: '0', margin: '0 0 2rem 0', width: '100%' }}>
-          ⚠️ <strong>Atenção:</strong> Cadastre pelo menos um <strong>Evento</strong> antes de criar registros.
-        </div>
-      )}
+
 
       {/* Controls Panel (Filters & Add Button) */}
       <div className="controls-panel" style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end', justifyContent: 'space-between' }}>
@@ -216,7 +212,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="btn btn-primary" onClick={openAddModal} disabled={events.length === 0} style={{ padding: '0.85rem 1.5rem', fontSize: '1rem' }}>
+          <button className="btn btn-primary" onClick={openAddModal} style={{ padding: '0.85rem 1.5rem', fontSize: '1rem' }}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
