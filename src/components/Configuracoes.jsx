@@ -58,26 +58,47 @@ export default function Configuracoes({
   const handleCSVAlunosTurma = (turmaNome, e) => {
     const file = e.target.files[0]
     if (!file) return
+
     const existingNames = new Set(
       (alunos || []).filter(a => a.turma === turmaNome).map(a => a.nome.toLowerCase())
     )
+
     const reader = new FileReader()
     reader.onload = (ev) => {
-      const lines = ev.target.result.split(/\r?\n/)
+      const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim() !== '')
+      if (lines.length < 2) return
+
+      // Detecta separador (vírgula ou ponto-e-vírgula)
+      const sep = lines[0].includes(';') ? ';' : ','
+
+      // Encontra índice da coluna "Nome" no cabeçalho (case-insensitive)
+      const headers = lines[0].split(sep).map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase())
+      const nomeIdx = headers.indexOf('nome')
+
+      if (nomeIdx === -1) {
+        alert('Coluna "Nome" não encontrada no CSV.\nVerifique se o cabeçalho contém exatamente a palavra "Nome".')
+        e.target.value = ''
+        return
+      }
+
       const novos = []
-      lines.forEach(line => {
-        const name = line.split(',')[0].replace(/^["']|["']$/g, '').trim()
-        const lower = name.toLowerCase()
-        if (!name) return
-        if (['nome', 'aluno', 'alunos', 'name'].includes(lower)) return // skip header
-        if (!existingNames.has(lower)) {
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(sep).map(c => c.replace(/^["']|["']$/g, '').trim())
+        const name = cols[nomeIdx] || ''
+        if (!name) continue
+        if (!existingNames.has(name.toLowerCase())) {
           novos.push(name)
-          existingNames.add(lower)
+          existingNames.add(name.toLowerCase())
         }
-      })
-      if (novos.length > 0) importAlunosTurma(turmaNome, novos)
+      }
+
+      if (novos.length > 0) {
+        importAlunosTurma(turmaNome, novos)
+      } else {
+        alert('Nenhum aluno novo encontrado na coluna "Nome".')
+      }
     }
-    reader.readAsText(file)
+    reader.readAsText(file, 'UTF-8')
     e.target.value = ''
   }
 
