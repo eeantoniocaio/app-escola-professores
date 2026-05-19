@@ -5,7 +5,8 @@ export default function Configuracoes({
   tiposEvento, addTipoEvento, removeTipoEvento,
   tiposEvidencia, addTipoEvidencia, removeTipoEvidencia,
   professores, addProfessor, removeProfessor, importProfessores,
-  turmas, addTurma, removeTurma, updateTurmaLink
+  turmas, addTurma, removeTurma, updateTurmaLink,
+  alunos, importAlunosTurma, clearAlunosTurma
 }) {
   const [novoTipoEvento, setNovoTipoEvento] = useState('')
   const [novoTipoEvidencia, setNovoTipoEvidencia] = useState('')
@@ -52,6 +53,32 @@ export default function Configuracoes({
   const handleSaveLink = (turma) => {
     const link = editingLink[turma.id] !== undefined ? editingLink[turma.id] : (turma.link || '')
     updateTurmaLink(turma.id, link || null)
+  }
+
+  const handleCSVAlunosTurma = (turmaNome, e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const existingNames = new Set(
+      (alunos || []).filter(a => a.turma === turmaNome).map(a => a.nome.toLowerCase())
+    )
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const lines = ev.target.result.split(/\r?\n/)
+      const novos = []
+      lines.forEach(line => {
+        const name = line.split(',')[0].replace(/^["']|["']$/g, '').trim()
+        const lower = name.toLowerCase()
+        if (!name) return
+        if (['nome', 'aluno', 'alunos', 'name'].includes(lower)) return // skip header
+        if (!existingNames.has(lower)) {
+          novos.push(name)
+          existingNames.add(lower)
+        }
+      })
+      if (novos.length > 0) importAlunosTurma(turmaNome, novos)
+    }
+    reader.readAsText(file)
+    e.target.value = ''
   }
 
   const handleFileUpload = (e) => {
@@ -222,16 +249,18 @@ export default function Configuracoes({
           <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span>🏫</span> Turmas
           </h3>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Adicione as turmas e configure um link externo para cada uma (ex: Google Classroom, Forms).</p>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Configure cada turma: link externo e lista de alunos via CSV.</p>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
             {turmas.length === 0 && (
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Nenhuma turma cadastrada.</p>
             )}
             {turmas.map(turma => {
               const currentLink = editingLink[turma.id] !== undefined ? editingLink[turma.id] : (turma.link || '')
+              const alunosDaTurma = (alunos || []).filter(a => a.turma === turma.nome)
               return (
-                <div key={turma.id} style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div key={turma.id} style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', border: '1px solid var(--border-light)' }}>
+                  {/* Row 1: Nome + Excluir */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>{turma.nome}</span>
                     <button className="btn-icon delete" onClick={() => removeTurma(turma.nome)} title="Excluir turma">
@@ -240,6 +269,8 @@ export default function Configuracoes({
                       </svg>
                     </button>
                   </div>
+
+                  {/* Row 2: Link */}
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>🔗 Link:</span>
                     <input
@@ -258,6 +289,62 @@ export default function Configuracoes({
                       Salvar
                     </button>
                   </div>
+
+                  {/* Row 3: Alunos */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      👥 Alunos:
+                    </span>
+                    <span style={{
+                      fontSize: '0.82rem', fontWeight: 700,
+                      background: alunosDaTurma.length > 0 ? '#dcfce7' : '#f1f5f9',
+                      color: alunosDaTurma.length > 0 ? '#166534' : '#64748b',
+                      borderRadius: '20px', padding: '0.2rem 0.65rem'
+                    }}>
+                      {alunosDaTurma.length} aluno{alunosDaTurma.length !== 1 ? 's' : ''}
+                    </span>
+
+                    {/* Import CSV */}
+                    <label style={{
+                      cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
+                      color: '#6366f1', display: 'flex', alignItems: 'center', gap: '0.3rem',
+                      background: '#ede9fe', borderRadius: '8px', padding: '0.3rem 0.65rem'
+                    }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                      </svg>
+                      Importar CSV
+                      <input
+                        type="file" accept=".csv,.txt"
+                        onChange={e => handleCSVAlunosTurma(turma.nome, e)}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+
+                    {/* Clear */}
+                    {alunosDaTurma.length > 0 && (
+                      <button
+                        onClick={() => clearAlunosTurma(turma.nome)}
+                        style={{
+                          fontSize: '0.78rem', background: 'none', border: '1px solid #fecaca',
+                          color: '#dc2626', borderRadius: '8px', padding: '0.3rem 0.65rem',
+                          cursor: 'pointer', fontWeight: 600
+                        }}
+                      >
+                        ✕ Limpar lista
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Preview dos primeiros alunos */}
+                  {alunosDaTurma.length > 0 && (
+                    <div style={{ fontSize: '0.78rem', color: '#475569', background: 'white', borderRadius: '6px', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', maxHeight: '80px', overflowY: 'auto' }}>
+                      {alunosDaTurma.map((a, i) => (
+                        <span key={a.id}>{a.nome}{i < alunosDaTurma.length - 1 ? ', ' : ''}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}

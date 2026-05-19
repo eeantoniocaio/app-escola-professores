@@ -25,6 +25,7 @@ export default function App() {
   const [tiposEvidencia, setTiposEvidencia] = useState([])
   const [professores, setProfessores] = useState([])
   const [turmas, setTurmas] = useState([])
+  const [alunos, setAlunos] = useState([]) // [{id, nome, turma}]
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
 
@@ -75,7 +76,8 @@ export default function App() {
           profRes,
           tipEvtRes,
           tipEviRes,
-          turmasRes
+          turmasRes,
+          alunosRes
         ] = await Promise.all([
           supabase.from('eventos').select('*').order('created_at', { ascending: false }),
           supabase.from('registros').select('*').order('created_at', { ascending: false }),
@@ -83,7 +85,8 @@ export default function App() {
           supabase.from('professores').select('nome'),
           supabase.from('tiposEvento').select('nome'),
           supabase.from('tiposEvidencia').select('nome'),
-          supabase.from('turmas').select('id, nome, link').order('nome')
+          supabase.from('turmas').select('id, nome, link').order('nome'),
+          supabase.from('alunos').select('id, nome, turma').order('nome')
         ])
 
         if (evtRes.error) console.error('Erro eventos:', evtRes.error)
@@ -99,6 +102,7 @@ export default function App() {
         if (tipEvtRes.data) setTiposEvento(tipEvtRes.data.map(t => t.nome))
         if (tipEviRes.data) setTiposEvidencia(tipEviRes.data.map(t => t.nome))
         if (turmasRes.data) setTurmas(turmasRes.data)
+        if (alunosRes.data) setAlunos(alunosRes.data)
       } catch (error) {
         console.error('Erro geral ao buscar dados:', error)
         showToast('Erro ao carregar dados do banco', 'error')
@@ -225,13 +229,36 @@ export default function App() {
   }
   const handleRemoveTurma = async (nome) => {
     const { error } = await supabase.from('turmas').delete().eq('nome', nome)
-    if (!error) setTurmas(prev => prev.filter(t => t.nome !== nome))
+    if (!error) {
+      setTurmas(prev => prev.filter(t => t.nome !== nome))
+      setAlunos(prev => prev.filter(a => a.turma !== nome)) // cascade cleanup
+    }
   }
   const handleUpdateTurmaLink = async (id, link) => {
     const { data, error } = await supabase.from('turmas').update({ link }).eq('id', id).select('id, nome, link')
     if (!error && data) {
       setTurmas(prev => prev.map(t => t.id === id ? data[0] : t))
       showToast('Link da turma atualizado!')
+    }
+  }
+
+  // Alunos
+  const handleImportAlunosTurma = async (turmaNome, nomes) => {
+    const inserts = nomes.map(nome => ({ nome, turma: turmaNome }))
+    const { data, error } = await supabase.from('alunos').insert(inserts).select('id, nome, turma')
+    if (error) {
+      showToast('Erro ao importar alunos', 'error')
+    } else if (data) {
+      setAlunos(prev => [...prev, ...data])
+      showToast(`${data.length} aluno(s) importado(s) para ${turmaNome}!`)
+    }
+  }
+  const handleClearAlunosTurma = async (turmaNome) => {
+    if (!window.confirm(`Remover todos os alunos de ${turmaNome}?`)) return
+    const { error } = await supabase.from('alunos').delete().eq('turma', turmaNome)
+    if (!error) {
+      setAlunos(prev => prev.filter(a => a.turma !== turmaNome))
+      showToast(`Lista de ${turmaNome} limpa.`, 'info')
     }
   }
 
@@ -446,6 +473,10 @@ export default function App() {
                 addTurma={handleAddTurma}
                 removeTurma={handleRemoveTurma}
                 updateTurmaLink={handleUpdateTurmaLink}
+
+                alunos={alunos}
+                importAlunosTurma={handleImportAlunosTurma}
+                clearAlunosTurma={handleClearAlunosTurma}
               />
             )}
           </>
