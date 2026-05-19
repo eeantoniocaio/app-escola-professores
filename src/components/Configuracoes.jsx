@@ -68,21 +68,26 @@ export default function Configuracoes({
       const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim() !== '')
       if (lines.length < 2) return
 
-      // Detecta separador (vírgula ou ponto-e-vírgula)
+      // Detecta separador (vírgula ou ponto-e-vírgula) pela primeira linha
       const sep = lines[0].includes(';') ? ';' : ','
 
-      // Encontra índice da coluna "Nome" no cabeçalho (case-insensitive)
-      const headers = lines[0].split(sep).map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase())
-      const nomeIdx = headers.indexOf('nome do aluno')
+      // Varre todas as linhas até encontrar a que contém "Nome do Aluno"
+      let headerIdx = -1
+      let nomeIdx = -1
+      for (let i = 0; i < lines.length; i++) {
+        const cols = lines[i].split(sep).map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase())
+        const idx = cols.indexOf('nome do aluno')
+        if (idx !== -1) { headerIdx = i; nomeIdx = idx; break }
+      }
 
       if (nomeIdx === -1) {
-        alert('Coluna "Nome do Aluno" não encontrada no CSV.\nVerifique se o cabeçalho contém exatamente "Nome do Aluno".')
+        alert('Coluna "Nome do Aluno" não encontrada no CSV.\nVerifique se alguma linha contém exatamente "Nome do Aluno".')
         e.target.value = ''
         return
       }
 
       const novos = []
-      for (let i = 1; i < lines.length; i++) {
+      for (let i = headerIdx + 1; i < lines.length; i++) {
         const cols = lines[i].split(sep).map(c => c.replace(/^["']|["']$/g, '').trim())
         const name = cols[nomeIdx] || ''
         if (!name) continue
@@ -95,7 +100,7 @@ export default function Configuracoes({
       if (novos.length > 0) {
         importAlunosTurma(turmaNome, novos)
       } else {
-        alert('Nenhum aluno novo encontrado na coluna "Nome".')
+        alert('Nenhum aluno novo encontrado na coluna "Nome do Aluno".')
       }
     }
     reader.readAsText(file, 'UTF-8')
