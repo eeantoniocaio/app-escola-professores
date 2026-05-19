@@ -1,42 +1,42 @@
-import React, { useState, useEffect, useRef } from 'react'
-
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 
 export default function EventDetailModal({ event, records, professores, onClose, onSave }) {
-  // Get all teachers who submitted records for this event
-  const eventRecords = records.filter(r => r.eventId === event.id)
-  const recordTeachers = eventRecords.map(r => r.teacher)
+  // Memoize expensive computations so they don't rerun on every re-render
+  const eventRecords = useMemo(() => records.filter(r => r.eventId === event.id), [records, event.id])
+  const recordTeachers = useMemo(() => eventRecords.map(r => r.teacher), [eventRecords])
+  const teacherOptions = useMemo(
+    () => [...new Set([...professores, ...recordTeachers])].sort(),
+    [professores, recordTeachers]
+  )
 
-  // Merge configured professors with teachers who submitted records (no duplicates), sorted
-  const teacherOptions = [...new Set([...professores, ...recordTeachers])].sort()
-
-  // Initialize late teachers from saved data
-  const [lateTeachers, setLateTeachers] = useState(event.entregouForaDoPrazo || [])
+  // Use a Set for O(1) lookup instead of array.includes() (O(n) — was causing INP issues with 39 teachers)
+  const [lateSet, setLateSet] = useState(() => new Set(event.entregouForaDoPrazo || []))
 
   const overlayRef = useRef(null)
 
-  // Close on Escape key
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
 
-  // Lock background scroll
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = 'unset' }
   }, [])
 
-  const toggleTeacher = (teacher) => {
-    setLateTeachers(prev =>
-      prev.includes(teacher) ? prev.filter(t => t !== teacher) : [...prev, teacher]
-    )
-  }
+  const toggleTeacher = useCallback((teacher) => {
+    setLateSet(prev => {
+      const next = new Set(prev)
+      next.has(teacher) ? next.delete(teacher) : next.add(teacher)
+      return next
+    })
+  }, [])
 
-  const handleSave = () => {
-    onSave({ ...event, entregouForaDoPrazo: lateTeachers })
+  const handleSave = useCallback(() => {
+    onSave({ ...event, entregouForaDoPrazo: [...lateSet] })
     onClose()
-  }
+  }, [event, lateSet, onSave, onClose])
 
   const getTypeBadgeClass = (tipo) => {
     switch (tipo) {
@@ -132,12 +132,16 @@ export default function EventDetailModal({ event, records, professores, onClose,
 
             <div className="teacher-checklist">
               {teacherOptions.map(teacher => {
-                const isSelected = lateTeachers.includes(teacher)
+                const isSelected = lateSet.has(teacher)
                 return (
-                  <label
+                  <div
                     key={teacher}
                     className={`teacher-check-item ${isSelected ? 'selected' : ''}`}
                     onClick={() => toggleTeacher(teacher)}
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    tabIndex={0}
+                    onKeyDown={e => { if (e.key === ' ') { e.preventDefault(); toggleTeacher(teacher) } }}
                   >
                     <div className={`teacher-checkbox ${isSelected ? 'checked' : ''}`}>
                       {isSelected && (
@@ -150,7 +154,6 @@ export default function EventDetailModal({ event, records, professores, onClose,
                       <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>
                         {teacher}
                       </span>
-
                     </div>
                     {isSelected && (
                       <span style={{
@@ -165,13 +168,12 @@ export default function EventDetailModal({ event, records, professores, onClose,
                         Fora do prazo
                       </span>
                     )}
-                  </label>
+                  </div>
                 )
               })}
             </div>
 
-            {/* Summary counter */}
-            {lateTeachers.length > 0 && (
+            {lateSet.size > 0 && (
               <div style={{
                 marginTop: '0.75rem',
                 padding: '0.6rem 0.85rem',
@@ -185,7 +187,7 @@ export default function EventDetailModal({ event, records, professores, onClose,
                 gap: '0.4rem'
               }}>
                 <span>⚠️</span>
-                <span>{lateTeachers.length} professor{lateTeachers.length !== 1 ? 'es' : ''} marcado{lateTeachers.length !== 1 ? 's' : ''} com atraso</span>
+                <span>{lateSet.size} professor{lateSet.size !== 1 ? 'es' : ''} marcado{lateSet.size !== 1 ? 's' : ''} com atraso</span>
               </div>
             )}
           </div>
