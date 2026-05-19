@@ -6,6 +6,7 @@ import Registros from './components/Registros'
 import EventModal from './components/EventModal'
 import Configuracoes from './components/Configuracoes'
 import Relatorios from './components/Relatorios'
+import logoUrl from './assets/logo.png'
 
 export default function App() {
   const [view, setView] = useState('home')
@@ -172,7 +173,9 @@ export default function App() {
     <div className="app-container">
       <header className="header">
         <div className="header-brand" onClick={() => setView('home')}>
-          <div className="logo-icon">👩‍🏫</div>
+          <div className="logo-icon">
+            <img src={logoUrl} alt="Logo" className="logo-img" />
+          </div>
           <div className="brand-title">
             <h1>Portal de Evidências</h1>
             <p>E.E. Antônio Caio — Coordenação Pedagógica</p>
@@ -191,6 +194,12 @@ export default function App() {
           </button>
           <button className={`btn ${view === 'relatorios' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('relatorios')}>
             Relatórios
+          </button>
+          <button className={`btn ${view === 'mapa-de-classe' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('mapa-de-classe')}>
+            Mapa de Classe
+          </button>
+          <button className={`btn ${view === 'ocorrencias' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('ocorrencias')}>
+            Ocorrências
           </button>
           <button className={`btn ${view === 'configuracoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('configuracoes')} title="Configurações" style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '40px' }}>
             ⚙️
@@ -241,6 +250,20 @@ export default function App() {
                 tiposEvento={tiposEvento}
                 tiposEvidencia={tiposEvidencia}
               />
+            )}
+
+            {view === 'mapa-de-classe' && (
+              <div style={{ animation: 'fadeIn 0.5s ease-out', textAlign: 'center', padding: '3rem' }}>
+                <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Mapa de Classe</h2>
+                <p style={{ color: 'var(--text-muted)' }}>Em desenvolvimento...</p>
+              </div>
+            )}
+
+            {view === 'ocorrencias' && (
+              <div style={{ animation: 'fadeIn 0.5s ease-out', textAlign: 'center', padding: '3rem' }}>
+                <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Ocorrências em Sala de Aula</h2>
+                <p style={{ color: 'var(--text-muted)' }}>Em desenvolvimento...</p>
+              </div>
             )}
 
             {view === 'configuracoes' && (

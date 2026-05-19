@@ -104,6 +104,54 @@ export default function Home({ setView, openEventModal }) {
           <span style={{ fontSize: '2.5rem' }}>📊</span>
           <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Relatórios</span>
         </button>
+
+        <button 
+          onClick={() => setView('mapa-de-classe')}
+          style={{ 
+            padding: '2rem', 
+            borderRadius: 'var(--radius-lg)', 
+            border: 'none', 
+            background: 'var(--pastel-pink)', 
+            color: 'var(--pastel-pink-dark)',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+            width: '200px',
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'transform 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <span style={{ fontSize: '2.5rem' }}>🗺️</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Mapa de Classe</span>
+        </button>
+
+        <button 
+          onClick={() => setView('ocorrencias')}
+          style={{ 
+            padding: '2rem', 
+            borderRadius: 'var(--radius-lg)', 
+            border: 'none', 
+            background: 'var(--pastel-yellow)', 
+            color: 'var(--pastel-yellow-dark)',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+            width: '200px',
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'transform 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <span style={{ fontSize: '2.5rem' }}>⚠️</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>Ocorrências em Sala de Aula</span>
+        </button>
       </div>
     </div>
   );
