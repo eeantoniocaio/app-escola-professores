@@ -116,6 +116,17 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
     return matchTeacher && matchDate && matchTipo
   })
 
+  const safeFormatDate = (dateStr) => {
+    if (!dateStr) return 'Sem data'
+    try {
+      const d = new Date(dateStr + 'T00:00:00')
+      if (isNaN(d.getTime())) return 'Data Inválida'
+      return d.toLocaleDateString('pt-BR')
+    } catch(e) {
+      return 'Data Inválida'
+    }
+  }
+
   const total = records.length
 
   const hasActiveFilters = filterTeacher !== 'todos' || filterDate !== '' || filterTipo !== 'todos'
@@ -250,7 +261,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
                       <div className="record-header">
                         <div className="record-meta">
                           <span className="record-teacher">{rec.teacher}</span>
-                          <span>{new Date(rec.date + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                          <span>{safeFormatDate(rec.date)}</span>
                         </div>
                       </div>
 

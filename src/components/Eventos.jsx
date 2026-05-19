@@ -21,6 +21,17 @@ export default function Eventos({ setView, events, records, deleteEvent, openEve
     setSelectedEvent(ev)
   }
 
+  const safeFormatDate = (dateStr) => {
+    if (!dateStr) return 'Não informada'
+    try {
+      const d = new Date(dateStr + 'T00:00:00')
+      if (isNaN(d.getTime())) return 'Data Inválida'
+      return d.toLocaleDateString('pt-BR')
+    } catch(e) {
+      return 'Data Inválida'
+    }
+  }
+
   return (
     <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
       {/* View Header with title and Novo Evento action button */}
@@ -108,10 +119,10 @@ export default function Eventos({ setView, events, records, deleteEvent, openEve
                       <strong>Solicitante:</strong> <span style={{ color: 'var(--text-main)' }}>{ev.quemSolicitou}</span>
                     </div>
                     <div className="event-info-item">
-                      <strong>Solicitado em:</strong> <span>{ev.dataSolicitacao ? new Date(ev.dataSolicitacao + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informada'}</span>
+                      <strong>Solicitado em:</strong> <span>{safeFormatDate(ev.dataSolicitacao)}</span>
                     </div>
                     <div className="event-info-item" style={{ color: 'var(--pastel-pink-dark)', fontWeight: 600, marginBottom: '0.5rem' }}>
-                      <strong>Prazo de Entrega:</strong> <span>{new Date(ev.dataEntrega + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                      <strong>Prazo de Entrega:</strong> <span>{safeFormatDate(ev.dataEntrega)}</span>
                     </div>
 
                     {/* Finalizado Action Button */}

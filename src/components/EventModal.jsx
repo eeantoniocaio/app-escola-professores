@@ -58,11 +58,11 @@ export default function EventModal({ isOpen, eventToEdit, tiposEvento, onClose, 
     }
 
     onSave({
-      dataSolicitacao,
+      dataSolicitacao: dataSolicitacao ? dataSolicitacao : null,
       evento,
       tipo,
       quemSolicitou,
-      dataEntrega
+      dataEntrega: dataEntrega ? dataEntrega : null
     })
   }
 

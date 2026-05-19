@@ -44,7 +44,7 @@ export default function Login({ setSession }) {
     } catch (err) {
       let errorMsg = err.message || 'Ocorreu um erro durante a autenticação.'
       if (errorMsg === 'Email not confirmed') {
-        errorMsg = 'E-mail não confirmado. Por favor, verifique sua caixa de entrada para confirmar seu e-mail antes de entrar.'
+        errorMsg = 'Vá até a sua caixa de email e confirme o cadastro'
       } else if (errorMsg === 'Invalid login credentials') {
         errorMsg = 'E-mail ou senha incorretos.'
       } else if (errorMsg === 'User already registered') {

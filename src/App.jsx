@@ -259,7 +259,7 @@ export default function App() {
         ) : (
           <>
             {view === 'home' && (
-              <Home setView={setView} openEventModal={handleOpenEventModal} />
+              <Home setView={setView} openEventModal={handleOpenEventModal} userRole={userRole} />
             )}
             
             {view === 'eventos' && userRole === 'gestao' && (
@@ -299,16 +299,50 @@ export default function App() {
             )}
 
             {view === 'mapa-de-classe' && (
-              <div style={{ animation: 'fadeIn 0.5s ease-out', textAlign: 'center', padding: '3rem' }}>
-                <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Mapa de Classe</h2>
-                <p style={{ color: 'var(--text-muted)' }}>Em desenvolvimento...</p>
+              <div style={{ animation: 'fadeIn 0.5s ease-out', padding: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <h2 style={{ fontSize: '2rem', margin: 0 }}>Mapa de Classe</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <label style={{ fontWeight: 'bold', color: 'var(--text-color)' }}>Turma:</label>
+                    <select style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', minWidth: '150px' }}>
+                      <option value="">Todas as turmas</option>
+                      <option value="6A">6º Ano A</option>
+                      <option value="7A">7º Ano A</option>
+                      <option value="8A">8º Ano A</option>
+                      <option value="9A">9º Ano A</option>
+                      <option value="1A">1ª Série A</option>
+                      <option value="2A">2ª Série A</option>
+                      <option value="3A">3ª Série A</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Módulo em desenvolvimento...</p>
+                </div>
               </div>
             )}
 
             {view === 'ocorrencias' && (
-              <div style={{ animation: 'fadeIn 0.5s ease-out', textAlign: 'center', padding: '3rem' }}>
-                <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Ocorrências em Sala de Aula</h2>
-                <p style={{ color: 'var(--text-muted)' }}>Em desenvolvimento...</p>
+              <div style={{ animation: 'fadeIn 0.5s ease-out', padding: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <h2 style={{ fontSize: '2rem', margin: 0 }}>Ocorrências em Sala de Aula</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <label style={{ fontWeight: 'bold', color: 'var(--text-color)' }}>Turma:</label>
+                    <select style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', minWidth: '150px' }}>
+                      <option value="">Todas as turmas</option>
+                      <option value="6A">6º Ano A</option>
+                      <option value="7A">7º Ano A</option>
+                      <option value="8A">8º Ano A</option>
+                      <option value="9A">9º Ano A</option>
+                      <option value="1A">1ª Série A</option>
+                      <option value="2A">2ª Série A</option>
+                      <option value="3A">3ª Série A</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Módulo em desenvolvimento...</p>
+                </div>
               </div>
             )}
 
