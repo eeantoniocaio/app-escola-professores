@@ -6,9 +6,13 @@ import Registros from './components/Registros'
 import EventModal from './components/EventModal'
 import Configuracoes from './components/Configuracoes'
 import Relatorios from './components/Relatorios'
+import Login from './components/Login'
 import logoUrl from './assets/logo.png'
 
 export default function App() {
+  const [session, setSession] = useState(null)
+  const [userRole, setUserRole] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [view, setView] = useState('home')
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [eventToEdit, setEventToEdit] = useState(null)
@@ -26,8 +30,38 @@ export default function App() {
     setTimeout(() => setToast(null), 3500)
   }
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      if (session) fetchRole(session.user.id)
+      else setAuthLoading(false)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      if (session) fetchRole(session.user.id)
+      else setAuthLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const fetchRole = async (userId) => {
+    try {
+      const { data, error } = await supabase.from('perfis').select('papel').eq('id', userId).maybeSingle()
+      if (data) setUserRole(data.papel)
+    } catch (err) {
+      console.error('Error fetching role:', err)
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
   // Fetch initial data from Supabase
   useEffect(() => {
+    if (!session) return;
     const fetchData = async () => {
       setLoading(true)
       try {
@@ -58,7 +92,7 @@ export default function App() {
       }
     }
     fetchData()
-  }, [])
+  }, [session])
 
   const handleOpenEventModal = (event = null) => {
     setEventToEdit(event)
@@ -169,6 +203,9 @@ export default function App() {
     }
   }
 
+  if (authLoading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Verificando autenticação...</div>
+  if (!session) return <Login setSession={setSession} />
+
   return (
     <div className="app-container">
       <header className="header">
@@ -186,23 +223,32 @@ export default function App() {
           <button className={`btn ${view === 'home' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('home')}>
             Início
           </button>
-          <button className={`btn ${view === 'eventos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('eventos')}>
-            Eventos
-          </button>
+          {userRole === 'gestao' && (
+            <button className={`btn ${view === 'eventos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('eventos')}>
+              Eventos
+            </button>
+          )}
           <button className={`btn ${view === 'registros' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('registros')}>
             Registros
           </button>
-          <button className={`btn ${view === 'relatorios' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('relatorios')}>
-            Relatórios
-          </button>
+          {userRole === 'gestao' && (
+            <button className={`btn ${view === 'relatorios' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('relatorios')}>
+              Relatórios
+            </button>
+          )}
           <button className={`btn ${view === 'mapa-de-classe' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('mapa-de-classe')}>
             Mapa de Classe
           </button>
           <button className={`btn ${view === 'ocorrencias' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('ocorrencias')}>
             Ocorrências
           </button>
-          <button className={`btn ${view === 'configuracoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('configuracoes')} title="Configurações" style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '40px' }}>
-            ⚙️
+          {userRole === 'gestao' && (
+            <button className={`btn ${view === 'configuracoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('configuracoes')} title="Configurações" style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '40px' }}>
+              ⚙️
+            </button>
+          )}
+          <button className="btn btn-secondary" onClick={() => supabase.auth.signOut()} title="Sair" style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '40px' }}>
+            🚪
           </button>
         </div>
       </header>
@@ -216,7 +262,7 @@ export default function App() {
               <Home setView={setView} openEventModal={handleOpenEventModal} />
             )}
             
-            {view === 'eventos' && (
+            {view === 'eventos' && userRole === 'gestao' && (
               <Eventos
                 setView={setView}
                 events={events}
@@ -241,7 +287,7 @@ export default function App() {
               />
             )}
 
-            {view === 'relatorios' && (
+            {view === 'relatorios' && userRole === 'gestao' && (
               <Relatorios 
                 setView={setView} 
                 records={records} 
@@ -266,7 +312,7 @@ export default function App() {
               </div>
             )}
 
-            {view === 'configuracoes' && (
+            {view === 'configuracoes' && userRole === 'gestao' && (
               <Configuracoes 
                 setView={setView}
                 tiposEvento={tiposEvento} 
