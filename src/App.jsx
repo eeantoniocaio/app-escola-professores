@@ -448,6 +448,7 @@ export default function App() {
                 ocorrencias={ocorrencias}
                 professores={professores}
                 turmas={turmas}
+                alunos={alunos}
                 addOcorrencia={handleAddOcorrencia}
                 deleteOcorrencia={handleDeleteOcorrencia}
               />
