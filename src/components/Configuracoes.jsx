@@ -73,10 +73,10 @@ export default function Configuracoes({
 
       // Encontra índice da coluna "Nome" no cabeçalho (case-insensitive)
       const headers = lines[0].split(sep).map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase())
-      const nomeIdx = headers.indexOf('nome')
+      const nomeIdx = headers.indexOf('nome do aluno')
 
       if (nomeIdx === -1) {
-        alert('Coluna "Nome" não encontrada no CSV.\nVerifique se o cabeçalho contém exatamente a palavra "Nome".')
+        alert('Coluna "Nome do Aluno" não encontrada no CSV.\nVerifique se o cabeçalho contém exatamente "Nome do Aluno".')
         e.target.value = ''
         return
       }
