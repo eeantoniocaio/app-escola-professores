@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react'
 
-const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', descricao: '', alunos: [] }
+const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', descricao: '', alunos: [], acao_professor: '' }
 
 export default function Ocorrencias({ setView, ocorrencias, professores, turmas, alunos, addOcorrencia, deleteOcorrencia }) {
   const [hoveredBtn, setHoveredBtn] = useState(null)
@@ -49,6 +49,7 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
       turma: form.turma || null,
       descricao: form.descricao.trim() || null,
       alunos: form.alunos.length > 0 ? form.alunos : [],
+      acao_professor: form.acao_professor.trim() || null,
     })
     setForm(EMPTY_FORM)
     setErrors({})
@@ -187,8 +188,13 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
                   </div>
                 )}
                 {o.descricao && (
-                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#475569', background: '#f8fafc', borderRadius: '8px', padding: '0.6rem 0.85rem', borderLeft: '3px solid #6366f1' }}>
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#475569', background: '#f8fafc', borderRadius: '8px', padding: '0.6rem 0.85rem', borderLeft: '3px solid #6366f1', marginBottom: o.acao_professor ? '0.5rem' : 0 }}>
                     {o.descricao}
+                  </p>
+                )}
+                {o.acao_professor && (
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#166534', background: '#f0fdf4', borderRadius: '8px', padding: '0.6rem 0.85rem', borderLeft: '3px solid #22c55e' }}>
+                    <span style={{ fontWeight: 700, marginRight: '0.35rem' }}>⚡ Ação:</span>{o.acao_professor}
                   </p>
                 )}
               </div>
@@ -341,6 +347,19 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
                     style={{ ...inputStyle('descricao'), resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }}
                   />
                 </div>
+
+                {/* Ação do professor(a) */}
+                <div>
+                  <label style={labelStyle}>Ação do Professor(a)</label>
+                  <textarea
+                    placeholder="Descreva as medidas tomadas em sala de aula..."
+                    value={form.acao_professor}
+                    onChange={e => setForm(p => ({ ...p, acao_professor: e.target.value }))}
+                    rows={3}
+                    style={{ ...inputStyle('acao_professor'), resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }}
+                  />
+                </div>
+
 
               </form>
             </div>
