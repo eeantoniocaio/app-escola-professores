@@ -11,7 +11,9 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
 
   // Filters
   const [filterProf, setFilterProf] = useState('')
+  const [filterDisciplina, setFilterDisciplina] = useState('')
   const [filterTurma, setFilterTurma] = useState('')
+  const [filterAluno, setFilterAluno] = useState('')
   const [filterData, setFilterData] = useState('')
 
   // Alunos da turma selecionada no formulário
@@ -66,10 +68,12 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
 
   const filtered = useMemo(() => (ocorrencias || []).filter(o => {
     if (filterProf && !o.professor.toLowerCase().includes(filterProf.toLowerCase())) return false
+    if (filterDisciplina && !o.disciplina.toLowerCase().includes(filterDisciplina.toLowerCase())) return false
     if (filterTurma && o.turma !== filterTurma) return false
+    if (filterAluno && !(o.alunos || []).some(a => a.toLowerCase().includes(filterAluno.toLowerCase()))) return false
     if (filterData && o.data !== filterData) return false
     return true
-  }), [ocorrencias, filterProf, filterTurma, filterData])
+  }), [ocorrencias, filterProf, filterDisciplina, filterTurma, filterAluno, filterData])
 
   const inputStyle = (field) => ({
     width: '100%', padding: '0.65rem 0.85rem', borderRadius: '10px',
@@ -118,14 +122,20 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', background: 'white', padding: '1rem 1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
-        <div style={{ flex: '1 1 200px' }}>
+        <div style={{ flex: '1 1 180px' }}>
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Professor(a)</label>
           <input type="text" placeholder="Filtrar por nome..." value={filterProf}
             onChange={e => setFilterProf(e.target.value)}
             style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
         </div>
+        <div style={{ flex: '1 1 150px' }}>
+          <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Disciplina</label>
+          <input type="text" placeholder="Ex: Matemática..." value={filterDisciplina}
+            onChange={e => setFilterDisciplina(e.target.value)}
+            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
+        </div>
         {turmas && turmas.length > 0 && (
-          <div style={{ flex: '1 1 150px' }}>
+          <div style={{ flex: '1 1 130px' }}>
             <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Turma</label>
             <select value={filterTurma} onChange={e => setFilterTurma(e.target.value)}
               style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }}>
@@ -134,14 +144,20 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
             </select>
           </div>
         )}
-        <div style={{ flex: '1 1 160px' }}>
+        <div style={{ flex: '1 1 150px' }}>
+          <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Aluno(a)</label>
+          <input type="text" placeholder="Nome do aluno..." value={filterAluno}
+            onChange={e => setFilterAluno(e.target.value)}
+            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
+        </div>
+        <div style={{ flex: '1 1 140px' }}>
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Data</label>
           <input type="date" value={filterData} onChange={e => setFilterData(e.target.value)}
             style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
         </div>
-        {(filterProf || filterTurma || filterData) && (
+        {(filterProf || filterDisciplina || filterTurma || filterAluno || filterData) && (
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <button onClick={() => { setFilterProf(''); setFilterTurma(''); setFilterData('') }}
+            <button onClick={() => { setFilterProf(''); setFilterDisciplina(''); setFilterTurma(''); setFilterAluno(''); setFilterData('') }}
               style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '0.5rem 0.9rem', cursor: 'pointer', fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>
               ✕ Limpar
             </button>
