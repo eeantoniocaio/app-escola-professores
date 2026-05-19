@@ -4,11 +4,13 @@ export default function Configuracoes({
   setView,
   tiposEvento, addTipoEvento, removeTipoEvento,
   tiposEvidencia, addTipoEvidencia, removeTipoEvidencia,
-  professores, addProfessor, removeProfessor, importProfessores
+  professores, addProfessor, removeProfessor, importProfessores,
+  turmas, addTurma, removeTurma
 }) {
   const [novoTipoEvento, setNovoTipoEvento] = useState('')
   const [novoTipoEvidencia, setNovoTipoEvidencia] = useState('')
   const [novoProfessor, setNovoProfessor] = useState('')
+  const [novaTurma, setNovaTurma] = useState('')
 
   const handleAddTipoEvento = (e) => {
     e.preventDefault()
@@ -35,6 +37,15 @@ export default function Configuracoes({
       addProfessor(novoProfessor.trim())
     }
     setNovoProfessor('')
+  }
+
+  const handleAddTurma = (e) => {
+    e.preventDefault()
+    if (!novaTurma.trim()) return
+    if (!turmas.includes(novaTurma.trim())) {
+      addTurma(novaTurma.trim())
+    }
+    setNovaTurma('')
   }
 
   const handleFileUpload = (e) => {
@@ -198,6 +209,41 @@ export default function Configuracoes({
             </label>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>— Selecione um arquivo com nomes (um por linha)</span>
           </div>
+        </div>
+
+        {/* Turmas */}
+        <div style={{ background: 'var(--bg-primary)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>🏫</span> Turmas
+          </h3>
+          
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1rem 0', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {turmas.map(turma => (
+              <li key={turma} style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.4rem 0.75rem', borderRadius: '20px', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>{turma}</span>
+                <button className="btn-icon delete" onClick={() => removeTurma(turma)} title="Excluir" style={{ width: '20px', height: '20px', padding: 0 }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </li>
+            ))}
+            {turmas.length === 0 && (
+              <li style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Nenhuma turma cadastrada.</li>
+            )}
+          </ul>
+
+          <form onSubmit={handleAddTurma} style={{ display: 'flex', gap: '0.5rem' }}>
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="Nome da turma (Ex: 6ºA, 7ºB, 1ªA)" 
+              value={novaTurma}
+              onChange={(e) => setNovaTurma(e.target.value)}
+              style={{ flex: 1, margin: 0 }}
+            />
+            <button type="submit" className="btn btn-primary" style={{ margin: 0 }}>Adicionar</button>
+          </form>
         </div>
 
       </div>

@@ -22,6 +22,7 @@ export default function App() {
   const [tiposEvento, setTiposEvento] = useState([])
   const [tiposEvidencia, setTiposEvidencia] = useState([])
   const [professores, setProfessores] = useState([])
+  const [turmas, setTurmas] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
 
@@ -70,13 +71,15 @@ export default function App() {
           recRes,
           profRes,
           tipEvtRes,
-          tipEviRes
+          tipEviRes,
+          turmasRes
         ] = await Promise.all([
           supabase.from('eventos').select('*').order('created_at', { ascending: false }),
           supabase.from('registros').select('*').order('created_at', { ascending: false }),
           supabase.from('professores').select('nome'),
           supabase.from('tiposEvento').select('nome'),
-          supabase.from('tiposEvidencia').select('nome')
+          supabase.from('tiposEvidencia').select('nome'),
+          supabase.from('turmas').select('nome').order('nome')
         ])
 
         if (evtRes.error) console.error('Erro eventos:', evtRes.error)
@@ -88,6 +91,7 @@ export default function App() {
         if (profRes.data) setProfessores(profRes.data.map(p => p.nome))
         if (tipEvtRes.data) setTiposEvento(tipEvtRes.data.map(t => t.nome))
         if (tipEviRes.data) setTiposEvidencia(tipEviRes.data.map(t => t.nome))
+        if (turmasRes.data) setTurmas(turmasRes.data.map(t => t.nome))
       } catch (error) {
         console.error('Erro geral ao buscar dados:', error)
         showToast('Erro ao carregar dados do banco', 'error')
@@ -207,6 +211,16 @@ export default function App() {
     }
   }
 
+  // Turmas
+  const handleAddTurma = async (nome) => {
+    const { data, error } = await supabase.from('turmas').insert([{ nome }]).select()
+    if (!error && data) setTurmas(prev => [...prev, data[0].nome].sort())
+  }
+  const handleRemoveTurma = async (nome) => {
+    const { error } = await supabase.from('turmas').delete().eq('nome', nome)
+    if (!error) setTurmas(prev => prev.filter(t => t !== nome))
+  }
+
   if (authLoading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Verificando autenticação...</div>
   if (!session) return <Login setSession={setSession} />
 
@@ -305,25 +319,60 @@ export default function App() {
 
             {view === 'mapa-de-classe' && (
               <div style={{ animation: 'fadeIn 0.5s ease-out', padding: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-                  <h2 style={{ fontSize: '2rem', margin: 0 }}>Mapa de Classe</h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <label style={{ fontWeight: 'bold', color: 'var(--text-color)' }}>Turma:</label>
-                    <select style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', minWidth: '150px' }}>
-                      <option value="">Todas as turmas</option>
-                      <option value="6A">6º Ano A</option>
-                      <option value="7A">7º Ano A</option>
-                      <option value="8A">8º Ano A</option>
-                      <option value="9A">9º Ano A</option>
-                      <option value="1A">1ª Série A</option>
-                      <option value="2A">2ª Série A</option>
-                      <option value="3A">3ª Série A</option>
-                    </select>
+                <div style={{ marginBottom: '2rem' }}>
+                  <h2 style={{ fontSize: '2rem', margin: 0, marginBottom: '0.5rem' }}>Mapa de Classe</h2>
+                  <p style={{ color: 'var(--text-muted)', margin: 0 }}>Selecione uma turma para visualizar o mapa de assentos</p>
+                </div>
+
+                {turmas.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏫</div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Nenhuma turma cadastrada.</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Vá em ⚙️ Configurações para adicionar turmas.</p>
                   </div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Módulo em desenvolvimento...</p>
-                </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
+                    {turmas.map((turma, idx) => {
+                      const colors = [
+                        { bg: 'hsl(350, 100%, 93%)', text: 'hsl(350, 60%, 35%)' },
+                        { bg: 'hsl(35, 100%, 88%)', text: 'hsl(35, 60%, 30%)' },
+                        { bg: 'hsl(145, 60%, 87%)', text: 'hsl(145, 50%, 28%)' },
+                        { bg: 'hsl(210, 80%, 90%)', text: 'hsl(210, 55%, 32%)' },
+                        { bg: 'hsl(270, 60%, 90%)', text: 'hsl(270, 45%, 35%)' },
+                        { bg: 'hsl(55, 90%, 86%)', text: 'hsl(55, 60%, 28%)' },
+                      ]
+                      const color = colors[idx % colors.length]
+                      return (
+                        <div
+                          key={turma}
+                          style={{
+                            backgroundColor: color.bg,
+                            borderRadius: '16px',
+                            padding: '1.5rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            transition: 'transform 0.2s, box-shadow 0.2s',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                          }}
+                          onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)' }}
+                          onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)' }}
+                        >
+                          <div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: color.text, fontFamily: 'Outfit, sans-serif' }}>{turma}</div>
+                            <div style={{ fontSize: '0.8rem', color: color.text, opacity: 0.75, marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <span>👥</span> Turma
+                            </div>
+                          </div>
+                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: color.text, fontSize: '1.1rem' }}>
+                            ›
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -366,6 +415,10 @@ export default function App() {
                 addProfessor={(n) => handleAddSetting('professores', n, setProfessores)}
                 removeProfessor={(n) => handleDeleteSetting('professores', n, setProfessores)}
                 importProfessores={handleImportProfessores}
+
+                turmas={turmas}
+                addTurma={handleAddTurma}
+                removeTurma={handleRemoveTurma}
               />
             )}
           </>
