@@ -17,7 +17,7 @@ export default function Login({ setSession }) {
 
     try {
       if (isSignUp) {
-        const allowedDomains = ['@professor.educacao.sp.gov.br', '@servidor.educacao.sp.gov.br'];
+        const allowedDomains = ['@prof.educacao.sp.gov.br', '@servidor.educacao.sp.gov.br'];
         const emailLower = email.trim().toLowerCase();
         
         const hasAllowedDomain = allowedDomains.some(domain => emailLower.endsWith(domain));

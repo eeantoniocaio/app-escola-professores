@@ -66,11 +66,11 @@ export default function App() {
       setLoading(true)
       try {
         const [
-          { data: evtData },
-          { data: recData },
-          { data: profData },
-          { data: tipEvtData },
-          { data: tipEviData }
+          evtRes,
+          recRes,
+          profRes,
+          tipEvtRes,
+          tipEviRes
         ] = await Promise.all([
           supabase.from('eventos').select('*').order('created_at', { ascending: false }),
           supabase.from('registros').select('*').order('created_at', { ascending: false }),
@@ -78,14 +78,18 @@ export default function App() {
           supabase.from('tiposEvento').select('nome'),
           supabase.from('tiposEvidencia').select('nome')
         ])
-        
-        if (evtData) setEvents(evtData)
-        if (recData) setRecords(recData)
-        if (profData) setProfessores(profData.map(p => p.nome))
-        if (tipEvtData) setTiposEvento(tipEvtData.map(t => t.nome))
-        if (tipEviData) setTiposEvidencia(tipEviData.map(t => t.nome))
+
+        if (evtRes.error) console.error('Erro eventos:', evtRes.error)
+        else setEvents(evtRes.data || [])
+
+        if (recRes.error) console.error('Erro registros:', recRes.error)
+        else setRecords(recRes.data || [])
+
+        if (profRes.data) setProfessores(profRes.data.map(p => p.nome))
+        if (tipEvtRes.data) setTiposEvento(tipEvtRes.data.map(t => t.nome))
+        if (tipEviRes.data) setTiposEvidencia(tipEviRes.data.map(t => t.nome))
       } catch (error) {
-        console.error('Error fetching data:', error)
+        console.error('Erro geral ao buscar dados:', error)
         showToast('Erro ao carregar dados do banco', 'error')
       } finally {
         setLoading(false)
@@ -377,11 +381,11 @@ export default function App() {
           eventToEdit={eventToEdit}
           tiposEvento={tiposEvento}
           onClose={handleCloseEventModal}
-          onSave={(eventData) => {
+      onSave={async (eventData) => {
             if (eventToEdit) {
-              handleUpdateEvent({ ...eventData, id: eventToEdit.id })
+              await handleUpdateEvent({ ...eventData, id: eventToEdit.id, created_at: eventToEdit.created_at })
             } else {
-              handleAddEvent(eventData)
+              await handleAddEvent(eventData)
             }
             handleCloseEventModal()
           }}
