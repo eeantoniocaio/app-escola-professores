@@ -3,6 +3,7 @@ import React, { useState, useMemo, useCallback } from 'react'
 const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', descricao: '', alunos: [] }
 
 export default function Ocorrencias({ setView, ocorrencias, professores, turmas, alunos, addOcorrencia, deleteOcorrencia }) {
+  const [hoveredBtn, setHoveredBtn] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -59,12 +60,12 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
     setForm(prev => ({ ...prev, turma, alunos: [] })) // limpa alunos ao mudar turma
   }
 
-  const filtered = (ocorrencias || []).filter(o => {
+  const filtered = useMemo(() => (ocorrencias || []).filter(o => {
     if (filterProf && !o.professor.toLowerCase().includes(filterProf.toLowerCase())) return false
     if (filterTurma && o.turma !== filterTurma) return false
     if (filterData && o.data !== filterData) return false
     return true
-  })
+  }), [ocorrencias, filterProf, filterTurma, filterData])
 
   const inputStyle = (field) => ({
     width: '100%', padding: '0.65rem 0.85rem', borderRadius: '10px',
@@ -95,15 +96,17 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
         </div>
         <button
           onClick={() => { setForm(EMPTY_FORM); setErrors({}); setShowModal(true) }}
+          onMouseEnter={() => setHoveredBtn('nova')}
+          onMouseLeave={() => setHoveredBtn(null)}
           style={{
             background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
             color: 'white', border: 'none', borderRadius: '12px',
             padding: '0.75rem 1.5rem', fontWeight: 700, fontSize: '0.95rem',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
-            boxShadow: '0 4px 12px rgba(99,102,241,0.3)', transition: 'transform 0.2s'
+            boxShadow: '0 4px 12px rgba(99,102,241,0.3)',
+            transform: hoveredBtn === 'nova' ? 'translateY(-2px)' : 'translateY(0)',
+            transition: 'transform 0.2s'
           }}
-          onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
         >
           <span style={{ fontSize: '1.1rem' }}>+</span> Nova Ocorrência
         </button>
@@ -189,10 +192,13 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
                   </p>
                 )}
               </div>
-              <button onClick={() => deleteOcorrencia(o.id)} title="Excluir"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#cbd5e1', padding: '0.25rem', transition: 'color 0.2s', flexShrink: 0 }}
-                onMouseOver={e => e.currentTarget.style.color = '#ef4444'}
-                onMouseOut={e => e.currentTarget.style.color = '#cbd5e1'}>
+              <button
+                onClick={() => deleteOcorrencia(o.id)}
+                onMouseEnter={() => setHoveredBtn(`del-${o.id}`)}
+                onMouseLeave={() => setHoveredBtn(null)}
+                title="Excluir"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: hoveredBtn === `del-${o.id}` ? '#ef4444' : '#cbd5e1', padding: '0.25rem', transition: 'color 0.2s', flexShrink: 0 }}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                   <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                 </svg>
