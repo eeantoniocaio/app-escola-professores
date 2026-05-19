@@ -34,6 +34,9 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
     if (!form.professor.trim()) e.professor = 'Campo obrigatório'
     if (!form.disciplina.trim()) e.disciplina = 'Campo obrigatório'
     if (!form.data) e.data = 'Campo obrigatório'
+    if (!form.turma) e.turma = 'Campo obrigatório'
+    if (!form.descricao.trim()) e.descricao = 'Campo obrigatório'
+    if (!form.acao_professor.trim()) e.acao_professor = 'Campo obrigatório'
     return e
   }
 
@@ -263,11 +266,12 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
                 {/* Turma */}
                 {turmas && turmas.length > 0 && (
                   <div>
-                    <label style={labelStyle}>Turma</label>
+                    <label style={labelStyle}>Turma <span style={{ color: '#ef4444' }}>*</span></label>
                     <select value={form.turma} onChange={e => handleTurmaChange(e.target.value)} style={inputStyle('turma')}>
-                      <option value="">Selecione (opcional)</option>
+                      <option value="">Selecione...</option>
                       {turmas.map(t => <option key={t.id} value={t.nome}>{t.nome}</option>)}
                     </select>
+                    {errors.turma && <span style={{ color: '#ef4444', fontSize: '0.78rem' }}>{errors.turma}</span>}
                   </div>
                 )}
 
@@ -338,7 +342,7 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
 
                 {/* Descrição */}
                 <div>
-                  <label style={labelStyle}>Descrição da Ocorrência</label>
+                  <label style={labelStyle}>Descrição da Ocorrência <span style={{ color: '#ef4444' }}>*</span></label>
                   <textarea
                     placeholder="Descreva o que aconteceu em sala de aula..."
                     value={form.descricao}
@@ -346,11 +350,12 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
                     rows={3}
                     style={{ ...inputStyle('descricao'), resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }}
                   />
+                  {errors.descricao && <span style={{ color: '#ef4444', fontSize: '0.78rem' }}>{errors.descricao}</span>}
                 </div>
 
                 {/* Ação do professor(a) */}
                 <div>
-                  <label style={labelStyle}>Ação do Professor(a)</label>
+                  <label style={labelStyle}>Ação do Professor(a) <span style={{ color: '#ef4444' }}>*</span></label>
                   <textarea
                     placeholder="Descreva as medidas tomadas em sala de aula..."
                     value={form.acao_professor}
@@ -358,6 +363,7 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
                     rows={3}
                     style={{ ...inputStyle('acao_professor'), resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }}
                   />
+                  {errors.acao_professor && <span style={{ color: '#ef4444', fontSize: '0.78rem' }}>{errors.acao_professor}</span>}
                 </div>
 
 
