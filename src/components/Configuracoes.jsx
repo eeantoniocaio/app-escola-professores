@@ -5,12 +5,13 @@ export default function Configuracoes({
   tiposEvento, addTipoEvento, removeTipoEvento,
   tiposEvidencia, addTipoEvidencia, removeTipoEvidencia,
   professores, addProfessor, removeProfessor, importProfessores,
-  turmas, addTurma, removeTurma
+  turmas, addTurma, removeTurma, updateTurmaLink
 }) {
   const [novoTipoEvento, setNovoTipoEvento] = useState('')
   const [novoTipoEvidencia, setNovoTipoEvidencia] = useState('')
   const [novoProfessor, setNovoProfessor] = useState('')
   const [novaTurma, setNovaTurma] = useState('')
+  const [editingLink, setEditingLink] = useState({}) // {[id]: linkValue}
 
   const handleAddTipoEvento = (e) => {
     e.preventDefault()
@@ -42,10 +43,15 @@ export default function Configuracoes({
   const handleAddTurma = (e) => {
     e.preventDefault()
     if (!novaTurma.trim()) return
-    if (!turmas.includes(novaTurma.trim())) {
+    if (!turmas.find(t => t.nome === novaTurma.trim())) {
       addTurma(novaTurma.trim())
     }
     setNovaTurma('')
+  }
+
+  const handleSaveLink = (turma) => {
+    const link = editingLink[turma.id] !== undefined ? editingLink[turma.id] : (turma.link || '')
+    updateTurmaLink(turma.id, link || null)
   }
 
   const handleFileUpload = (e) => {
@@ -213,25 +219,49 @@ export default function Configuracoes({
 
         {/* Turmas */}
         <div style={{ background: 'var(--bg-primary)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span>🏫</span> Turmas
           </h3>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Adicione as turmas e configure um link externo para cada uma (ex: Google Classroom, Forms).</p>
           
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1rem 0', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {turmas.map(turma => (
-              <li key={turma} style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.4rem 0.75rem', borderRadius: '20px', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>{turma}</span>
-                <button className="btn-icon delete" onClick={() => removeTurma(turma)} title="Excluir" style={{ width: '20px', height: '20px', padding: 0 }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                  </svg>
-                </button>
-              </li>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
             {turmas.length === 0 && (
-              <li style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Nenhuma turma cadastrada.</li>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Nenhuma turma cadastrada.</p>
             )}
-          </ul>
+            {turmas.map(turma => {
+              const currentLink = editingLink[turma.id] !== undefined ? editingLink[turma.id] : (turma.link || '')
+              return (
+                <div key={turma.id} style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>{turma.nome}</span>
+                    <button className="btn-icon delete" onClick={() => removeTurma(turma.nome)} title="Excluir turma">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>🔗 Link:</span>
+                    <input
+                      type="url"
+                      className="form-control"
+                      placeholder="https://..."
+                      value={currentLink}
+                      onChange={e => setEditingLink(prev => ({ ...prev, [turma.id]: e.target.value }))}
+                      style={{ flex: 1, margin: 0, fontSize: '0.85rem', padding: '0.4rem 0.6rem' }}
+                    />
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleSaveLink(turma)}
+                      style={{ margin: 0, padding: '0.4rem 0.75rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
 
           <form onSubmit={handleAddTurma} style={{ display: 'flex', gap: '0.5rem' }}>
             <input 

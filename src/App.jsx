@@ -79,7 +79,7 @@ export default function App() {
           supabase.from('professores').select('nome'),
           supabase.from('tiposEvento').select('nome'),
           supabase.from('tiposEvidencia').select('nome'),
-          supabase.from('turmas').select('nome').order('nome')
+          supabase.from('turmas').select('id, nome, link').order('nome')
         ])
 
         if (evtRes.error) console.error('Erro eventos:', evtRes.error)
@@ -91,7 +91,7 @@ export default function App() {
         if (profRes.data) setProfessores(profRes.data.map(p => p.nome))
         if (tipEvtRes.data) setTiposEvento(tipEvtRes.data.map(t => t.nome))
         if (tipEviRes.data) setTiposEvidencia(tipEviRes.data.map(t => t.nome))
-        if (turmasRes.data) setTurmas(turmasRes.data.map(t => t.nome))
+        if (turmasRes.data) setTurmas(turmasRes.data)
       } catch (error) {
         console.error('Erro geral ao buscar dados:', error)
         showToast('Erro ao carregar dados do banco', 'error')
@@ -213,12 +213,19 @@ export default function App() {
 
   // Turmas
   const handleAddTurma = async (nome) => {
-    const { data, error } = await supabase.from('turmas').insert([{ nome }]).select()
-    if (!error && data) setTurmas(prev => [...prev, data[0].nome].sort())
+    const { data, error } = await supabase.from('turmas').insert([{ nome }]).select('id, nome, link')
+    if (!error && data) setTurmas(prev => [...prev, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)))
   }
   const handleRemoveTurma = async (nome) => {
     const { error } = await supabase.from('turmas').delete().eq('nome', nome)
-    if (!error) setTurmas(prev => prev.filter(t => t !== nome))
+    if (!error) setTurmas(prev => prev.filter(t => t.nome !== nome))
+  }
+  const handleUpdateTurmaLink = async (id, link) => {
+    const { data, error } = await supabase.from('turmas').update({ link }).eq('id', id).select('id, nome, link')
+    if (!error && data) {
+      setTurmas(prev => prev.map(t => t.id === id ? data[0] : t))
+      showToast('Link da turma atualizado!')
+    }
   }
 
   if (authLoading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Verificando autenticação...</div>
@@ -342,31 +349,36 @@ export default function App() {
                         { bg: 'hsl(55, 90%, 86%)', text: 'hsl(55, 60%, 28%)' },
                       ]
                       const color = colors[idx % colors.length]
+                      const hasLink = turma.link && turma.link.trim() !== ''
                       return (
                         <div
-                          key={turma}
+                          key={turma.id}
                           style={{
                             backgroundColor: color.bg,
                             borderRadius: '16px',
                             padding: '1.5rem',
-                            cursor: 'pointer',
+                            cursor: hasLink ? 'pointer' : 'default',
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             transition: 'transform 0.2s, box-shadow 0.2s',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                            opacity: hasLink ? 1 : 0.7
                           }}
-                          onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)' }}
+                          onClick={() => hasLink && window.open(turma.link, '_blank', 'noopener')}
+                          onMouseOver={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)' } }}
                           onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)' }}
+                          title={hasLink ? `Abrir ${turma.nome}` : 'Link não configurado'}
                         >
                           <div>
-                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: color.text, fontFamily: 'Outfit, sans-serif' }}>{turma}</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: color.text, fontFamily: 'Outfit, sans-serif' }}>{turma.nome}</div>
                             <div style={{ fontSize: '0.8rem', color: color.text, opacity: 0.75, marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                              <span>👥</span> Turma
+                              <span>{hasLink ? '🔗' : '👥'}</span>
+                              <span>{hasLink ? 'Clique para abrir' : 'Sem link'}</span>
                             </div>
                           </div>
                           <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: color.text, fontSize: '1.1rem' }}>
-                            ›
+                            {hasLink ? '›' : ''}
                           </div>
                         </div>
                       )
@@ -419,6 +431,7 @@ export default function App() {
                 turmas={turmas}
                 addTurma={handleAddTurma}
                 removeTurma={handleRemoveTurma}
+                updateTurmaLink={handleUpdateTurmaLink}
               />
             )}
           </>
