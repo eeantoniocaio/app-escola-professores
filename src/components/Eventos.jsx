@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import EventDetailModal from './EventDetailModal'
 
-export default function Eventos({ setView, events, records, deleteEvent, openEventModal, toggleEventFinalizado, updateEvent }) {
+export default function Eventos({ setView, events, records, professores, deleteEvent, openEventModal, toggleEventFinalizado, updateEvent }) {
   const [selectedEvent, setSelectedEvent] = useState(null)
 
   // Color badges based on type
@@ -163,6 +163,7 @@ export default function Eventos({ setView, events, records, deleteEvent, openEve
         <EventDetailModal
           event={selectedEvent}
           records={records || []}
+          professores={professores || []}
           onClose={() => setSelectedEvent(null)}
           onSave={(updatedEvent) => {
             updateEvent(updatedEvent)

@@ -1,26 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 
-// Default teacher roster always available for selection
-const DEFAULT_TEACHERS = [
-  'Prof. Carlos Silva',
-  'Profa. Regina Mendes',
-  'Prof. Marcos Aurelio',
-  'Profa. Juliana Lima',
-  'Prof. Ricardo Ferreira',
-  'Profa. Ana Paula Costa',
-  'Prof. Eduardo Santos',
-  'Profa. Fernanda Oliveira',
-  'Prof. Lucas Carvalho',
-  'Profa. Beatriz Souza',
-]
 
-export default function EventDetailModal({ event, records, onClose, onSave }) {
+export default function EventDetailModal({ event, records, professores, onClose, onSave }) {
   // Get all teachers who submitted records for this event
   const eventRecords = records.filter(r => r.eventId === event.id)
   const recordTeachers = eventRecords.map(r => r.teacher)
 
-  // Merge default roster with teachers who submitted records (no duplicates), sorted
-  const teacherOptions = [...new Set([...DEFAULT_TEACHERS, ...recordTeachers])].sort()
+  // Merge configured professors with teachers who submitted records (no duplicates), sorted
+  const teacherOptions = [...new Set([...professores, ...recordTeachers])].sort()
 
   // Initialize late teachers from saved data
   const [lateTeachers, setLateTeachers] = useState(event.entregouForaDoPrazo || [])

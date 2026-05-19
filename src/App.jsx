@@ -271,6 +271,7 @@ export default function App() {
                 setView={setView}
                 events={events}
                 records={records}
+                professores={professores}
                 deleteEvent={handleDeleteEvent}
                 openEventModal={handleOpenEventModal}
                 toggleEventFinalizado={toggleEventFinalizado}
