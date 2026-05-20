@@ -7,6 +7,7 @@ import EventModal from './components/EventModal'
 import Configuracoes from './components/Configuracoes'
 import Relatorios from './components/Relatorios'
 import Ocorrencias from './components/Ocorrencias'
+import HistoricoOcorrencias from './components/HistoricoOcorrencias'
 import Login from './components/Login'
 import EnvioQuestoes from './components/EnvioQuestoes'
 import logoUrl from './assets/logo.png'
@@ -384,6 +385,9 @@ export default function App() {
               <button className={`btn ${view === 'relatorios' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('relatorios')}>
                 Relatórios
               </button>
+              <button className={`btn ${view === 'historico-ocorrencias' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('historico-ocorrencias')}>
+                Histórico de Ocorrências
+              </button>
             </>
           )}
           <button className={`btn ${view === 'mapa-de-classe' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('mapa-de-classe')}>
@@ -519,11 +523,19 @@ export default function App() {
             {view === 'ocorrencias' && (
               <Ocorrencias
                 setView={setView}
-                ocorrencias={ocorrencias}
                 professores={professores}
                 turmas={turmas}
                 alunos={alunos}
                 addOcorrencia={handleAddOcorrencia}
+              />
+            )}
+
+            {view === 'historico-ocorrencias' && userRole === 'gestao' && (
+              <HistoricoOcorrencias
+                setView={setView}
+                ocorrencias={ocorrencias}
+                professores={professores}
+                turmas={turmas}
                 deleteOcorrencia={handleDeleteOcorrencia}
                 updateOcorrencia={handleUpdateOcorrencia}
                 userRole={userRole}
