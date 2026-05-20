@@ -321,6 +321,15 @@ export default function App() {
       }
     }
   }
+  const handleUpdateOcorrencia = async (id, intervencaoGestao) => {
+    const { data, error } = await supabase.from('ocorrencias').update({ intervencao_gestao: intervencaoGestao }).eq('id', id).select()
+    if (error) {
+      showToast('Erro ao atualizar ocorrência', 'error')
+    } else if (data) {
+      setOcorrencias(prev => prev.map(o => o.id === id ? data[0] : o))
+      showToast('Intervenção salva com sucesso!')
+    }
+  }
 
   // Questões
   const handleAddQuestao = async (novaQuestao) => {
@@ -511,6 +520,8 @@ export default function App() {
                 alunos={alunos}
                 addOcorrencia={handleAddOcorrencia}
                 deleteOcorrencia={handleDeleteOcorrencia}
+                updateOcorrencia={handleUpdateOcorrencia}
+                userRole={userRole}
               />
             )}
 

@@ -2,9 +2,12 @@ import React, { useState, useMemo, useCallback } from 'react'
 
 const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', descricao: '', alunos: [], acao_professor: '' }
 
-export default function Ocorrencias({ setView, ocorrencias, professores, turmas, alunos, addOcorrencia, deleteOcorrencia }) {
+export default function Ocorrencias({ setView, ocorrencias, professores, turmas, alunos, addOcorrencia, deleteOcorrencia, updateOcorrencia, userRole }) {
   const [hoveredBtn, setHoveredBtn] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [selectedOcorrencia, setSelectedOcorrencia] = useState(null)
+  const [intervencaoText, setIntervencaoText] = useState('')
+  const [savingIntervencao, setSavingIntervencao] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
@@ -186,12 +189,36 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {filtered.map(o => (
-            <div key={o.id} style={{
-              background: 'white', borderRadius: '14px', padding: '1.25rem 1.5rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem'
-            }}>
+          {filtered.map(o => {
+            const isGestao = userRole === 'gestao'
+            return (
+            <div key={o.id} 
+              onClick={() => {
+                if (isGestao) {
+                  setSelectedOcorrencia(o)
+                  setIntervencaoText(o.intervencao_gestao || '')
+                }
+              }}
+              style={{
+                background: 'white', borderRadius: '14px', padding: '1.25rem 1.5rem',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem',
+                cursor: isGestao ? 'pointer' : 'default',
+                transition: 'transform 0.2s, box-shadow 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                if (isGestao && hoveredBtn !== `del-${o.id}`) {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.08)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isGestao) {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)'
+                }
+              }}
+            >
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                   <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>{o.professor}</span>
@@ -224,8 +251,13 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
                   </p>
                 )}
                 {o.acao_professor && (
-                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#166534', background: '#f0fdf4', borderRadius: '8px', padding: '0.6rem 0.85rem', borderLeft: '3px solid #22c55e' }}>
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#166534', background: '#f0fdf4', borderRadius: '8px', padding: '0.6rem 0.85rem', borderLeft: '3px solid #22c55e', marginBottom: o.intervencao_gestao ? '0.5rem' : 0 }}>
                     <span style={{ fontWeight: 700, marginRight: '0.35rem' }}>⚡ Ação:</span>{o.acao_professor}
+                  </p>
+                )}
+                {o.intervencao_gestao && (
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#4c1d95', background: '#ede9fe', borderRadius: '8px', padding: '0.6rem 0.85rem', borderLeft: '3px solid #8b5cf6' }}>
+                    <span style={{ fontWeight: 700, marginRight: '0.35rem' }}>🛡️ Intervenção da Gestão:</span>{o.intervencao_gestao}
                   </p>
                 )}
               </div>
@@ -241,7 +273,8 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
                 </svg>
               </button>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
@@ -407,6 +440,59 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
               <button type="submit" form="ocorrencia-form" disabled={saving}
                 style={{ flex: 2, padding: '0.75rem', border: 'none', borderRadius: '12px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', opacity: saving ? 0.7 : 1 }}>
                 {saving ? 'Salvando...' : '✓ Registrar Ocorrência'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Intervenção Gestão */}
+      {selectedOcorrencia && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={(e) => { if (e.target === e.currentTarget) setSelectedOcorrencia(null) }}>
+          <div style={{ background: 'white', borderRadius: '20px', width: '100%', maxWidth: '560px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            <div style={{ padding: '1.5rem 2rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontSize: '1.3rem' }}>🛡️</span>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#1e293b' }}>Intervenção da Gestão</h3>
+              </div>
+              <button onClick={() => setSelectedOcorrencia(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.4rem', lineHeight: 1 }}>×</button>
+            </div>
+            
+            <div style={{ overflowY: 'auto', padding: '1.5rem 2rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: '0.25rem' }}>{selectedOcorrencia.professor} - {selectedOcorrencia.turma}</div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>{new Date(selectedOcorrencia.data + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+                <div style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '0.5rem' }}><strong>Descrição:</strong> {selectedOcorrencia.descricao}</div>
+                <div style={{ fontSize: '0.9rem', color: '#166534' }}><strong>Ação do Prof:</strong> {selectedOcorrencia.acao_professor}</div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Sua Intervenção</label>
+                <textarea
+                  placeholder="Descreva as ações ou observações da gestão sobre esta ocorrência..."
+                  value={intervencaoText}
+                  onChange={e => setIntervencaoText(e.target.value)}
+                  rows={5}
+                  style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ padding: '1.25rem 2rem', display: 'flex', gap: '0.75rem', flexShrink: 0, borderTop: '1px solid #f1f5f9' }}>
+              <button type="button" onClick={() => setSelectedOcorrencia(null)} style={{ flex: 1, padding: '0.75rem', border: '1.5px solid #e2e8f0', borderRadius: '12px', background: 'white', cursor: 'pointer', fontWeight: 600, color: '#64748b', fontSize: '0.95rem' }}>
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                disabled={savingIntervencao}
+                onClick={async () => {
+                  setSavingIntervencao(true)
+                  await updateOcorrencia(selectedOcorrencia.id, intervencaoText.trim())
+                  setSavingIntervencao(false)
+                  setSelectedOcorrencia(null)
+                }}
+                style={{ flex: 2, padding: '0.75rem', border: 'none', borderRadius: '12px', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', opacity: savingIntervencao ? 0.7 : 1 }}>
+                {savingIntervencao ? 'Salvando...' : '✓ Salvar Intervenção'}
               </button>
             </div>
           </div>
