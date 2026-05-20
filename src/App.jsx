@@ -120,6 +120,39 @@ export default function App() {
     fetchData()
   }, [session])
 
+  // Realtime Notifications for Ocorrencias (Gestão)
+  useEffect(() => {
+    if (userRole !== 'gestao') return;
+
+    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+
+    const channel = supabase.channel('realtime-ocorrencias')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'ocorrencias' },
+        (payload) => {
+          setOcorrencias(prev => [payload.new, ...prev]);
+          
+          if ("Notification" in window && Notification.permission === "granted") {
+            const audio = new Audio('/notification.ogg');
+            audio.play().catch(err => console.log('Audio block by browser:', err));
+
+            new Notification('Nova Ocorrência Registrada', {
+              body: `Professor(a) ${payload.new.professor} registrou uma nova ocorrência para ${payload.new.aluno}.`,
+              requireInteraction: true
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    }
+  }, [userRole]);
+
   const handleOpenEventModal = (event = null) => {
     setEventToEdit(event)
     setIsEventModalOpen(true)
