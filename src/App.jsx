@@ -57,7 +57,12 @@ export default function App() {
   const fetchRole = async (userId) => {
     try {
       const { data, error } = await supabase.from('perfis').select('papel').eq('id', userId).maybeSingle()
-      if (data) setUserRole(data.papel)
+      if (data) {
+        setUserRole(data.papel)
+        if (data.papel !== 'gestao') {
+          setView(prev => prev === 'home' ? 'mapa-de-classe' : prev)
+        }
+      }
     } catch (err) {
       console.error('Error fetching role:', err)
     } finally {
@@ -368,27 +373,30 @@ export default function App() {
         </div>
         
         <div className="header-actions">
-          <button className={`btn ${view === 'home' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('home')}>
-            Início
-          </button>
           {userRole === 'gestao' && (
-            <button className={`btn ${view === 'eventos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('eventos')}>
-              Eventos
-            </button>
-          )}
-          <button className={`btn ${view === 'registros' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('registros')}>
-            Registros
-          </button>
-          {userRole === 'gestao' && (
-            <button className={`btn ${view === 'relatorios' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('relatorios')}>
-              Relatórios
-            </button>
+            <>
+              <button className={`btn ${view === 'home' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('home')}>
+                Início
+              </button>
+              <button className={`btn ${view === 'eventos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('eventos')}>
+                Eventos
+              </button>
+              <button className={`btn ${view === 'registros' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('registros')}>
+                Registros
+              </button>
+              <button className={`btn ${view === 'relatorios' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('relatorios')}>
+                Relatórios
+              </button>
+            </>
           )}
           <button className={`btn ${view === 'mapa-de-classe' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('mapa-de-classe')}>
             Mapa de Classe
           </button>
           <button className={`btn ${view === 'ocorrencias' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('ocorrencias')}>
             Ocorrências
+          </button>
+          <button className={`btn ${view === 'envio-questoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('envio-questoes')}>
+            Envio de Questões
           </button>
           {userRole === 'gestao' && (
             <button className={`btn ${view === 'configuracoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('configuracoes')} title="Configurações" style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '40px' }}>
