@@ -59,9 +59,6 @@ export default function App() {
       const { data, error } = await supabase.from('perfis').select('papel').eq('id', userId).maybeSingle()
       if (data) {
         setUserRole(data.papel)
-        if (data.papel !== 'gestao') {
-          setView(prev => prev === 'home' ? 'mapa-de-classe' : prev)
-        }
       }
     } catch (err) {
       console.error('Error fetching role:', err)
@@ -373,11 +370,11 @@ export default function App() {
         </div>
         
         <div className="header-actions">
+          <button className={`btn ${view === 'home' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('home')}>
+            Início
+          </button>
           {userRole === 'gestao' && (
             <>
-              <button className={`btn ${view === 'home' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('home')}>
-                Início
-              </button>
               <button className={`btn ${view === 'eventos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('eventos')}>
                 Eventos
               </button>
