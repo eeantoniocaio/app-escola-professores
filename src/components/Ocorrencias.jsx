@@ -22,6 +22,12 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
     [alunos, form.turma]
   )
 
+  // Alunos da turma selecionada no filtro
+  const alunosDoFiltro = useMemo(
+    () => (alunos || []).filter(a => a.turma === filterTurma).sort((a, b) => a.nome.localeCompare(b.nome)),
+    [alunos, filterTurma]
+  )
+
   const toggleAluno = useCallback((nome) => {
     setForm(prev => ({
       ...prev,
@@ -124,9 +130,11 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', background: 'white', padding: '1rem 1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
         <div style={{ flex: '1 1 180px' }}>
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Professor(a)</label>
-          <input type="text" placeholder="Filtrar por nome..." value={filterProf}
-            onChange={e => setFilterProf(e.target.value)}
-            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
+          <select value={filterProf} onChange={e => setFilterProf(e.target.value)}
+            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }}>
+            <option value="">Todos</option>
+            {professores && professores.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
         </div>
         <div style={{ flex: '1 1 150px' }}>
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Disciplina</label>
@@ -137,19 +145,23 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
         {turmas && turmas.length > 0 && (
           <div style={{ flex: '1 1 130px' }}>
             <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Turma</label>
-            <select value={filterTurma} onChange={e => setFilterTurma(e.target.value)}
+            <select value={filterTurma} onChange={e => { setFilterTurma(e.target.value); setFilterAluno(''); }}
               style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }}>
               <option value="">Todas</option>
               {turmas.map(t => <option key={t.id} value={t.nome}>{t.nome}</option>)}
             </select>
           </div>
         )}
-        <div style={{ flex: '1 1 150px' }}>
-          <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Aluno(a)</label>
-          <input type="text" placeholder="Nome do aluno..." value={filterAluno}
-            onChange={e => setFilterAluno(e.target.value)}
-            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
-        </div>
+        {filterTurma && (
+          <div style={{ flex: '1 1 150px' }}>
+            <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Aluno(a)</label>
+            <select value={filterAluno} onChange={e => setFilterAluno(e.target.value)}
+              style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }}>
+              <option value="">Todos</option>
+              {alunosDoFiltro.map(a => <option key={a.id} value={a.nome}>{a.nome}</option>)}
+            </select>
+          </div>
+        )}
         <div style={{ flex: '1 1 140px' }}>
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Data</label>
           <input type="date" value={filterData} onChange={e => setFilterData(e.target.value)}
@@ -369,9 +381,9 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
                   {errors.descricao && <span style={{ color: '#ef4444', fontSize: '0.78rem' }}>{errors.descricao}</span>}
                 </div>
 
-                {/* Ação do professor(a) */}
+                {/* Intervenção pedagógica em sala de aula */}
                 <div>
-                  <label style={labelStyle}>Ação do Professor(a) <span style={{ color: '#ef4444' }}>*</span></label>
+                  <label style={labelStyle}>Intervenção pedagógica em sala de aula <span style={{ color: '#ef4444' }}>*</span></label>
                   <textarea
                     placeholder="Descreva as medidas tomadas em sala de aula..."
                     value={form.acao_professor}

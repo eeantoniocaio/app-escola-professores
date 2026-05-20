@@ -8,6 +8,7 @@ import Configuracoes from './components/Configuracoes'
 import Relatorios from './components/Relatorios'
 import Ocorrencias from './components/Ocorrencias'
 import Login from './components/Login'
+import EnvioQuestoes from './components/EnvioQuestoes'
 import logoUrl from './assets/logo.png'
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
   const [events, setEvents] = useState([])
   const [records, setRecords] = useState([])
   const [ocorrencias, setOcorrencias] = useState([])
+  const [questoes, setQuestoes] = useState([])
   const [tiposEvento, setTiposEvento] = useState([])
   const [tiposEvidencia, setTiposEvidencia] = useState([])
   const [professores, setProfessores] = useState([])
@@ -73,6 +75,7 @@ export default function App() {
           evtRes,
           recRes,
           ocorrRes,
+          questoesRes,
           profRes,
           tipEvtRes,
           tipEviRes,
@@ -82,6 +85,7 @@ export default function App() {
           supabase.from('eventos').select('*').order('created_at', { ascending: false }),
           supabase.from('registros').select('*').order('created_at', { ascending: false }),
           supabase.from('ocorrencias').select('*').order('created_at', { ascending: false }),
+          supabase.from('questoes').select('*').order('created_at', { ascending: false }),
           supabase.from('professores').select('nome'),
           supabase.from('tiposEvento').select('nome'),
           supabase.from('tiposEvidencia').select('nome'),
@@ -97,6 +101,9 @@ export default function App() {
 
         if (ocorrRes.error) console.error('Erro ocorrências:', ocorrRes.error)
         else setOcorrencias(ocorrRes.data || [])
+
+        if (questoesRes.error) console.error('Erro questões:', questoesRes.error)
+        else setQuestoes(questoesRes.data || [])
 
         if (profRes.data) setProfessores(profRes.data.map(p => p.nome))
         if (tipEvtRes.data) setTiposEvento(tipEvtRes.data.map(t => t.nome))
@@ -282,6 +289,26 @@ export default function App() {
     }
   }
 
+  // Questões
+  const handleAddQuestao = async (novaQuestao) => {
+    const { data, error } = await supabase.from('questoes').insert([novaQuestao]).select()
+    if (error) {
+      showToast('Erro ao salvar questão', 'error')
+    } else if (data) {
+      setQuestoes(prev => [data[0], ...prev])
+      showToast('Questão registrada com sucesso!')
+    }
+  }
+  const handleDeleteQuestao = async (id) => {
+    if (window.confirm('Deseja excluir esta questão?')) {
+      const { error } = await supabase.from('questoes').delete().eq('id', id)
+      if (!error) {
+        setQuestoes(prev => prev.filter(q => q.id !== id))
+        showToast('Questão excluída.', 'info')
+      }
+    }
+  }
+
   if (authLoading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Verificando autenticação...</div>
   if (!session) return <Login setSession={setSession} />
 
@@ -453,6 +480,18 @@ export default function App() {
                 deleteOcorrencia={handleDeleteOcorrencia}
               />
             )}
+
+            {view === 'envio-questoes' && (
+              <EnvioQuestoes
+                setView={setView}
+                professores={professores}
+                turmas={turmas}
+                questoes={questoes}
+                addQuestao={handleAddQuestao}
+                deleteQuestao={handleDeleteQuestao}
+              />
+            )}
+
 
             {view === 'configuracoes' && userRole === 'gestao' && (
               <Configuracoes 
