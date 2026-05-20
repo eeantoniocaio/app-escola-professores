@@ -467,7 +467,7 @@ export default function Ocorrencias({ setView, ocorrencias, professores, turmas,
               </div>
 
               <div>
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Sua Intervenção</label>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Intervenção da Gestão</label>
                 <textarea
                   placeholder="Descreva as ações ou observações da gestão sobre esta ocorrência..."
                   value={intervencaoText}
