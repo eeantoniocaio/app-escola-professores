@@ -181,7 +181,7 @@ export default function Home({ setView, openEventModal, userRole }) {
           onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
           <span style={{ fontSize: '2.5rem' }}>📝</span>
-          <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>Envio de Questões</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>Envio de questões para recuperação de ausências</span>
         </button>
       </div>
     </div>

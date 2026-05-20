@@ -393,7 +393,7 @@ export default function App() {
             Ocorrências
           </button>
           <button className={`btn ${view === 'envio-questoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('envio-questoes')}>
-            Envio de Questões
+            Envio de questões para recuperação de ausências
           </button>
           {userRole === 'gestao' && (
             <button className={`btn ${view === 'configuracoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('configuracoes')} title="Configurações" style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '40px' }}>
