@@ -371,41 +371,44 @@ export default function App() {
           </div>
         </div>
         
-        <div className="header-actions">
-          <button className={`btn ${view === 'home' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('home')}>
+        <div className="header-actions" style={{ gap: '0.25rem' }}>
+          <button className={`nav-link ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>
             Início
           </button>
           {userRole === 'gestao' && (
             <>
-              <button className={`btn ${view === 'eventos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('eventos')}>
+              <button className={`nav-link ${view === 'eventos' ? 'active' : ''}`} onClick={() => setView('eventos')}>
                 Eventos
               </button>
-              <button className={`btn ${view === 'registros' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('registros')}>
+              <button className={`nav-link ${view === 'registros' ? 'active' : ''}`} onClick={() => setView('registros')}>
                 Registros
               </button>
-              <button className={`btn ${view === 'relatorios' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('relatorios')}>
+              <button className={`nav-link ${view === 'relatorios' ? 'active' : ''}`} onClick={() => setView('relatorios')}>
                 Relatórios
               </button>
-              <button className={`btn ${view === 'historico-ocorrencias' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('historico-ocorrencias')}>
+              <button className={`nav-link ${view === 'historico-ocorrencias' ? 'active' : ''}`} onClick={() => setView('historico-ocorrencias')}>
                 Histórico de Ocorrências
               </button>
             </>
           )}
-          <button className={`btn ${view === 'mapa-de-classe' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('mapa-de-classe')}>
+          <button className={`nav-link ${view === 'mapa-de-classe' ? 'active' : ''}`} onClick={() => setView('mapa-de-classe')}>
             Mapa de Classe
           </button>
-          <button className="btn btn-secondary" onClick={() => setShowOcorrenciaModal(true)}>
+          <button className="nav-link" onClick={() => setShowOcorrenciaModal(true)}>
             Ocorrências
           </button>
-          <button className={`btn ${view === 'envio-questoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('envio-questoes')}>
-            Envio de questões para recuperação de ausências
+          <button className={`nav-link ${view === 'envio-questoes' ? 'active' : ''}`} onClick={() => setView('envio-questoes')}>
+            Reposições
           </button>
+          
+          <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
+          
           {userRole === 'gestao' && (
-            <button className={`btn ${view === 'configuracoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('configuracoes')} title="Configurações" style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '40px' }}>
+            <button className={`nav-link ${view === 'configuracoes' ? 'active' : ''}`} onClick={() => setView('configuracoes')} title="Configurações" style={{ fontSize: '1.2rem', padding: '0.4rem' }}>
               ⚙️
             </button>
           )}
-          <button className="btn btn-secondary" onClick={() => supabase.auth.signOut()} title="Sair" style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '40px' }}>
+          <button className="nav-link" onClick={() => supabase.auth.signOut()} title="Sair" style={{ fontSize: '1.2rem', padding: '0.4rem' }}>
             🚪
           </button>
         </div>

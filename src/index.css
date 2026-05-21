@@ -198,21 +198,69 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-primary:hover {
   background-color: hsl(207, 75%, 85%);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
-  background-color: transparent;
+  background-color: white;
   color: var(--text-muted);
   border: 1px solid var(--border-light);
-  box-shadow: none;
 }
 
 .btn-secondary:hover {
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: hsl(220, 20%, 96%);
   color: var(--text-main);
-  transform: translateY(-1px);
+  border-color: hsl(220, 20%, 85%);
+}
+
+/* Minimalist Header Navigation Links */
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+}
+
+.nav-link.active {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background-color: var(--text-main);
+  border-radius: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .nav-link.active::after {
+    background-color: var(--text-main);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
