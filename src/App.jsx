@@ -18,6 +18,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true)
   const [view, setView] = useState('home')
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
+  const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false)
   const [eventToEdit, setEventToEdit] = useState(null)
   
   const [events, setEvents] = useState([])
@@ -393,7 +394,7 @@ export default function App() {
           <button className={`btn ${view === 'mapa-de-classe' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('mapa-de-classe')}>
             Mapa de Classe
           </button>
-          <button className={`btn ${view === 'ocorrencias' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('ocorrencias')}>
+          <button className="btn btn-secondary" onClick={() => setShowOcorrenciaModal(true)}>
             Ocorrências
           </button>
           <button className={`btn ${view === 'envio-questoes' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('envio-questoes')}>
@@ -416,7 +417,7 @@ export default function App() {
         ) : (
           <>
             {view === 'home' && (
-              <Home setView={setView} openEventModal={handleOpenEventModal} userRole={userRole} />
+              <Home setView={setView} openEventModal={handleOpenEventModal} openOcorrenciaModal={() => setShowOcorrenciaModal(true)} userRole={userRole} />
             )}
             
             {view === 'eventos' && userRole === 'gestao' && (
@@ -520,15 +521,7 @@ export default function App() {
               </div>
             )}
 
-            {view === 'ocorrencias' && (
-              <Ocorrencias
-                setView={setView}
-                professores={professores}
-                turmas={turmas}
-                alunos={alunos}
-                addOcorrencia={handleAddOcorrencia}
-              />
-            )}
+
 
             {view === 'historico-ocorrencias' && userRole === 'gestao' && (
               <HistoricoOcorrencias
@@ -587,6 +580,16 @@ export default function App() {
       <footer style={{ padding: '2rem', textAlign: 'center', borderTop: '1px solid var(--border-light)', fontSize: '0.85rem', color: 'var(--text-light)', marginTop: 'auto' }}>
         © {new Date().getFullYear()} E.E. Antônio Caio - Sistema de Avaliação Docente. Todos os direitos reservados.
       </footer>
+
+      {showOcorrenciaModal && (
+        <Ocorrencias
+          onClose={() => setShowOcorrenciaModal(false)}
+          professores={professores}
+          turmas={turmas}
+          alunos={alunos}
+          addOcorrencia={handleAddOcorrencia}
+        />
+      )}
 
       {isEventModalOpen && (
         <EventModal 

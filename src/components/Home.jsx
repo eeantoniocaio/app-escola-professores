@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Home({ setView, openEventModal, userRole }) {
+export default function Home({ setView, openEventModal, openOcorrenciaModal, userRole }) {
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <div className="welcome-section" style={{ marginBottom: '3rem', textAlign: 'center' }}>
@@ -137,7 +137,7 @@ export default function Home({ setView, openEventModal, userRole }) {
         </button>
 
         <button 
-          onClick={() => setView('ocorrencias')}
+          onClick={() => openOcorrenciaModal()}
           style={{ 
             padding: '2rem', 
             borderRadius: 'var(--radius-lg)', 
