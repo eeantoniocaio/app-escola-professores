@@ -27,6 +27,10 @@ export default function Relatorios({ setView, records, events, professores, tipo
       solicitante: ev ? ev.quemSolicitou : '-',
       dataSolicitacao: ev ? ev.dataSolicitacao : null,
       prazoEntrega: ev ? ev.dataEntrega : null,
+      gestor: rec.gestor || '-',
+      description: rec.description || '-',
+      fileName: rec.fileName || null,
+      fileSize: rec.fileSize || null,
       source: 'record',
       foraDoPlaz: false,
     }
@@ -83,16 +87,19 @@ export default function Relatorios({ setView, records, events, professores, tipo
   }
 
   const exportCSV = () => {
-    const headers = ['Professor(a)', 'Evento', 'Tipo', 'Data', 'Solicitante', 'Solicitado Em', 'Prazo de Entrega'];
+    const headers = ['Professor(a)', 'Evento', 'Tipo', 'Data', 'Gestor(a)', 'Solicitante', 'Solicitado Em', 'Prazo de Entrega', 'Descrição', 'Anexo'];
     
     const rows = filteredRows.map(row => [
       `"${row.teacher}"`,
       `"${row.evento}"`,
       `"${row.tipo}"`,
       `"${row.date ? new Date(row.date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`,
+      `"${row.gestor || '-'}"`,
       `"${row.solicitante}"`,
       `"${row.dataSolicitacao ? new Date(row.dataSolicitacao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`,
-      `"${row.prazoEntrega ? new Date(row.prazoEntrega + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`
+      `"${row.prazoEntrega ? new Date(row.prazoEntrega + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`,
+      `"${row.description || '-'}"`,
+      `"${row.fileName ? row.fileName + (row.fileSize ? ' (' + row.fileSize + ')' : '') : '-'}"`
     ].join(','));
     
     const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows].join('\n');
@@ -222,31 +229,45 @@ export default function Relatorios({ setView, records, events, professores, tipo
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-light)' }}>
-              <th style={{ padding: '0.75rem' }}>Professor(a)</th>
-              <th style={{ padding: '0.75rem' }}>Evento</th>
-              <th style={{ padding: '0.75rem' }}>Tipo</th>
-              <th style={{ padding: '0.75rem' }}>Data</th>
-              <th style={{ padding: '0.75rem' }}>Solicitante</th>
+              <th style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>Professor(a)</th>
+              <th style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>Data</th>
+              <th style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>Tipo</th>
+              <th style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>Gestor(a)</th>
+              <th style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>Evento</th>
+              <th style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>Solicitante</th>
+              <th style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>Prazo de Entrega</th>
+              <th style={{ padding: '0.75rem' }}>Descrição</th>
+              <th style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>Anexo</th>
             </tr>
           </thead>
           <tbody>
             {filteredRows.length > 0 ? filteredRows.map(row => (
-                <tr key={row.id} style={{ borderBottom: '1px solid var(--border-light)', background: row.foraDoPlaz ? '#fff5f7' : 'transparent' }}>
-                  <td style={{ padding: '0.75rem', fontWeight: row.foraDoPlaz ? 600 : 400 }}>{row.teacher}</td>
-                  <td style={{ padding: '0.75rem' }}>{row.evento}</td>
+                <tr key={row.id} style={{ borderBottom: '1px solid var(--border-light)', background: row.foraDoPlaz ? '#fff5f7' : 'transparent', verticalAlign: 'top' }}>
+                  <td style={{ padding: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{row.teacher}</td>
+                  <td style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>{row.date ? new Date(row.date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
                   <td style={{ padding: '0.75rem' }}>
                     {row.foraDoPlaz
                       ? <span style={{ background: '#FFDEE9', color: '#8B3A52', padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, whiteSpace: 'nowrap' }}>⚠️ Entrega fora do prazo</span>
-                      : row.tipo
+                      : <span style={{ background: '#E6E6FA', color: '#4a3f8a', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 600 }}>{row.tipo}</span>
                     }
                   </td>
-                  <td style={{ padding: '0.75rem' }}>{row.date ? new Date(row.date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
-                  <td style={{ padding: '0.75rem' }}>{row.solicitante}</td>
+                  <td style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>{row.gestor || '-'}</td>
+                  <td style={{ padding: '0.75rem' }}>{row.evento}</td>
+                  <td style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>{row.solicitante}</td>
+                  <td style={{ padding: '0.75rem', whiteSpace: 'nowrap' }}>{row.prazoEntrega ? new Date(row.prazoEntrega + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
+                  <td style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '220px' }}>{row.description || '-'}</td>
+                  <td style={{ padding: '0.75rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+                    {row.fileName
+                      ? <span style={{ background: '#F2EBC4', color: '#7a6a10', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>📎 {row.fileName}</span>
+                      : <span style={{ color: 'var(--text-light)' }}>-</span>
+                    }
+                  </td>
                 </tr>
             )) : (
               <tr>
                 <td colSpan="5" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   Nenhum registro encontrado com estes filtros.
+                  <br/><span style={{fontSize:'0.8rem'}}>Tente ajustar ou limpar os filtros.</span>
                 </td>
               </tr>
             )}
