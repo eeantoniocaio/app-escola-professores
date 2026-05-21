@@ -28,6 +28,7 @@ export default function App() {
   const [tiposEvento, setTiposEvento] = useState([])
   const [tiposEvidencia, setTiposEvidencia] = useState([])
   const [professores, setProfessores] = useState([])
+  const [gestores, setGestores] = useState([])
   const [turmas, setTurmas] = useState([])
   const [alunos, setAlunos] = useState([]) // [{id, nome, turma}]
   const [loading, setLoading] = useState(true)
@@ -84,7 +85,8 @@ export default function App() {
           tipEvtRes,
           tipEviRes,
           turmasRes,
-          alunosRes
+          alunosRes,
+          gestRes
         ] = await Promise.all([
           supabase.from('eventos').select('*').order('created_at', { ascending: false }),
           supabase.from('registros').select('*').order('created_at', { ascending: false }),
@@ -94,7 +96,8 @@ export default function App() {
           supabase.from('tiposEvento').select('nome'),
           supabase.from('tiposEvidencia').select('nome'),
           supabase.from('turmas').select('id, nome, link').order('nome'),
-          supabase.from('alunos').select('id, nome, turma').order('nome')
+          supabase.from('alunos').select('id, nome, turma').order('nome'),
+          supabase.from('gestores').select('nome')
         ])
 
         if (evtRes.error) console.error('Erro eventos:', evtRes.error)
@@ -114,6 +117,7 @@ export default function App() {
         if (tipEviRes.data) setTiposEvidencia(tipEviRes.data.map(t => t.nome))
         if (turmasRes.data) setTurmas(turmasRes.data)
         if (alunosRes.data) setAlunos(alunosRes.data)
+        if (gestRes.data) setGestores(gestRes.data.map(g => g.nome))
       } catch (error) {
         console.error('Erro geral ao buscar dados:', error)
         showToast('Erro ao carregar dados do banco', 'error')
@@ -443,6 +447,7 @@ export default function App() {
                 events={events}
                 tiposEvidencia={tiposEvidencia}
                 professores={professores}
+                gestores={gestores}
                 addRecord={handleAddRecord}
                 updateRecord={handleUpdateRecord}
                 deleteRecord={handleDeleteRecord}
@@ -562,9 +567,12 @@ export default function App() {
                 removeTipoEvidencia={(n) => handleDeleteSetting('tiposEvidencia', n, setTiposEvidencia)}
                 
                 professores={professores} 
+                gestores={gestores}
                 addProfessor={(n) => handleAddSetting('professores', n, setProfessores)}
                 removeProfessor={(n) => handleDeleteSetting('professores', n, setProfessores)}
                 importProfessores={handleImportProfessores}
+                addGestor={(n) => handleAddSetting('gestores', n, setGestores)}
+                removeGestor={(n) => handleDeleteSetting('gestores', n, setGestores)}
 
                 turmas={turmas}
                 addTurma={handleAddTurma}

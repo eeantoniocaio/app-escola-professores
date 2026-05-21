@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 
-export default function Registros({ setView, records, events, tiposEvidencia, professores = [], addRecord, updateRecord, deleteRecord }) {
+export default function Registros({ setView, records, events, tiposEvidencia, professores = [], gestores = [], addRecord, updateRecord, deleteRecord }) {
   const [filterTeacher, setFilterTeacher] = useState('todos')
   const [filterDate, setFilterDate] = useState('')
   const [filterTipo, setFilterTipo] = useState('todos')
@@ -13,6 +13,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
   const [eventId, setEventId] = useState('')
   const [date, setDate] = useState('')
   const [tipo, setTipo] = useState(tiposEvidencia[0] || '')
+  const [gestor, setGestor] = useState('')
   const [description, setDescription] = useState('')
   const [mockFileName, setMockFileName] = useState('')
   const [mockFileSize, setMockFileSize] = useState('')
@@ -54,6 +55,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
     setEventId(events[0]?.id || '')
     setDate(new Date().toISOString().split('T')[0])
     setTipo(tiposEvidencia[0] || '')
+    setGestor('')
     setDescription('')
     setMockFileName('')
     setMockFileSize('')
@@ -69,6 +71,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
     setEventId(rec.eventId || '')
     setDate(rec.date || '')
     setTipo(rec.tipo || tiposEvidencia[0] || '')
+    setGestor(rec.gestor || '')
     setDescription(rec.description || '')
     setMockFileName(rec.fileName || '')
     setMockFileSize(rec.fileSize || '')
@@ -87,9 +90,9 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!teacher || !date) return
+    if (!teacher || !date || !gestor) return
     const recordData = {
-      title: tipo, teacher, eventId: null, date, tipo,
+      title: tipo, teacher, eventId: null, date, tipo, gestor,
       description,
       fileName: mockFileName || 'documento.pdf',
       fileSize: mockFileSize || '1.0 MB',
@@ -267,8 +270,13 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
 
                       <div className="record-body">
                         {rec.tipo && (
-                          <span style={{ display: 'inline-block', fontSize: '0.72rem', color: 'var(--pastel-purple-dark)', background: 'var(--pastel-purple)', padding: '0.15rem 0.5rem', borderRadius: '4px', marginBottom: '0.4rem', fontWeight: 600 }}>
+                          <span style={{ display: 'inline-block', fontSize: '0.72rem', color: 'var(--pastel-purple-dark)', background: 'var(--pastel-purple)', padding: '0.15rem 0.5rem', borderRadius: '4px', marginBottom: '0.4rem', marginRight: '0.4rem', fontWeight: 600 }}>
                             🏷️ {rec.tipo}
+                          </span>
+                        )}
+                        {rec.gestor && (
+                          <span style={{ display: 'inline-block', fontSize: '0.72rem', color: '#0369a1', background: '#e0f2fe', padding: '0.15rem 0.5rem', borderRadius: '4px', marginBottom: '0.4rem', fontWeight: 600 }}>
+                            👔 {rec.gestor}
                           </span>
                         )}
                         {associatedEvent && (
@@ -341,6 +349,14 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
                   <label>Tipo *</label>
                   <select className="form-control" value={tipo} onChange={(e) => setTipo(e.target.value)} required>
                     {tiposEvidencia.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Gestor(a) *</label>
+                  <select className="form-control" value={gestor} onChange={(e) => setGestor(e.target.value)} required>
+                    <option value="">Selecione um gestor</option>
+                    {gestores.map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
 
