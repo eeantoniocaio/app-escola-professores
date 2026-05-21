@@ -112,6 +112,32 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
           </button>
         )}
 
+        {userRole === 'gestao' && (
+          <button 
+            onClick={() => setView('historico-ocorrencias')}
+            style={{ 
+              padding: '2rem', 
+              borderRadius: 'var(--radius-lg)', 
+              border: 'none', 
+              background: '#e0f2fe', 
+              color: '#0369a1',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '1rem',
+              width: '200px',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'transform 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <span style={{ fontSize: '2.5rem' }}>🛡️</span>
+            <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>Histórico de Ocorrências</span>
+          </button>
+        )}
+
         <button 
           onClick={() => setView('mapa-de-classe')}
           style={{ 
