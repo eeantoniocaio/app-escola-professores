@@ -1,8 +1,8 @@
 import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
+import * as pdfFonts from "pdfmake/build/vfs_fonts";
 
-// Register fonts
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
+// Register fonts safely (compat with Vite and CommonJS exports)
+pdfMake.vfs = pdfFonts?.pdfMake?.vfs || pdfFonts?.vfs || pdfFonts;
 
 export const exportCSV = (filteredRows) => {
   const headers = ['Professor(a)', 'Evento', 'Tipo/Status', 'Data', 'Gestor(a)', 'Solicitante', 'Solicitado Em', 'Prazo de Entrega', 'Descrição', 'Anexo'];
