@@ -10,6 +10,7 @@ import Ocorrencias from './components/Ocorrencias'
 import HistoricoOcorrencias from './components/HistoricoOcorrencias'
 import Login from './components/Login'
 import EnvioQuestoes from './components/EnvioQuestoes'
+import InstallPWA from './components/InstallPWA'
 import logoUrl from './assets/logo.png'
 
 export default function App() {
@@ -593,6 +594,8 @@ export default function App() {
           </>
         )}
       </main>
+
+      <InstallPWA />
 
       <footer style={{ padding: '2rem', textAlign: 'center', borderTop: '1px solid var(--border-light)', fontSize: '0.85rem', color: 'var(--text-light)', marginTop: 'auto' }}>
         © {new Date().getFullYear()} E.E. Antônio Caio - Sistema de Avaliação Docente. Todos os direitos reservados.
