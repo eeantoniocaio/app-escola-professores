@@ -480,22 +480,28 @@ export default function App() {
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
-                    {turmas.map((turma, idx) => {
-                      const colors = [
-                        { bg: 'hsl(350, 100%, 93%)', text: 'hsl(350, 60%, 35%)' },
-                        { bg: 'hsl(35, 100%, 88%)', text: 'hsl(35, 60%, 30%)' },
-                        { bg: 'hsl(145, 60%, 87%)', text: 'hsl(145, 50%, 28%)' },
-                        { bg: 'hsl(210, 80%, 90%)', text: 'hsl(210, 55%, 32%)' },
-                        { bg: 'hsl(270, 60%, 90%)', text: 'hsl(270, 45%, 35%)' },
-                        { bg: 'hsl(55, 90%, 86%)', text: 'hsl(55, 60%, 28%)' },
-                      ]
-                      const color = colors[idx % colors.length]
+                    {turmas.map((turma) => {
+                      // Paleta por série: extrai o número inicial do nome (ex: "6ºA" → 6, "1ªA" → 1)
+                      const gradeColors = {
+                        1: 'hsl(350, 100%, 92%)',
+                        2: 'hsl(270, 60%, 90%)',
+                        3: 'hsl(35, 100%, 88%)',
+                        4: 'hsl(145, 60%, 87%)',
+                        5: 'hsl(210, 80%, 90%)',
+                        6: 'hsl(55, 90%, 86%)',
+                        7: 'hsl(185, 70%, 88%)',
+                        8: 'hsl(310, 60%, 90%)',
+                        9: 'hsl(15, 100%, 90%)',
+                      }
+                      const match = turma.nome.match(/^(\d+)/)
+                      const grade = match ? parseInt(match[1]) : 0
+                      const bg = gradeColors[grade] || 'hsl(210, 20%, 92%)'
                       const hasLink = turma.link && turma.link.trim() !== ''
                       return (
                         <div
                           key={turma.id}
                           style={{
-                            backgroundColor: color.bg,
+                            backgroundColor: bg,
                             borderRadius: '16px',
                             padding: '1.5rem',
                             cursor: hasLink ? 'pointer' : 'default',
@@ -504,7 +510,7 @@ export default function App() {
                             alignItems: 'center',
                             transition: 'transform 0.2s, box-shadow 0.2s',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                            opacity: hasLink ? 1 : 0.7
+                            opacity: hasLink ? 1 : 0.75
                           }}
                           onClick={() => hasLink && window.open(turma.link, '_blank', 'noopener')}
                           onMouseOver={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)' } }}
@@ -512,13 +518,13 @@ export default function App() {
                           title={hasLink ? `Abrir ${turma.nome}` : 'Link não configurado'}
                         >
                           <div>
-                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: color.text, fontFamily: 'Outfit, sans-serif' }}>{turma.nome}</div>
-                            <div style={{ fontSize: '0.8rem', color: color.text, opacity: 0.75, marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1a1a1a', fontFamily: 'Outfit, sans-serif' }}>{turma.nome}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#444', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                               <span>{hasLink ? '🔗' : '👥'}</span>
                               <span>{hasLink ? 'Clique para abrir' : 'Sem link'}</span>
                             </div>
                           </div>
-                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: color.text, fontSize: '1.1rem' }}>
+                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333', fontSize: '1.1rem' }}>
                             {hasLink ? '›' : ''}
                           </div>
                         </div>
