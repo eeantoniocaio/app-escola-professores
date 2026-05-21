@@ -42,7 +42,7 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
                 borderRadius: 'var(--radius-lg)', 
                 border: 'none', 
                 background: 'var(--pastel-blue)', 
-                color: 'var(--pastel-blue-dark)',
+                color: '#2d6b77',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -56,7 +56,7 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
               onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
               <span style={{ fontSize: '2.5rem' }}>📅</span>
-              <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Eventos</span>
+              <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a1a1a' }}>Eventos</span>
             </button>
           </>
         )}
@@ -67,8 +67,8 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
               padding: '2rem', 
               borderRadius: 'var(--radius-lg)', 
               border: 'none', 
-              background: 'var(--pastel-purple)', 
-              color: 'var(--pastel-purple-dark)',
+              background: '#E6E6FA', 
+              color: '#4a3f8a',
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
@@ -82,7 +82,7 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
             onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
           >
             <span style={{ fontSize: '2.5rem' }}>📁</span>
-            <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Registros</span>
+            <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a1a1a' }}>Registros</span>
           </button>
         )}
 
@@ -93,8 +93,8 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
               padding: '2rem', 
               borderRadius: 'var(--radius-lg)', 
               border: 'none', 
-              background: 'var(--pastel-orange)', 
-              color: 'var(--pastel-orange-dark)',
+              background: '#F2CA7E', 
+              color: '#1a1a1a',
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
@@ -108,7 +108,7 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
             onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
           >
             <span style={{ fontSize: '2.5rem' }}>📊</span>
-            <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Relatórios</span>
+            <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a1a1a' }}>Relatórios</span>
           </button>
         )}
 
@@ -119,8 +119,8 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
               padding: '2rem', 
               borderRadius: 'var(--radius-lg)', 
               border: 'none', 
-              background: '#e0f2fe', 
-              color: '#0369a1',
+              background: '#A7D0D9', 
+              color: '#1a1a1a',
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
@@ -134,7 +134,7 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
             onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
           >
             <span style={{ fontSize: '2.5rem' }}>🛡️</span>
-            <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>Histórico de Ocorrências</span>
+            <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center', color: '#1a1a1a' }}>Histórico de Ocorrências</span>
           </button>
         )}
 
@@ -144,8 +144,8 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
             padding: '2rem', 
             borderRadius: 'var(--radius-lg)', 
             border: 'none', 
-            background: 'var(--pastel-pink)', 
-            color: 'var(--pastel-pink-dark)',
+            background: '#F2BBC9', 
+            color: '#1a1a1a',
             cursor: 'pointer',
             display: 'flex',
             flexDirection: 'column',
@@ -159,7 +159,7 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
           onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
           <span style={{ fontSize: '2.5rem' }}>🗺️</span>
-          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Mapa de Classe</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a1a1a' }}>Mapa de Classe</span>
         </button>
 
         <button 
@@ -168,8 +168,8 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
             padding: '2rem', 
             borderRadius: 'var(--radius-lg)', 
             border: 'none', 
-            background: 'var(--pastel-yellow)', 
-            color: 'var(--pastel-yellow-dark)',
+            background: '#FFFACD', 
+            color: '#1a1a1a',
             cursor: 'pointer',
             display: 'flex',
             flexDirection: 'column',
@@ -183,7 +183,7 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
           onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
           <span style={{ fontSize: '2.5rem' }}>⚠️</span>
-          <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>Ocorrências em Sala de Aula</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center', color: '#1a1a1a' }}>Ocorrências em Sala de Aula</span>
         </button>
 
         <button 
@@ -192,8 +192,8 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
             padding: '2rem', 
             borderRadius: 'var(--radius-lg)', 
             border: 'none', 
-            background: 'var(--pastel-blue)', 
-            color: 'var(--pastel-blue-dark)',
+            background: '#97F294', 
+            color: '#1a1a1a',
             cursor: 'pointer',
             display: 'flex',
             flexDirection: 'column',
@@ -207,7 +207,7 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
           onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
           <span style={{ fontSize: '2.5rem' }}>📝</span>
-          <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>Envio de questões para recuperação de ausências</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center', color: '#1a1a1a' }}>Envio de questões para recuperação de ausências</span>
         </button>
       </div>
     </div>

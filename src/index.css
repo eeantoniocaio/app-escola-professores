@@ -1,82 +1,62 @@
 /* Design System - App Evidências Docentes */
 :root {
-  /* Pastel Palette (HSL for consistency and easy opacity tweaks) */
-  --bg-primary: hsl(220, 40%, 97%);
-  --bg-card: hsl(0, 0%, 100%);
-  --border-light: hsl(220, 20%, 90%);
-  
-  /* Status & Element Pastels */
-  --pastel-blue: hsl(207, 75%, 90%);
-  --pastel-blue-dark: hsl(207, 45%, 35%);
-  
-  --pastel-green: hsl(145, 60%, 91%);
-  --pastel-green-dark: hsl(145, 45%, 30%);
-  
-  --pastel-purple: hsl(265, 60%, 91%);
-  --pastel-purple-dark: hsl(265, 45%, 35%);
-  
-  --pastel-pink: hsl(340, 70%, 91%);
-  --pastel-pink-dark: hsl(340, 50%, 35%);
-  
-  --pastel-orange: hsl(25, 80%, 90%);
-  --pastel-orange-dark: hsl(25, 60%, 35%);
-  
-  --pastel-yellow: hsl(45, 80%, 90%);
-  --pastel-yellow-dark: hsl(45, 60%, 35%);
+  /* ── New Brand Palette ── */
+  --color-pink:        #F2BBC9;   /* rosa pastel */
+  --color-pink-light:  #FFDEE9;   /* rosa claro */
+  --color-pink-soft:   #FFF5F9;   /* rosa ultra-suave */
+  --color-blue:        #A7D0D9;   /* azul acinzentado */
+  --color-green:       #97F294;   /* verde menta */
+  --color-cream:       #F2EBC4;   /* creme/bege */
+  --color-amber:       #F2CA7E;   /* âmbar/dourado */
+  --color-yellow:      #FFFACD;   /* amarelo claro */
+  --color-lavender:    #E6E6FA;   /* lavanda */
 
-  /* Text Colors */
-  --text-main: hsl(215, 30%, 18%);
-  --text-muted: hsl(215, 15%, 45%);
-  --text-light: hsl(215, 10%, 65%);
-  
-  /* Shadows & Glassmorphism */
-  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 10px 25px -5px rgba(160, 180, 200, 0.15), 0 8px 10px -6px rgba(160, 180, 200, 0.1);
-  --shadow-lg: 0 20px 40px -10px rgba(160, 180, 200, 0.25), 0 10px 15px -8px rgba(160, 180, 200, 0.15);
-  --shadow-inset: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
-  
+  /* ── Backgrounds ── */
+  --bg-primary:   #FFF5F9;        /* fundo geral: rosa ultra-suave */
+  --bg-secondary: #F2EBC4;        /* fundo de seções: creme */
+  --bg-card:      #ffffff;        /* cards brancos */
+
+  /* ── Borders ── */
+  --border-light: #F2BBC9;        /* bordas rosa pastel */
+
+  /* ── Pastels (mapped to new palette) ── */
+  --pastel-pink:        #FFDEE9;
+  --pastel-pink-dark:   #8B3A52;
+
+  --pastel-blue:        #A7D0D9;
+  --pastel-blue-dark:   #2d6b77;
+
+  --pastel-green:       #97F294;
+  --pastel-green-dark:  #1a6b18;
+
+  --pastel-purple:      #E6E6FA;
+  --pastel-purple-dark: #4a3f8a;
+
+  --pastel-orange:      #FFDEE9;
+  --pastel-orange-dark: #8B3A52;
+
+  --pastel-yellow:      #FFFACD;
+  --pastel-yellow-dark: #7a6a10;
+
+  /* ── Text ── */
+  --text-main:  #2a1a20;
+  --text-muted: #7a5a65;
+  --text-light: #b08090;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 2px 8px rgba(242, 187, 201, 0.18), 0 1px 3px rgba(242, 187, 201, 0.12);
+  --shadow-md: 0 8px 24px rgba(242, 187, 201, 0.2), 0 4px 8px rgba(242, 187, 201, 0.12);
+  --shadow-lg: 0 16px 40px rgba(242, 187, 201, 0.25), 0 8px 16px rgba(242, 187, 201, 0.15);
+  --shadow-inset: inset 0 2px 4px rgba(242, 187, 201, 0.08);
+
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
-  
+
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: all 0.15s ease;
 }
 
-/* Dark Mode settings - clean subtle dark mode if preferred, but we will focus on premium pastel light mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: hsl(220, 25%, 10%);
-    --bg-card: hsl(220, 20%, 14%);
-    --border-light: hsl(220, 15%, 20%);
-    
-    --text-main: hsl(210, 20%, 95%);
-    --text-muted: hsl(210, 10%, 75%);
-    --text-light: hsl(210, 8%, 55%);
-    
-    --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 10px 15px -8px rgba(0, 0, 0, 0.4);
-    
-    /* Adapt pastels slightly for dark backgrounds */
-    --pastel-blue: hsl(207, 45%, 22%);
-    --pastel-blue-dark: hsl(207, 85%, 80%);
-    
-    --pastel-green: hsl(145, 35%, 18%);
-    --pastel-green-dark: hsl(145, 80%, 75%);
-    
-    --pastel-purple: hsl(265, 35%, 22%);
-    --pastel-purple-dark: hsl(265, 80%, 80%);
-    
-    --pastel-pink: hsl(340, 35%, 22%);
-    --pastel-pink-dark: hsl(340, 80%, 80%);
-    
-    --pastel-orange: hsl(25, 45%, 20%);
-    --pastel-orange-dark: hsl(25, 85%, 80%);
-    
-    --pastel-yellow: hsl(45, 45%, 18%);
-    --pastel-yellow-dark: hsl(45, 85%, 80%);
-  }
-}
 
 /* Reset & Base */
 * {
@@ -111,7 +91,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .header {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 245, 249, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-light);
@@ -125,11 +105,6 @@ h1, h2, h3, h4, h5, h6 {
   transition: var(--transition-smooth);
 }
 
-@media (prefers-color-scheme: dark) {
-  .header {
-    background: rgba(26, 32, 44, 0.8);
-  }
-}
 
 .header-brand {
   display: flex;
@@ -192,12 +167,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary {
-  background-color: var(--pastel-blue);
-  color: var(--pastel-blue-dark);
+  background-color: var(--color-pink);
+  color: #5a1a2a;
 }
 
 .btn-primary:hover {
-  background-color: hsl(207, 75%, 85%);
+  background-color: #eaaabb;
 }
 
 .btn-secondary {
@@ -207,9 +182,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-secondary:hover {
-  background-color: hsl(220, 20%, 96%);
+  background-color: var(--color-pink-soft);
   color: var(--text-main);
-  border-color: hsl(220, 20%, 85%);
+  border-color: var(--color-pink);
 }
 
 /* Minimalist Header Navigation Links */

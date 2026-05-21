@@ -483,15 +483,15 @@ export default function App() {
                     {turmas.map((turma) => {
                       // Paleta por série: extrai o número inicial do nome (ex: "6ºA" → 6, "1ªA" → 1)
                       const gradeColors = {
-                        1: 'hsl(350, 100%, 92%)',
-                        2: 'hsl(270, 60%, 90%)',
-                        3: 'hsl(35, 100%, 88%)',
-                        4: 'hsl(145, 60%, 87%)',
-                        5: 'hsl(210, 80%, 90%)',
-                        6: 'hsl(55, 90%, 86%)',
-                        7: 'hsl(185, 70%, 88%)',
-                        8: 'hsl(310, 60%, 90%)',
-                        9: 'hsl(15, 100%, 90%)',
+                        1: '#FFDEE9',   // rosa claro
+                        2: '#E6E6FA',   // lavanda
+                        3: '#F2EBC4',   // creme
+                        4: '#97F294',   // verde menta
+                        5: '#A7D0D9',   // azul acinzentado
+                        6: '#FFFACD',   // amarelo claro
+                        7: '#F2BBC9',   // rosa pastel
+                        8: '#F2CA7E',   // âmbar
+                        9: '#FFF5F9',   // rosa ultra-suave
                       }
                       const match = turma.nome.match(/^(\d+)/)
                       const grade = match ? parseInt(match[1]) : 0
