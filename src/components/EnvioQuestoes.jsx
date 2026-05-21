@@ -6,6 +6,7 @@ const EMPTY_FORM = {
   turma: '', 
   data: '', 
   enunciado: '', 
+  imagem_base64: '',
   numAlternativas: '4', // default 4
   alternativas: { A: '', B: '', C: '', D: '', E: '' } 
 };
@@ -50,7 +51,8 @@ export default function EnvioQuestoes({ setView, professores, turmas, questoes, 
       data: form.data,
       enunciado: form.enunciado.trim(),
       num_alternativas: parseInt(form.numAlternativas, 10),
-      alternativas: form.alternativas
+      alternativas: form.alternativas,
+      imagem_base64: form.imagem_base64 || null
     });
     setForm(EMPTY_FORM);
     setErrors({});
@@ -220,6 +222,66 @@ export default function EnvioQuestoes({ setView, professores, turmas, questoes, 
                     style={{ ...inputStyle('enunciado'), resize: 'vertical', minHeight: '100px', fontFamily: 'inherit' }}
                   />
                   {errors.enunciado && <span style={{ color: '#ef4444', fontSize: '0.78rem' }}>{errors.enunciado}</span>}
+                </div>
+
+                {/* Imagem da Questão */}
+                <div>
+                  <label style={labelStyle}>Imagem da Questão <span style={{ color: '#94a3b8', fontWeight: 400 }}>(opcional)</span></label>
+                  {form.imagem_base64 ? (
+                    <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
+                      <img
+                        src={form.imagem_base64}
+                        alt="Preview"
+                        style={{ width: '100%', maxHeight: '220px', objectFit: 'contain', display: 'block', background: '#f8fafc' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm(p => ({ ...p, imagem_base64: '' }))}
+                        style={{
+                          position: 'absolute', top: '8px', right: '8px',
+                          background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%',
+                          width: '28px', height: '28px', cursor: 'pointer', color: 'white',
+                          fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                        title="Remover imagem"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <label style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      gap: '0.5rem', border: '2px dashed #cbd5e1', borderRadius: '12px',
+                      padding: '1.5rem', cursor: 'pointer', background: '#f8fafc',
+                      transition: 'border-color 0.2s'
+                    }}
+                    onMouseOver={e => e.currentTarget.style.borderColor = '#0ea5e9'}
+                    onMouseOut={e => e.currentTarget.style.borderColor = '#cbd5e1'}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#94a3b8" viewBox="0 0 24 24">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                      </svg>
+                      <span style={{ fontSize: '0.88rem', color: '#64748b', fontWeight: 600 }}>Clique para selecionar uma imagem</span>
+                      <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>PNG, JPG ou JPEG — máx. 2MB</span>
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/jpg"
+                        style={{ display: 'none' }}
+                        onChange={e => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            alert('Imagem muito grande! O tamanho máximo é 2MB.');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = ev => setForm(p => ({ ...p, imagem_base64: ev.target.result }));
+                          reader.readAsDataURL(file);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
 
                 {/* Alternativas Dinamicas */}
