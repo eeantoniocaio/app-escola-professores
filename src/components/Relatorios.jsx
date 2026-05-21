@@ -13,18 +13,59 @@ export default function Relatorios({ setView, records, events, professores, tipo
   // Derive solicitantes
   const solicitantes = [...new Set(events.map(e => e.quemSolicitou).filter(Boolean))]
 
-  const filteredRecords = records.filter(rec => {
-    const associatedEvent = events.find(e => e.id === rec.eventId)
+  // ── Build unified rows ────────────────────────────────────────────────────
+  // Source 1: evidence records (as before)
+  const recordRows = records.map(rec => {
+    const ev = events.find(e => e.id === rec.eventId)
+    return {
+      id: `rec-${rec.id}`,
+      teacher: rec.teacher,
+      evento: ev ? ev.evento : '-',
+      eventId: rec.eventId,
+      tipo: rec.tipo || '-',
+      date: rec.date,
+      solicitante: ev ? ev.quemSolicitou : '-',
+      dataSolicitacao: ev ? ev.dataSolicitacao : null,
+      prazoEntrega: ev ? ev.dataEntrega : null,
+      source: 'record',
+      foraDoPlaz: false,
+    }
+  })
 
-    const matchEvent = filterEvent === 'todos' || rec.eventId?.toString() === filterEvent
-    const matchTeacher = filterTeacher === 'todos' || rec.teacher === filterTeacher
-    const matchDate = !filterDate || rec.date === filterDate
-    
-    const matchSolicitante = filterSolicitante === 'todos' || (associatedEvent && associatedEvent.quemSolicitou === filterSolicitante)
-    const matchDataSolicitacao = !filterDataSolicitacao || (associatedEvent && associatedEvent.dataSolicitacao === filterDataSolicitacao)
-    const matchPrazoEntrega = !filterPrazoEntrega || (associatedEvent && associatedEvent.dataEntrega === filterPrazoEntrega)
-    
-    const matchTipo = filterTipo === 'todos' || rec.tipo === filterTipo
+  // Source 2: late-delivery entries from events
+  const lateRows = []
+  events.forEach(ev => {
+    if (ev.entregouForaDoPrazo && ev.entregouForaDoPrazo.length > 0) {
+      ev.entregouForaDoPrazo.forEach(teacher => {
+        // Only add if there is NO evidence record for this teacher+event already
+        // (We always add it — it's a separate annotation, not a duplicate)
+        lateRows.push({
+          id: `late-${ev.id}-${teacher}`,
+          teacher,
+          evento: ev.evento,
+          eventId: ev.id,
+          tipo: '⚠️ Entrega fora do prazo',
+          date: ev.dataEntrega || null,   // use the deadline as reference date
+          solicitante: ev.quemSolicitou || '-',
+          dataSolicitacao: ev.dataSolicitacao || null,
+          prazoEntrega: ev.dataEntrega || null,
+          source: 'late',
+          foraDoPlaz: true,
+        })
+      })
+    }
+  })
+
+  const allRows = [...recordRows, ...lateRows]
+
+  const filteredRows = allRows.filter(row => {
+    const matchEvent = filterEvent === 'todos' || row.eventId?.toString() === filterEvent
+    const matchTeacher = filterTeacher === 'todos' || row.teacher === filterTeacher
+    const matchDate = !filterDate || row.date === filterDate
+    const matchSolicitante = filterSolicitante === 'todos' || row.solicitante === filterSolicitante
+    const matchDataSolicitacao = !filterDataSolicitacao || row.dataSolicitacao === filterDataSolicitacao
+    const matchPrazoEntrega = !filterPrazoEntrega || row.prazoEntrega === filterPrazoEntrega
+    const matchTipo = filterTipo === 'todos' || row.tipo === filterTipo
 
     return matchEvent && matchTeacher && matchDate && matchSolicitante && matchDataSolicitacao && matchPrazoEntrega && matchTipo
   })
@@ -44,18 +85,15 @@ export default function Relatorios({ setView, records, events, professores, tipo
   const exportCSV = () => {
     const headers = ['Professor(a)', 'Evento', 'Tipo', 'Data', 'Solicitante', 'Solicitado Em', 'Prazo de Entrega'];
     
-    const rows = filteredRecords.map(rec => {
-      const ev = events.find(e => e.id === rec.eventId);
-      return [
-        `"${rec.teacher}"`,
-        `"${ev ? ev.evento : '-'}"`,
-        `"${rec.tipo}"`,
-        `"${new Date(rec.date + 'T00:00:00').toLocaleDateString('pt-BR')}"`,
-        `"${ev && ev.quemSolicitou ? ev.quemSolicitou : '-'}"`,
-        `"${ev && ev.dataSolicitacao ? new Date(ev.dataSolicitacao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`,
-        `"${ev && ev.dataEntrega ? new Date(ev.dataEntrega + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`
-      ].join(',');
-    });
+    const rows = filteredRows.map(row => [
+      `"${row.teacher}"`,
+      `"${row.evento}"`,
+      `"${row.tipo}"`,
+      `"${row.date ? new Date(row.date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`,
+      `"${row.solicitante}"`,
+      `"${row.dataSolicitacao ? new Date(row.dataSolicitacao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`,
+      `"${row.prazoEntrega ? new Date(row.prazoEntrega + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}"`
+    ].join(','));
     
     const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows].join('\n');
     const encodedUri = encodeURI(csvContent);
@@ -161,7 +199,7 @@ export default function Relatorios({ setView, records, events, professores, tipo
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }} className="print-area">
-        <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Resultados ({filteredRecords.length})</h3>
+        <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Resultados ({filteredRows.length})</h3>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button onClick={exportCSV} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -192,18 +230,20 @@ export default function Relatorios({ setView, records, events, professores, tipo
             </tr>
           </thead>
           <tbody>
-            {filteredRecords.length > 0 ? filteredRecords.map(rec => {
-              const ev = events.find(e => e.id === rec.eventId)
-              return (
-                <tr key={rec.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                  <td style={{ padding: '0.75rem' }}>{rec.teacher}</td>
-                  <td style={{ padding: '0.75rem' }}>{ev ? ev.evento : '-'}</td>
-                  <td style={{ padding: '0.75rem' }}>{rec.tipo}</td>
-                  <td style={{ padding: '0.75rem' }}>{new Date(rec.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                  <td style={{ padding: '0.75rem' }}>{ev ? ev.quemSolicitou : '-'}</td>
+            {filteredRows.length > 0 ? filteredRows.map(row => (
+                <tr key={row.id} style={{ borderBottom: '1px solid var(--border-light)', background: row.foraDoPlaz ? '#fff5f7' : 'transparent' }}>
+                  <td style={{ padding: '0.75rem', fontWeight: row.foraDoPlaz ? 600 : 400 }}>{row.teacher}</td>
+                  <td style={{ padding: '0.75rem' }}>{row.evento}</td>
+                  <td style={{ padding: '0.75rem' }}>
+                    {row.foraDoPlaz
+                      ? <span style={{ background: '#FFDEE9', color: '#8B3A52', padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, whiteSpace: 'nowrap' }}>⚠️ Entrega fora do prazo</span>
+                      : row.tipo
+                    }
+                  </td>
+                  <td style={{ padding: '0.75rem' }}>{row.date ? new Date(row.date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
+                  <td style={{ padding: '0.75rem' }}>{row.solicitante}</td>
                 </tr>
-              )
-            }) : (
+            )) : (
               <tr>
                 <td colSpan="5" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   Nenhum registro encontrado com estes filtros.
