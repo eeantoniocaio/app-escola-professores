@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 
 export default function Registros({ setView, records, events, tiposEvidencia, professores = [], gestores = [], addRecord, updateRecord, deleteRecord }) {
   const [filterTeacher, setFilterTeacher] = useState('todos')
+  const [filterGestor, setFilterGestor] = useState('todos')
   const [filterDate, setFilterDate] = useState('')
   const [filterTipo, setFilterTipo] = useState('todos')
 
@@ -114,9 +115,10 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
   // Filter logic
   const filteredRecords = records.filter(rec => {
     const matchTeacher = filterTeacher === 'todos' || rec.teacher === filterTeacher
+    const matchGestor = filterGestor === 'todos' || rec.gestor === filterGestor
     const matchDate = !filterDate || rec.date === filterDate
     const matchTipo = filterTipo === 'todos' || rec.tipo === filterTipo
-    return matchTeacher && matchDate && matchTipo
+    return matchTeacher && matchGestor && matchDate && matchTipo
   })
 
   const safeFormatDate = (dateStr) => {
@@ -132,10 +134,11 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
 
   const total = records.length
 
-  const hasActiveFilters = filterTeacher !== 'todos' || filterDate !== '' || filterTipo !== 'todos'
+  const hasActiveFilters = filterTeacher !== 'todos' || filterGestor !== 'todos' || filterDate !== '' || filterTipo !== 'todos'
 
   const clearFilters = () => {
     setFilterTeacher('todos')
+    setFilterGestor('todos')
     setFilterDate('')
     setFilterTipo('todos')
   }
@@ -178,6 +181,24 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
               <option value="todos">Todos os professores</option>
               {professores.map(t => (
                 <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Gestor filter */}
+          <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+              🛡️ Gestor(a)
+            </label>
+            <select
+              className="select-filter"
+              style={{ width: '100%' }}
+              value={filterGestor}
+              onChange={(e) => setFilterGestor(e.target.value)}
+            >
+              <option value="todos">Todos os gestores</option>
+              {gestores.map(g => (
+                <option key={g} value={g}>{g}</option>
               ))}
             </select>
           </div>
