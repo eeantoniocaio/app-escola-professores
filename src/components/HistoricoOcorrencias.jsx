@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
-
+import { exportOcorrenciasCSV, exportOcorrenciasPDF } from '../utils/exportOcorrencias'
 export default function HistoricoOcorrencias({ setView, ocorrencias, professores, turmas, deleteOcorrencia, updateOcorrencia, userRole }) {
   const [hoveredBtn, setHoveredBtn] = useState(null)
   const [selectedOcorrencia, setSelectedOcorrencia] = useState(null)
@@ -48,6 +48,32 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
           <p style={{ color: '#94a3b8', margin: 0, marginLeft: '2.5rem', fontSize: '0.9rem' }}>
             {filtered.length} ocorrência{filtered.length !== 1 ? 's' : ''} registrada{filtered.length !== 1 ? 's' : ''}
           </p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+          <button 
+            onClick={() => exportOcorrenciasCSV(filtered)} 
+            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, background: '#fff', border: '1px solid #f2bbc9', color: '#8b3a52', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#fff5f9'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            Exportar CSV
+          </button>
+          <button 
+            onClick={() => exportOcorrenciasPDF(filtered, { filterProf, filterDisciplina, filterTurma, filterAluno, filterData })} 
+            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, background: '#f2bbc9', border: 'none', color: '#8b3a52', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#e6aebc'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#f2bbc9'; }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+              <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+            </svg>
+            Gerar PDF
+          </button>
         </div>
       </div>
 
