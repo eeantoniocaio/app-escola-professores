@@ -100,18 +100,30 @@ export default function Configuracoes({
       const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim() !== '')
       if (lines.length < 2) return
       const sep = lines[0].includes(';') ? ';' : ','
-      let headerIdx = -1, nomeIdx = -1
+      let headerIdx = -1, nomeIdx = -1, situacaoIdx = -1
       for (let i = 0; i < lines.length; i++) {
         const cols = lines[i].split(sep).map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase())
         const idx = cols.indexOf('nome do aluno')
-        if (idx !== -1) { headerIdx = i; nomeIdx = idx; break }
+        if (idx !== -1) { 
+          headerIdx = i; 
+          nomeIdx = idx; 
+          situacaoIdx = cols.findIndex(c => c === 'situação' || c === 'situacao')
+          break 
+        }
       }
       if (nomeIdx === -1) { alert('Coluna "Nome do Aluno" não encontrada no CSV.'); e.target.value = ''; return }
       const novos = []
+      const situacoesIgnoradas = ['TRAN', 'REMA', 'BXTR']
       for (let i = headerIdx + 1; i < lines.length; i++) {
         const cols = lines[i].split(sep).map(c => c.replace(/^["']|["']$/g, '').trim())
         const name = cols[nomeIdx] || ''
         if (!name) continue
+        
+        if (situacaoIdx !== -1) {
+          const situacao = (cols[situacaoIdx] || '').toUpperCase()
+          if (situacoesIgnoradas.includes(situacao)) continue
+        }
+
         if (!existingNames.has(name.toLowerCase())) { novos.push(name); existingNames.add(name.toLowerCase()) }
       }
       if (novos.length > 0) importAlunosTurma(turmaNome, novos)
