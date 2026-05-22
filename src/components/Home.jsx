@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import BoasPraticasModal from './BoasPraticasModal';
 
-export default function Home({ setView, openEventModal, openOcorrenciaModal, userRole }) {
+export default function Home({ setView, openEventModal, openOcorrenciaModal, userRole, professores = [], turmas = [] }) {
+  const [isBoasPraticasOpen, setIsBoasPraticasOpen] = useState(false);
+
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <div className="welcome-section" style={{ marginBottom: '3rem', textAlign: 'center' }}>
@@ -209,7 +212,38 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
           <span style={{ fontSize: '2.5rem' }}>📝</span>
           <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center', color: '#1a1a1a' }}>Envio de questões para recuperação de ausências</span>
         </button>
+
+        <button 
+          onClick={() => setIsBoasPraticasOpen(true)}
+          style={{ 
+            padding: '2rem', 
+            borderRadius: 'var(--radius-lg)', 
+            border: 'none', 
+            background: '#8B5CF6', 
+            color: 'white',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+            width: '200px',
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'transform 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <span style={{ fontSize: '2.5rem' }}>🌟</span>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center', color: 'white' }}>Boas Práticas</span>
+        </button>
       </div>
+
+      <BoasPraticasModal 
+        isOpen={isBoasPraticasOpen} 
+        onClose={() => setIsBoasPraticasOpen(false)} 
+        professores={professores}
+        turmas={turmas}
+      />
     </div>
   );
 }

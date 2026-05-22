@@ -425,7 +425,14 @@ export default function App() {
         ) : (
           <>
             {view === 'home' && (
-              <Home setView={setView} openEventModal={handleOpenEventModal} openOcorrenciaModal={() => setShowOcorrenciaModal(true)} userRole={userRole} />
+              <Home 
+                setView={setView} 
+                openEventModal={handleOpenEventModal} 
+                openOcorrenciaModal={() => setShowOcorrenciaModal(true)} 
+                userRole={userRole} 
+                professores={professores}
+                turmas={turmas}
+              />
             )}
             
             {view === 'eventos' && userRole === 'gestao' && (
