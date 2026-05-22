@@ -5,6 +5,7 @@ export default function Login({ setSession }) {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState(null)
   const [message, setMessage] = useState(null)
@@ -91,14 +92,28 @@ export default function Login({ setSession }) {
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--text-color)' }}>Senha</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Sua senha"
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ccc' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Sua senha"
+                style={{ width: '100%', padding: '0.75rem', paddingRight: '2.5rem', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ 
+                  position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', 
+                  background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: '1.1rem'
+                }}
+                title={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
           <button 
             type="submit" 
