@@ -312,6 +312,17 @@ export default function App() {
     }
   }
 
+  const handleRemoveAlunosPorNome = async (turmaNome, nomes) => {
+    if (!nomes || nomes.length === 0) return
+    const { error } = await supabase.from('alunos').delete().eq('turma', turmaNome).in('nome', nomes)
+    if (!error) {
+      setAlunos(prev => prev.filter(a => !(a.turma === turmaNome && nomes.includes(a.nome))))
+      showToast(`${nomes.length} aluno(s) removido(s).`, 'info')
+    } else {
+      showToast('Erro ao remover alunos', 'error')
+    }
+  }
+
   // Ocorrências
   const handleAddOcorrencia = async (novaOcorrencia) => {
     const { data, error } = await supabase.from('ocorrencias').insert([novaOcorrencia]).select()
@@ -601,6 +612,7 @@ export default function App() {
                 alunos={alunos}
                 importAlunosTurma={handleImportAlunosTurma}
                 clearAlunosTurma={handleClearAlunosTurma}
+                removeAlunosPorNome={handleRemoveAlunosPorNome}
               />
             )}
           </>

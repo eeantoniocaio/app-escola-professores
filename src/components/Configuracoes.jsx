@@ -15,7 +15,7 @@ export default function Configuracoes({
   professores, addProfessor, removeProfessor, importProfessores,
   gestores, addGestor, removeGestor,
   turmas, addTurma, removeTurma, updateTurmaLink,
-  alunos, importAlunosTurma, clearAlunosTurma
+  alunos, importAlunosTurma, clearAlunosTurma, removeAlunosPorNome
 }) {
   const [activeSection, setActiveSection] = useState(null)
   const [novoTipoEvento, setNovoTipoEvento] = useState('')
@@ -24,6 +24,24 @@ export default function Configuracoes({
   const [novoGestor, setNovoGestor] = useState('')
   const [novaTurma, setNovaTurma] = useState('')
   const [editingLink, setEditingLink] = useState({})
+  const [selectedAlunos, setSelectedAlunos] = useState({})
+
+  const toggleAlunoSelection = (turmaId, nome) => {
+    setSelectedAlunos(prev => {
+      const current = prev[turmaId] || []
+      if (current.includes(nome)) return { ...prev, [turmaId]: current.filter(n => n !== nome) }
+      return { ...prev, [turmaId]: [...current, nome] }
+    })
+  }
+
+  const handleDeleteSelectedAlunos = (turmaId, turmaNome) => {
+    const nomes = selectedAlunos[turmaId] || []
+    if (nomes.length === 0) return
+    if (window.confirm(`Remover ${nomes.length} aluno(s) selecionado(s) de ${turmaNome}?`)) {
+       removeAlunosPorNome(turmaNome, nomes)
+       setSelectedAlunos(prev => ({ ...prev, [turmaId]: [] }))
+    }
+  }
 
   const handleAddTipoEvento = (e) => {
     e.preventDefault()
@@ -203,6 +221,8 @@ export default function Configuracoes({
               {turmas.map(turma => {
                 const currentLink = editingLink[turma.id] !== undefined ? editingLink[turma.id] : (turma.link || '')
                 const alunosDaTurma = (alunos || []).filter(a => a.turma === turma.nome)
+                const uniqueNames = Array.from(new Set(alunosDaTurma.map(a => a.nome.trim()))).sort()
+                const selectedForTurma = selectedAlunos[turma.id] || []
                 return (
                   <div key={turma.id} style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', border: '1px solid var(--border-light)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -219,8 +239,8 @@ export default function Configuracoes({
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>👥 Alunos:</span>
-                      <span style={{ fontSize: '0.82rem', fontWeight: 700, background: alunosDaTurma.length > 0 ? '#dcfce7' : '#f1f5f9', color: alunosDaTurma.length > 0 ? '#166534' : '#64748b', borderRadius: '20px', padding: '0.2rem 0.65rem' }}>
-                        {alunosDaTurma.length} aluno{alunosDaTurma.length !== 1 ? 's' : ''}
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, background: uniqueNames.length > 0 ? '#dcfce7' : '#f1f5f9', color: uniqueNames.length > 0 ? '#166534' : '#64748b', borderRadius: '20px', padding: '0.2rem 0.65rem' }}>
+                        {uniqueNames.length} aluno{uniqueNames.length !== 1 ? 's' : ''}
                       </span>
                       <label style={{ cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: '#6366f1', display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#ede9fe', borderRadius: '8px', padding: '0.3rem 0.65rem' }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
@@ -230,16 +250,34 @@ export default function Configuracoes({
                         Importar CSV
                         <input type="file" accept=".csv,.txt" onChange={e => handleCSVAlunosTurma(turma.nome, e)} style={{ display: 'none' }} />
                       </label>
-                      {alunosDaTurma.length > 0 && (
+                      {uniqueNames.length > 0 && (
                         <button onClick={() => clearAlunosTurma(turma.nome)}
                           style={{ fontSize: '0.78rem', background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: '8px', padding: '0.3rem 0.65rem', cursor: 'pointer', fontWeight: 600 }}>
                           ✕ Limpar lista
                         </button>
                       )}
                     </div>
-                    {alunosDaTurma.length > 0 && (
-                      <div style={{ fontSize: '0.78rem', color: '#475569', background: 'white', borderRadius: '6px', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', maxHeight: '80px', overflowY: 'auto' }}>
-                        {alunosDaTurma.map((a, i) => <span key={a.id}>{a.nome}{i < alunosDaTurma.length - 1 ? ', ' : ''}</span>)}
+                    {uniqueNames.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ fontSize: '0.85rem', color: '#475569', background: 'white', borderRadius: '6px', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', maxHeight: '150px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                          {uniqueNames.map(nome => (
+                            <label key={nome} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.2rem 0' }}>
+                              <input 
+                                type="checkbox" 
+                                checked={selectedForTurma.includes(nome)} 
+                                onChange={() => toggleAlunoSelection(turma.id, nome)}
+                                style={{ margin: 0, cursor: 'pointer' }}
+                              />
+                              {nome}
+                            </label>
+                          ))}
+                        </div>
+                        {selectedForTurma.length > 0 && (
+                          <button onClick={() => handleDeleteSelectedAlunos(turma.id, turma.nome)}
+                            style={{ fontSize: '0.78rem', background: 'none', border: '1px solid #fecaca', color: '#dc2626', borderRadius: '8px', padding: '0.3rem 0.65rem', cursor: 'pointer', fontWeight: 600, alignSelf: 'flex-start' }}>
+                            Excluir selecionados ({selectedForTurma.length})
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
