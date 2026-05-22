@@ -380,9 +380,7 @@ export default function App() {
     <div className="app-container">
       <header className="header">
         <div className="header-brand" onClick={() => setView('home')}>
-          <div className="logo-icon">
-            <img src={logoUrl} alt="Logo" className="logo-img" />
-          </div>
+          <img src={logoUrl} alt="Logo" style={{ height: '44px', objectFit: 'contain' }} />
           <div className="brand-title">
             <h1>Portal de Evidências</h1>
             <p>E.E. Antônio Caio — Coordenação Pedagógica</p>
