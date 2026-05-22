@@ -1232,3 +1232,128 @@ textarea.form-control {
   border-color: var(--pastel-pink-dark);
 }
 
+/* Responsive / Mobile Adjustments */
+.hamburger-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  z-index: 101;
+}
+
+.hamburger-icon {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-main);
+  position: relative;
+  transition: var(--transition-smooth);
+}
+
+.hamburger-icon::before,
+.hamburger-icon::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-main);
+  left: 0;
+  transition: var(--transition-smooth);
+}
+
+.hamburger-icon::before { top: -6px; }
+.hamburger-icon::after { top: 6px; }
+
+.hamburger-icon.open { background-color: transparent; }
+.hamburger-icon.open::before { top: 0; transform: rotate(45deg); }
+.hamburger-icon.open::after { top: 0; transform: rotate(-45deg); }
+
+@media (max-width: 992px) {
+  .hamburger-btn {
+    display: block;
+  }
+  
+  .header-actions {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 245, 249, 0.98);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-light);
+    padding: 1rem 2rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .header-actions.mobile-open {
+    display: flex;
+  }
+
+  .nav-divider {
+    width: 100% !important;
+    height: 1px !important;
+    margin: 0.5rem 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .eventos-grid, 
+  .records-grid,
+  .quick-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .record-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    margin: 1rem;
+    max-height: 85vh;
+  }
+
+  .modal-body {
+    padding: 1.25rem;
+  }
+
+  .modal-header, 
+  .modal-footer {
+    padding: 1.25rem;
+  }
+
+  .search-input-wrapper {
+    max-width: 100%;
+  }
+
+  .controls-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters-group {
+    flex-direction: column;
+  }
+
+  .home-buttons-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    padding: 1rem;
+  }
+
+  .brand-title h1 {
+    font-size: 1.1rem;
+  }
+  
+  .brand-title p {
+    font-size: 0.65rem;
+  }
+}

@@ -21,6 +21,7 @@ export default function App() {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false)
   const [eventToEdit, setEventToEdit] = useState(null)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
   const [events, setEvents] = useState([])
   const [records, setRecords] = useState([])
@@ -376,44 +377,48 @@ export default function App() {
           </div>
         </div>
         
-        <div className="header-actions" style={{ gap: '0.25rem' }}>
-          <button className={`nav-link ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>
+        <button className="hamburger-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="Alternar menu">
+          <span className={`hamburger-icon ${isMobileMenuOpen ? 'open' : ''}`}></span>
+        </button>
+
+        <div className={`header-actions ${isMobileMenuOpen ? 'mobile-open' : ''}`} style={{ gap: '0.25rem' }}>
+          <button className={`nav-link ${view === 'home' ? 'active' : ''}`} onClick={() => { setView('home'); setIsMobileMenuOpen(false); }}>
             Início
           </button>
           {userRole === 'gestao' && (
             <>
-              <button className={`nav-link ${view === 'eventos' ? 'active' : ''}`} onClick={() => setView('eventos')}>
+              <button className={`nav-link ${view === 'eventos' ? 'active' : ''}`} onClick={() => { setView('eventos'); setIsMobileMenuOpen(false); }}>
                 Eventos
               </button>
-              <button className={`nav-link ${view === 'registros' ? 'active' : ''}`} onClick={() => setView('registros')}>
+              <button className={`nav-link ${view === 'registros' ? 'active' : ''}`} onClick={() => { setView('registros'); setIsMobileMenuOpen(false); }}>
                 Registros
               </button>
-              <button className={`nav-link ${view === 'relatorios' ? 'active' : ''}`} onClick={() => setView('relatorios')}>
+              <button className={`nav-link ${view === 'relatorios' ? 'active' : ''}`} onClick={() => { setView('relatorios'); setIsMobileMenuOpen(false); }}>
                 Relatórios
               </button>
-              <button className={`nav-link ${view === 'historico-ocorrencias' ? 'active' : ''}`} onClick={() => setView('historico-ocorrencias')}>
+              <button className={`nav-link ${view === 'historico-ocorrencias' ? 'active' : ''}`} onClick={() => { setView('historico-ocorrencias'); setIsMobileMenuOpen(false); }}>
                 Histórico de Ocorrências
               </button>
             </>
           )}
-          <button className={`nav-link ${view === 'mapa-de-classe' ? 'active' : ''}`} onClick={() => setView('mapa-de-classe')}>
+          <button className={`nav-link ${view === 'mapa-de-classe' ? 'active' : ''}`} onClick={() => { setView('mapa-de-classe'); setIsMobileMenuOpen(false); }}>
             Mapa de Classe
           </button>
-          <button className="nav-link" onClick={() => setShowOcorrenciaModal(true)}>
+          <button className="nav-link" onClick={() => { setShowOcorrenciaModal(true); setIsMobileMenuOpen(false); }}>
             Ocorrências
           </button>
-          <button className={`nav-link ${view === 'envio-questoes' ? 'active' : ''}`} onClick={() => setView('envio-questoes')}>
+          <button className={`nav-link ${view === 'envio-questoes' ? 'active' : ''}`} onClick={() => { setView('envio-questoes'); setIsMobileMenuOpen(false); }}>
             Reposições
           </button>
           
-          <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
+          <div className="nav-divider" style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
           
           {userRole === 'gestao' && (
-            <button className={`nav-link ${view === 'configuracoes' ? 'active' : ''}`} onClick={() => setView('configuracoes')} title="Configurações" style={{ fontSize: '1.2rem', padding: '0.4rem' }}>
+            <button className={`nav-link ${view === 'configuracoes' ? 'active' : ''}`} onClick={() => { setView('configuracoes'); setIsMobileMenuOpen(false); }} title="Configurações" style={{ fontSize: '1.2rem', padding: '0.4rem' }}>
               ⚙️
             </button>
           )}
-          <button className="nav-link" onClick={() => supabase.auth.signOut()} title="Sair" style={{ fontSize: '1.2rem', padding: '0.4rem' }}>
+          <button className="nav-link" onClick={() => { supabase.auth.signOut(); setIsMobileMenuOpen(false); }} title="Sair" style={{ fontSize: '1.2rem', padding: '0.4rem' }}>
             🚪
           </button>
         </div>
