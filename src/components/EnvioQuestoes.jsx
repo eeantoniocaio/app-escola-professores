@@ -5,6 +5,7 @@ const EMPTY_FORM = {
   disciplina: '', 
   turma: '', 
   data: '', 
+  habilidade: '',
   enunciado: '', 
   imagem_base64: '',
   numAlternativas: '4', // default 4
@@ -25,6 +26,7 @@ export default function EnvioQuestoes({ setView, professores, turmas, questoes, 
     if (!form.disciplina.trim()) e.disciplina = 'Campo obrigatório';
     if (!form.turma) e.turma = 'Campo obrigatório';
     if (!form.data) e.data = 'Campo obrigatório';
+    if (!form.habilidade?.trim()) e.habilidade = 'Campo obrigatório';
     if (!form.enunciado.trim()) e.enunciado = 'Campo obrigatório';
     
     // Validar alternativas baseadas no número selecionado
@@ -49,6 +51,7 @@ export default function EnvioQuestoes({ setView, professores, turmas, questoes, 
       disciplina: form.disciplina.trim(),
       turma: form.turma,
       data: form.data,
+      habilidade: form.habilidade.trim(),
       enunciado: form.enunciado.trim(),
       num_alternativas: parseInt(form.numAlternativas, 10),
       alternativas: form.alternativas,
@@ -117,7 +120,10 @@ export default function EnvioQuestoes({ setView, professores, turmas, questoes, 
             <div key={q.id} style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                 <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b', paddingRight: '2rem' }}>{q.disciplina}</span>
-                <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.turma}</span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {q.habilidade && <span style={{ background: '#fef08a', color: '#854d0e', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.habilidade}</span>}
+                  <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.turma}</span>
+                </div>
               </div>
               <button 
                 onClick={() => deleteQuestao && deleteQuestao(q.id)}
@@ -209,6 +215,13 @@ export default function EnvioQuestoes({ setView, professores, turmas, questoes, 
                       <option value="5">5 alternativas</option>
                     </select>
                   </div>
+                </div>
+
+                {/* Habilidade */}
+                <div>
+                  <label style={labelStyle}>Habilidade <span style={{ color: '#ef4444' }}>*</span></label>
+                  <input type="text" placeholder="Ex: EF06MA02" value={form.habilidade} onChange={e => setForm(p => ({ ...p, habilidade: e.target.value }))} style={inputStyle('habilidade')} />
+                  {errors.habilidade && <span style={{ color: '#ef4444', fontSize: '0.78rem' }}>{errors.habilidade}</span>}
                 </div>
 
                 {/* Enunciado */}
