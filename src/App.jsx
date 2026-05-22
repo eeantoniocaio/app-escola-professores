@@ -75,7 +75,7 @@ export default function App() {
 
   // Fetch initial data from Supabase
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const fetchData = async () => {
       setLoading(true)
       try {
@@ -129,7 +129,7 @@ export default function App() {
       }
     }
     fetchData()
-  }, [session])
+  }, [session?.user?.id])
 
   // Realtime Notifications for Ocorrencias (Gestão)
   useEffect(() => {
