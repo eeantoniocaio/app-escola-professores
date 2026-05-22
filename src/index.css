@@ -1301,7 +1301,13 @@ textarea.form-control {
 
 @media (max-width: 768px) {
   .main-content {
-    padding: 1.5rem 1rem;
+    padding: 1rem 0.5rem;
+  }
+
+  .event-card,
+  .record-card,
+  .ocorrencia-card {
+    padding: 1rem !important;
   }
 
   .eventos-grid, 

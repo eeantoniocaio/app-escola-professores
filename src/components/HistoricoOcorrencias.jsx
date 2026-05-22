@@ -32,7 +32,7 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
   const labelStyle = { display: 'block', fontWeight: 600, fontSize: '0.85rem', color: '#475569', marginBottom: '0.35rem' }
 
   return (
-    <div style={{ animation: 'fadeIn 0.4s ease-out', padding: '2rem' }}>
+    <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -130,6 +130,7 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
             const isGestao = userRole === 'gestao'
             return (
             <div key={o.id} 
+              className="ocorrencia-card"
               onClick={() => {
                 if (isGestao) {
                   setSelectedOcorrencia(o)

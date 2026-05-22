@@ -479,7 +479,7 @@ export default function App() {
             )}
 
             {view === 'mapa-de-classe' && (
-              <div style={{ animation: 'fadeIn 0.5s ease-out', padding: '2rem' }}>
+              <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
                 <div style={{ marginBottom: '2rem' }}>
                   <h2 style={{ fontSize: '2rem', margin: 0, marginBottom: '0.5rem' }}>Mapa de Classe</h2>
                   <p style={{ color: 'var(--text-muted)', margin: 0 }}>Selecione uma turma para visualizar o mapa de assentos</p>
