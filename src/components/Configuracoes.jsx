@@ -25,6 +25,14 @@ export default function Configuracoes({
   const [novaTurma, setNovaTurma] = useState('')
   const [editingLink, setEditingLink] = useState({})
   const [selectedAlunos, setSelectedAlunos] = useState({})
+  const [novoAlunoPorTurma, setNovoAlunoPorTurma] = useState({})
+
+  const handleAddAlunoIndividual = (turmaNome) => {
+    const nome = novoAlunoPorTurma[turmaNome]
+    if (!nome || !nome.trim()) return
+    importAlunosTurma(turmaNome, [nome.trim().toUpperCase()])
+    setNovoAlunoPorTurma(prev => ({ ...prev, [turmaNome]: '' }))
+  }
 
   const toggleAlunoSelection = (turmaId, nome) => {
     setSelectedAlunos(prev => {
@@ -257,6 +265,26 @@ export default function Configuracoes({
                         </button>
                       )}
                     </div>
+                    
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="Nome do aluno..." 
+                        value={novoAlunoPorTurma[turma.nome] || ''}
+                        onChange={e => setNovoAlunoPorTurma(prev => ({ ...prev, [turma.nome]: e.target.value }))}
+                        onKeyDown={e => { if(e.key === 'Enter') handleAddAlunoIndividual(turma.nome) }}
+                        style={{ flex: 1, margin: 0, fontSize: '0.85rem', padding: '0.4rem 0.6rem' }}
+                      />
+                      <button 
+                        className="btn btn-primary" 
+                        onClick={() => handleAddAlunoIndividual(turma.nome)}
+                        style={{ margin: 0, padding: '0.4rem 0.75rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+
                     {uniqueNames.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <div style={{ fontSize: '0.85rem', color: '#475569', background: 'white', borderRadius: '6px', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', maxHeight: '150px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
