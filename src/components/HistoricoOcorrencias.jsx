@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo } from 'react'
 import { exportOcorrenciasCSV, exportOcorrenciasPDF } from '../utils/exportOcorrencias'
+import { Book, Calendar, CheckCircle2, Clock, AlertTriangle, User, Zap, Shield, ClipboardList, X, ArrowLeft, Download, FileText, Trash2, Check } from 'lucide-react'
+
 export default function HistoricoOcorrencias({ setView, ocorrencias, professores, turmas, deleteOcorrencia, updateOcorrencia, userRole }) {
-  const [hoveredBtn, setHoveredBtn] = useState(null)
   const [selectedOcorrencia, setSelectedOcorrencia] = useState(null)
   const [intervencaoText, setIntervencaoText] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('Em aberto')
@@ -23,67 +24,55 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
     return true
   }), [ocorrencias, filterProf, filterDisciplina, filterTurma, filterAluno, filterData])
 
-  const inputStyle = (field) => ({
-    width: '100%', padding: '0.65rem 0.85rem', borderRadius: '10px',
-    border: `1.5px solid #e2e8f0`,
+  const inputStyle = {
+    width: '100%', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)',
+    border: '1px solid var(--border-light)',
     fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box',
-    backgroundColor: 'white', transition: 'border-color 0.2s'
-  })
+    backgroundColor: 'var(--bg-card)', transition: 'border-color 0.2s'
+  }
 
-  const labelStyle = { display: 'block', fontWeight: 600, fontSize: '0.85rem', color: '#475569', marginBottom: '0.35rem' }
+  const labelStyle = { display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }
 
   return (
     <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-            <button onClick={() => setView('home')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }} title="Voltar">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-              </svg>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
+            <button className="btn btn-secondary" onClick={() => setView('home')} style={{ padding: '0.5rem' }} title="Voltar">
+              <ArrowLeft size={20} />
             </button>
-            <h2 style={{ fontSize: '1.8rem', margin: 0, fontWeight: 800 }}>Histórico de Ocorrências</h2>
+            <h2 style={{ fontSize: '1.75rem', margin: 0, fontWeight: 700 }}>Histórico de Ocorrências</h2>
           </div>
-          <p style={{ color: '#94a3b8', margin: 0, marginLeft: '2.5rem', fontSize: '0.9rem' }}>
+          <p style={{ color: 'var(--text-muted)', margin: 0, marginLeft: '3.25rem', fontSize: '0.9rem' }}>
             {filtered.length} ocorrência{filtered.length !== 1 ? 's' : ''} registrada{filtered.length !== 1 ? 's' : ''}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
           <button 
+            className="btn btn-secondary"
             onClick={() => exportOcorrenciasCSV(filtered)} 
-            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, background: '#fff', border: '1px solid #f2bbc9', color: '#8b3a52', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#fff5f9'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
+            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-            </svg>
-            Exportar CSV
+            <Download size={16} /> Exportar CSV
           </button>
           <button 
+            className="btn btn-primary"
             onClick={() => exportOcorrenciasPDF(filtered, { filterProf, filterDisciplina, filterTurma, filterAluno, filterData })} 
-            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, background: '#f2bbc9', border: 'none', color: '#8b3a52', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#e6aebc'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#f2bbc9'; }}
+            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--color-primary-dark)' }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
-              <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
-            </svg>
-            Gerar PDF
+            <FileText size={16} /> Gerar PDF
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', background: 'white', padding: '1rem 1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', background: 'var(--bg-card)', padding: '1rem 1.25rem', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
         <div style={{ flex: '1 1 180px' }}>
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Professor(a)</label>
           <select value={filterProf} onChange={e => setFilterProf(e.target.value)}
-            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }}>
+            style={{ ...inputStyle, padding: '0.5rem 0.75rem', fontSize: '0.87rem' }}>
             <option value="">Todos</option>
             {professores && professores.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
@@ -92,13 +81,13 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Disciplina</label>
           <input type="text" placeholder="Ex: Matemática..." value={filterDisciplina}
             onChange={e => setFilterDisciplina(e.target.value)}
-            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
+            style={{ ...inputStyle, padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
         </div>
         {turmas && turmas.length > 0 && (
           <div style={{ flex: '1 1 130px' }}>
             <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Turma</label>
             <select value={filterTurma} onChange={e => { setFilterTurma(e.target.value); setFilterAluno(''); }}
-              style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }}>
+              style={{ ...inputStyle, padding: '0.5rem 0.75rem', fontSize: '0.87rem' }}>
               <option value="">Todas</option>
               {turmas.map(t => <option key={t.id} value={t.nome}>{t.nome}</option>)}
             </select>
@@ -108,17 +97,17 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Aluno</label>
           <input type="text" placeholder="Nome do aluno..." value={filterAluno}
             onChange={e => setFilterAluno(e.target.value)}
-            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
+            style={{ ...inputStyle, padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
         </div>
         <div style={{ flex: '1 1 140px' }}>
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Data</label>
           <input type="date" value={filterData} onChange={e => setFilterData(e.target.value)}
-            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
+            style={{ ...inputStyle, padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
         </div>
         {(filterProf || filterDisciplina || filterTurma || filterAluno || filterData) && (
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             <button onClick={() => { setFilterProf(''); setFilterDisciplina(''); setFilterTurma(''); setFilterAluno(''); setFilterData('') }}
-              style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '0.5rem 0.9rem', cursor: 'pointer', fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>
+              style={{ background: 'var(--bg-secondary)', border: 'none', borderRadius: 'var(--radius-sm)', padding: '0.5rem 0.9rem', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600 }}>
               ✕ Limpar
             </button>
           </div>
@@ -127,9 +116,9 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
-          <p style={{ color: '#94a3b8', fontSize: '1.05rem', fontWeight: 500 }}>Nenhuma ocorrência registrada.</p>
+        <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
+          <div style={{ color: 'var(--color-primary)', display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><ClipboardList size={48} /></div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', fontWeight: 500 }}>Nenhuma ocorrência registrada.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -138,16 +127,15 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
             const currentStatus = o.status || 'Em aberto'
             let statusStyles = {}
             if (currentStatus === 'Concluída') {
-              statusStyles = { bg: '#f0fdf4', border: '#22c55e', text: '#15803d' }
+              statusStyles = { bg: 'var(--color-success-bg)', border: 'var(--color-success)', text: 'var(--color-success)', icon: <CheckCircle2 size={14} /> }
             } else if (currentStatus === 'Em andamento') {
-              statusStyles = { bg: '#fff7ed', border: '#f97316', text: '#c2410c' }
+              statusStyles = { bg: 'var(--color-warning-bg)', border: 'var(--color-warning)', text: 'var(--color-warning)', icon: <Clock size={14} /> }
             } else {
-              statusStyles = { bg: '#fef2f2', border: '#ef4444', text: '#b91c1c' }
+              statusStyles = { bg: 'var(--color-danger-bg)', border: 'var(--color-danger)', text: 'var(--color-danger)', icon: <AlertTriangle size={14} /> }
             }
 
             return (
             <div key={o.id} 
-              className="ocorrencia-card"
               onClick={() => {
                 if (isGestao) {
                   setSelectedOcorrencia(o)
@@ -156,69 +144,70 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
                 }
               }}
               style={{
-                background: statusStyles.bg, borderRadius: '14px', padding: '1.25rem 1.5rem',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9',
+                background: statusStyles.bg, borderRadius: 'var(--radius-md)', padding: '1.25rem 1.5rem',
+                boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)',
                 borderLeft: `6px solid ${statusStyles.border}`,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem',
                 cursor: isGestao ? 'pointer' : 'default',
-                transition: 'transform 0.2s, box-shadow 0.2s'
+                transition: 'var(--transition-smooth)'
               }}
+              onMouseOver={(e) => { if (isGestao) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; } }}
+              onMouseOut={(e) => { if (isGestao) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; } }}
             >
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>{o.professor}</span>
+                  <span style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-main)' }}>{o.professor}</span>
                   {o.turma && (
-                    <span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.78rem', fontWeight: 600 }}>
+                    <span style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', borderRadius: '999px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>
                       {o.turma}
                     </span>
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: (o.descricao || (o.alunos && o.alunos.length > 0)) ? '0.75rem' : 0 }}>
-                  <span style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <span>📚</span> {o.disciplina}
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Book size={14} /> {o.disciplina}
                   </span>
-                  <span style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <span>📅</span> {new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR')}
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Calendar size={14} /> {new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR')}
                   </span>
-                  <span style={{ fontSize: '0.85rem', color: statusStyles.text, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(255,255,255,0.6)', padding: '0.1rem 0.5rem', borderRadius: '12px' }}>
-                    {currentStatus === 'Concluída' ? '✅' : currentStatus === 'Em andamento' ? '⏳' : '⚠️'} {currentStatus}
+                  <span style={{ fontSize: '0.85rem', color: statusStyles.text, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(255,255,255,0.7)', padding: '0.15rem 0.6rem', borderRadius: '999px' }}>
+                    {statusStyles.icon} {currentStatus}
                   </span>
                 </div>
                 {o.alunos && o.alunos.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: o.descricao ? '0.5rem' : 0 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: o.descricao ? '0.75rem' : 0 }}>
                     {o.alunos.map(nome => (
-                      <span key={nome} style={{ background: '#f0fdf4', color: '#15803d', borderRadius: '20px', padding: '0.15rem 0.6rem', fontSize: '0.75rem', fontWeight: 600 }}>
-                        👤 {nome}
+                      <span key={nome} style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)', borderRadius: '999px', padding: '0.15rem 0.6rem', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <User size={12} /> {nome}
                       </span>
                     ))}
                   </div>
                 )}
                 {o.descricao && (
-                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#475569', background: '#f8fafc', borderRadius: '8px', padding: '0.6rem 0.85rem', borderLeft: '3px solid #6366f1', marginBottom: o.acao_professor ? '0.5rem' : 0 }}>
+                  <div style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', borderLeft: '3px solid var(--color-primary)', marginBottom: o.acao_professor ? '0.5rem' : 0 }}>
                     {o.descricao}
-                  </p>
+                  </div>
                 )}
                 {o.acao_professor && (
-                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#166534', background: '#f0fdf4', borderRadius: '8px', padding: '0.6rem 0.85rem', borderLeft: '3px solid #22c55e', marginBottom: o.intervencao_gestao ? '0.5rem' : 0 }}>
-                    <span style={{ fontWeight: 700, marginRight: '0.35rem' }}>⚡ Ação:</span>{o.acao_professor}
-                  </p>
+                  <div style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-success)', background: 'var(--color-success-bg)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', borderLeft: '3px solid var(--color-success)', marginBottom: o.intervencao_gestao ? '0.5rem' : 0, display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                    <Zap size={16} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+                    <div><span style={{ fontWeight: 600, marginRight: '0.35rem' }}>Ação:</span>{o.acao_professor}</div>
+                  </div>
                 )}
                 {o.intervencao_gestao && (
-                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#4c1d95', background: '#ede9fe', borderRadius: '8px', padding: '0.6rem 0.85rem', borderLeft: '3px solid #8b5cf6' }}>
-                    <span style={{ fontWeight: 700, marginRight: '0.35rem' }}>🛡️ Intervenção da Gestão:</span>{o.intervencao_gestao}
-                  </p>
+                  <div style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-primary)', background: 'var(--color-primary-light)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', borderLeft: '3px solid var(--color-primary-dark)', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                    <Shield size={16} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+                    <div><span style={{ fontWeight: 600, marginRight: '0.35rem' }}>Intervenção da Gestão:</span>{o.intervencao_gestao}</div>
+                  </div>
                 )}
               </div>
               <button
-                onClick={() => deleteOcorrencia(o.id)}
-                onMouseEnter={() => setHoveredBtn(`del-${o.id}`)}
-                onMouseLeave={() => setHoveredBtn(null)}
+                className="btn-icon delete"
+                onClick={(e) => { e.stopPropagation(); deleteOcorrencia(o.id); }}
                 title="Excluir"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: hoveredBtn === `del-${o.id}` ? '#ef4444' : '#cbd5e1', padding: '0.25rem', transition: 'color 0.2s', flexShrink: 0 }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-danger)', padding: '0.5rem', transition: 'var(--transition-fast)', flexShrink: 0 }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                </svg>
+                <Trash2 size={20} />
               </button>
             </div>
             )
@@ -228,52 +217,53 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
 
       {/* Modal Intervenção Gestão */}
       {selectedOcorrencia && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={(e) => { if (e.target === e.currentTarget) setSelectedOcorrencia(null) }}>
-          <div style={{ background: 'white', borderRadius: '20px', width: '100%', maxWidth: '560px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
-            <div style={{ padding: '1.5rem 2rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid #f1f5f9' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <span style={{ fontSize: '1.3rem' }}>🛡️</span>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#1e293b' }}>Intervenção da Gestão</h3>
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setSelectedOcorrencia(null) }}>
+          <div className="modal-content" style={{ maxWidth: '560px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            <div className="modal-header" style={{ padding: '1.5rem 2rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--color-primary)' }}>
+                <Shield size={24} />
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-main)' }}>Intervenção da Gestão</h3>
               </div>
-              <button onClick={() => setSelectedOcorrencia(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.4rem', lineHeight: 1 }}>×</button>
+              <button className="btn-icon" onClick={() => setSelectedOcorrencia(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={24} /></button>
             </div>
             
-            <div style={{ overflowY: 'auto', padding: '1.5rem 2rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: '0.25rem' }}>{selectedOcorrencia.professor} - {selectedOcorrencia.turma}</div>
-                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>{new Date(selectedOcorrencia.data + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
-                <div style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '0.5rem' }}><strong>Descrição:</strong> {selectedOcorrencia.descricao}</div>
-                <div style={{ fontSize: '0.9rem', color: '#166534' }}><strong>Ação do Prof:</strong> {selectedOcorrencia.acao_professor}</div>
+            <div className="modal-body" style={{ overflowY: 'auto', padding: '1.5rem 2rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>{selectedOcorrencia.professor} - {selectedOcorrencia.turma}</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Calendar size={12} /> {new Date(selectedOcorrencia.data + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}><strong>Descrição:</strong> {selectedOcorrencia.descricao}</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--color-success)' }}><strong>Ação do Prof:</strong> {selectedOcorrencia.acao_professor}</div>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Status</label>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Status</label>
                 <select
                   value={selectedStatus}
                   onChange={e => setSelectedStatus(e.target.value)}
-                  style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none', marginBottom: '1rem', fontFamily: 'inherit' }}
+                  style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', marginBottom: '1.25rem', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)' }}
                 >
                   <option value="Em aberto">Em aberto</option>
                   <option value="Em andamento">Em andamento</option>
                   <option value="Concluída">Concluída</option>
                 </select>
 
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Intervenção da Gestão</label>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Intervenção da Gestão</label>
                 <textarea
                   placeholder="Descreva as ações ou observações da gestão sobre esta ocorrência..."
                   value={intervencaoText}
                   onChange={e => setIntervencaoText(e.target.value)}
                   rows={5}
-                  style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+                  style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)' }}
                 />
               </div>
             </div>
 
-            <div style={{ padding: '1.25rem 2rem', display: 'flex', gap: '0.75rem', flexShrink: 0, borderTop: '1px solid #f1f5f9' }}>
-              <button type="button" onClick={() => setSelectedOcorrencia(null)} style={{ flex: 1, padding: '0.75rem', border: '1.5px solid #e2e8f0', borderRadius: '12px', background: 'white', cursor: 'pointer', fontWeight: 600, color: '#64748b', fontSize: '0.95rem' }}>
+            <div className="modal-footer" style={{ padding: '1.25rem 2rem', display: 'flex', gap: '0.75rem', flexShrink: 0, borderTop: '1px solid var(--border-light)', backgroundColor: 'var(--bg-secondary)', borderBottomLeftRadius: 'var(--radius-md)', borderBottomRightRadius: 'var(--radius-md)' }}>
+              <button className="btn btn-secondary" type="button" onClick={() => setSelectedOcorrencia(null)} style={{ flex: 1, padding: '0.75rem' }}>
                 Cancelar
               </button>
               <button 
+                className="btn btn-primary"
                 type="button" 
                 disabled={savingIntervencao}
                 onClick={async () => {
@@ -282,8 +272,8 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
                   setSavingIntervencao(false)
                   setSelectedOcorrencia(null)
                 }}
-                style={{ flex: 2, padding: '0.75rem', border: 'none', borderRadius: '12px', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', opacity: savingIntervencao ? 0.7 : 1 }}>
-                {savingIntervencao ? 'Salvando...' : '✓ Salvar Intervenção'}
+                style={{ flex: 2, padding: '0.75rem', opacity: savingIntervencao ? 0.7 : 1, display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                {savingIntervencao ? 'Salvando...' : <><Check size={18} /> Salvar Intervenção</>}
               </button>
             </div>
           </div>

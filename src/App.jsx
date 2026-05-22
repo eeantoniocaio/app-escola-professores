@@ -12,6 +12,7 @@ import Login from './components/Login'
 import EnvioQuestoes from './components/EnvioQuestoes'
 import InstallPWA from './components/InstallPWA'
 import logoUrl from './assets/logo.png'
+import { Home as HomeIcon, Calendar, BookOpen, BarChart2, ShieldAlert, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon } from 'lucide-react'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -394,43 +395,43 @@ export default function App() {
 
         <div className={`header-actions ${isMobileMenuOpen ? 'mobile-open' : ''}`} style={{ gap: '0.25rem' }}>
           <button className={`nav-link ${view === 'home' ? 'active' : ''}`} onClick={() => { setView('home'); setIsMobileMenuOpen(false); }}>
-            Início
+            <HomeIcon size={18} /> Início
           </button>
           {userRole === 'gestao' && (
             <>
               <button className={`nav-link ${view === 'eventos' ? 'active' : ''}`} onClick={() => { setView('eventos'); setIsMobileMenuOpen(false); }}>
-                Eventos
+                <Calendar size={18} /> Eventos
               </button>
               <button className={`nav-link ${view === 'registros' ? 'active' : ''}`} onClick={() => { setView('registros'); setIsMobileMenuOpen(false); }}>
-                Registros
+                <BookOpen size={18} /> Registros
               </button>
               <button className={`nav-link ${view === 'relatorios' ? 'active' : ''}`} onClick={() => { setView('relatorios'); setIsMobileMenuOpen(false); }}>
-                Relatórios
+                <BarChart2 size={18} /> Relatórios
               </button>
               <button className={`nav-link ${view === 'historico-ocorrencias' ? 'active' : ''}`} onClick={() => { setView('historico-ocorrencias'); setIsMobileMenuOpen(false); }}>
-                Histórico de Ocorrências
+                <ShieldAlert size={18} /> Ocorrências (Histórico)
               </button>
             </>
           )}
           <button className={`nav-link ${view === 'mapa-de-classe' ? 'active' : ''}`} onClick={() => { setView('mapa-de-classe'); setIsMobileMenuOpen(false); }}>
-            Mapa de Classe
+            <Users size={18} /> Mapa de Classe
           </button>
           <button className="nav-link" onClick={() => { setShowOcorrenciaModal(true); setIsMobileMenuOpen(false); }}>
-            Ocorrências
+            <PlusCircle size={18} /> Ocorrências
           </button>
           <button className={`nav-link ${view === 'envio-questoes' ? 'active' : ''}`} onClick={() => { setView('envio-questoes'); setIsMobileMenuOpen(false); }}>
-            Reposições
+            <PenTool size={18} /> Reposições
           </button>
           
           <div className="nav-divider" style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
           
           {userRole === 'gestao' && (
-            <button className={`nav-link ${view === 'configuracoes' ? 'active' : ''}`} onClick={() => { setView('configuracoes'); setIsMobileMenuOpen(false); }} title="Configurações" style={{ fontSize: '1.2rem', padding: '0.4rem' }}>
-              ⚙️
+            <button className={`nav-link ${view === 'configuracoes' ? 'active' : ''}`} onClick={() => { setView('configuracoes'); setIsMobileMenuOpen(false); }} title="Configurações" style={{ padding: '0.4rem' }}>
+              <Settings size={20} />
             </button>
           )}
-          <button className="nav-link" onClick={() => { supabase.auth.signOut(); setIsMobileMenuOpen(false); }} title="Sair" style={{ fontSize: '1.2rem', padding: '0.4rem' }}>
-            🚪
+          <button className="nav-link" onClick={() => { supabase.auth.signOut(); setIsMobileMenuOpen(false); }} title="Sair" style={{ padding: '0.4rem' }}>
+            <LogOut size={20} />
           </button>
         </div>
       </header>
@@ -497,59 +498,46 @@ export default function App() {
                 </div>
 
                 {turmas.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏫</div>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Nenhuma turma cadastrada.</p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Vá em ⚙️ Configurações para adicionar turmas.</p>
+                  <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: 'white', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ color: 'var(--color-primary)', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><Users size={48} /></div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', fontWeight: 600 }}>Nenhuma turma cadastrada.</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Vá em Configurações para adicionar turmas.</p>
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
                     {turmas.map((turma) => {
-                      // Paleta por série: extrai o número inicial do nome (ex: "6ºA" → 6, "1ªA" → 1)
-                      const gradeColors = {
-                        1: '#FFDEE9',   // rosa claro
-                        2: '#E6E6FA',   // lavanda
-                        3: '#F2EBC4',   // creme
-                        4: '#97F294',   // verde menta
-                        5: '#A7D0D9',   // azul acinzentado
-                        6: '#FFFACD',   // amarelo claro
-                        7: '#F2BBC9',   // rosa pastel
-                        8: '#F2CA7E',   // âmbar
-                        9: '#FFF5F9',   // rosa ultra-suave
-                      }
-                      const match = turma.nome.match(/^(\d+)/)
-                      const grade = match ? parseInt(match[1]) : 0
-                      const bg = gradeColors[grade] || 'hsl(210, 20%, 92%)'
                       const hasLink = turma.link && turma.link.trim() !== ''
                       return (
                         <div
                           key={turma.id}
                           style={{
-                            backgroundColor: bg,
-                            borderRadius: '16px',
+                            backgroundColor: 'var(--bg-card)',
+                            border: '1px solid var(--border-light)',
+                            borderLeft: '4px solid var(--color-primary)',
+                            borderRadius: 'var(--radius-md)',
                             padding: '1.5rem',
                             cursor: hasLink ? 'pointer' : 'default',
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            transition: 'transform 0.2s, box-shadow 0.2s',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                            transition: 'var(--transition-smooth)',
+                            boxShadow: 'var(--shadow-sm)',
                             opacity: hasLink ? 1 : 0.75
                           }}
                           onClick={() => hasLink && window.open(turma.link, '_blank', 'noopener')}
-                          onMouseOver={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)' } }}
-                          onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)' }}
+                          onMouseOver={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.borderColor = 'var(--color-primary)' } }}
+                          onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.borderColor = 'var(--border-light)' }}
                           title={hasLink ? `Abrir ${turma.nome}` : 'Link não configurado'}
                         >
                           <div>
-                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1a1a1a', fontFamily: 'Outfit, sans-serif' }}>{turma.nome}</div>
-                            <div style={{ fontSize: '0.8rem', color: '#444', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                              <span>{hasLink ? '🔗' : '👥'}</span>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-main)' }}>{turma.nome}</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              {hasLink ? <LinkIcon size={14} /> : <Users size={14} />}
                               <span>{hasLink ? 'Clique para abrir' : 'Sem link'}</span>
                             </div>
                           </div>
-                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333', fontSize: '1.1rem' }}>
-                            {hasLink ? '›' : ''}
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)' }}>
+                            {hasLink ? <ChevronRight size={18} /> : ''}
                           </div>
                         </div>
                       )

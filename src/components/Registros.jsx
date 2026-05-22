@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { PlusCircle, Calendar, Pencil, Trash2, ArrowLeft, User, Shield, Tag, Search, FolderOpen, Paperclip, Briefcase, UploadCloud, FileText, X, Link as LinkIcon } from 'lucide-react'
 
 export default function Registros({ setView, records, events, tiposEvidencia, professores = [], gestores = [], addRecord, updateRecord, deleteRecord }) {
   const [filterTeacher, setFilterTeacher] = useState('todos')
@@ -108,10 +109,6 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
     setIsFormModalOpen(false)
   }
 
-
-
-
-
   // Filter logic
   const filteredRecords = records.filter(rec => {
     const matchTeacher = filterTeacher === 'todos' || rec.teacher === filterTeacher
@@ -133,7 +130,6 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
   }
 
   const total = records.length
-
   const hasActiveFilters = filterTeacher !== 'todos' || filterGestor !== 'todos' || filterDate !== '' || filterTipo !== 'todos'
 
   const clearFilters = () => {
@@ -146,35 +142,31 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
   return (
     <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
       {/* Header */}
-      <div className="dashboard-header">
-        <div className="dashboard-title-section">
-          <button className="btn-back-home" onClick={() => setView('home')} title="Voltar ao início">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-            </svg>
+      <div className="dashboard-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button className="btn btn-secondary" onClick={() => setView('home')} title="Voltar ao início" style={{ padding: '0.5rem' }}>
+            <ArrowLeft size={20} />
           </button>
           <div>
-            <h2 style={{ marginBottom: '0.1rem' }}>Registros de Evidência</h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+            <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Registros de Evidência</h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, marginTop: '0.2rem' }}>
               {filteredRecords.length} registro{filteredRecords.length !== 1 ? 's' : ''} encontrado{filteredRecords.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
       </div>
 
-
-
       {/* Controls Panel (Filters & Add Button) */}
-      <div className="controls-panel" style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+      <div style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end', justifyContent: 'space-between', backgroundColor: 'var(--bg-card)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flex: 1, alignItems: 'flex-end' }}>
           {/* Professor filter */}
-          <div style={{ flex: '1 1 200px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
-              👤 Professor(a)
+          <div style={{ flex: '1 1 180px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+              <User size={14} /> Professor(a)
             </label>
             <select
               className="select-filter"
-              style={{ width: '100%' }}
+              style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}
               value={filterTeacher}
               onChange={(e) => setFilterTeacher(e.target.value)}
             >
@@ -186,13 +178,13 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
           </div>
 
           {/* Gestor filter */}
-          <div style={{ flex: '1 1 200px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
-              🛡️ Gestor(a)
+          <div style={{ flex: '1 1 180px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+              <Shield size={14} /> Gestor(a)
             </label>
             <select
               className="select-filter"
-              style={{ width: '100%' }}
+              style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}
               value={filterGestor}
               onChange={(e) => setFilterGestor(e.target.value)}
             >
@@ -205,26 +197,26 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
 
           {/* Date filter */}
           <div style={{ flex: '1 1 150px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
-              📅 Data
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+              <Calendar size={14} /> Data
             </label>
             <input
               type="date"
               className="select-filter"
-              style={{ width: '100%', paddingRight: '0.75rem' }}
+              style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}
               value={filterDate}
               onChange={(e) => setFilterDate(e.target.value)}
             />
           </div>
 
           {/* Tipo filter */}
-          <div style={{ flex: '1 1 200px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
-              🏷️ Tipo
+          <div style={{ flex: '1 1 180px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+              <Tag size={14} /> Tipo
             </label>
             <select
               className="select-filter"
-              style={{ width: '100%' }}
+              style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}
               value={filterTipo}
               onChange={(e) => setFilterTipo(e.target.value)}
             >
@@ -239,7 +231,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
             <button
               onClick={clearFilters}
               className="btn btn-secondary"
-              style={{ padding: '0.65rem 1rem', height: 'fit-content' }}
+              style={{ padding: '0.6rem 1rem', height: 'fit-content' }}
             >
               Limpar Filtros
             </button>
@@ -247,170 +239,158 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="btn btn-primary" onClick={openAddModal} style={{ padding: '0.85rem 1.5rem', fontSize: '1rem' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
-            Novo Registro
+          <button className="btn btn-primary" onClick={openAddModal} style={{ padding: '0.75rem 1.25rem', fontSize: '0.95rem' }}>
+            <PlusCircle size={18} /> Novo Registro
           </button>
         </div>
       </div>
 
       {hasActiveFilters && (
-        <div style={{ marginBottom: '1.5rem', padding: '0.65rem', background: 'var(--pastel-blue)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--pastel-blue-dark)', fontWeight: 600, display: 'inline-block' }}>
-          🔍 Mostrando {filteredRecords.length} de {total} registros
+        <div style={{ marginBottom: '1.5rem', padding: '0.5rem 1rem', background: 'var(--color-primary-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', color: 'var(--color-primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Search size={16} /> Mostrando {filteredRecords.length} de {total} registros
         </div>
       )}
 
       {/* Records List */}
       <div>
-          {filteredRecords.length === 0 ? (
-            <div className="no-records">
-              <div className="no-records-icon">📁</div>
-              <h3>Nenhum registro encontrado</h3>
-              <p>Nenhuma evidência corresponde aos filtros selecionados.</p>
-              {hasActiveFilters && (
-                <button className="btn btn-secondary" style={{ marginTop: '1rem' }} onClick={clearFilters}>
-                  Limpar filtros
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="records-grid">
-              {filteredRecords.map(rec => {
-                const associatedEvent = events.find(e => e.id === rec.eventId)
-                return (
-                  <div key={rec.id} className="record-card">
-                    <div>
-                      <div className="record-header">
-                        <div className="record-meta">
-                          <span className="record-teacher">{rec.teacher}</span>
-                          <span>{safeFormatDate(rec.date)}</span>
-                        </div>
+        {filteredRecords.length === 0 ? (
+          <div style={{ padding: '4rem 2rem', textAlign: 'center', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ color: 'var(--color-primary)', display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><FolderOpen size={48} /></div>
+            <h3 style={{ marginBottom: '0.5rem' }}>Nenhum registro encontrado</h3>
+            <p style={{ color: 'var(--text-muted)' }}>Nenhuma evidência corresponde aos filtros selecionados.</p>
+            {hasActiveFilters && (
+              <button className="btn btn-secondary" style={{ marginTop: '1.5rem' }} onClick={clearFilters}>
+                Limpar filtros
+              </button>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            {filteredRecords.map(rec => {
+              const associatedEvent = events.find(e => e.id === rec.eventId)
+              return (
+                <div key={rec.id} style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)', transition: 'var(--transition-smooth)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <div style={{ padding: '1.25rem 1.5rem', flexGrow: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '1rem' }}>{rec.teacher}</span>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Calendar size={12} /> {safeFormatDate(rec.date)}</span>
                       </div>
-
-                      <div className="record-body">
-                        {rec.tipo && (
-                          <span style={{ display: 'inline-block', fontSize: '0.72rem', color: 'var(--pastel-purple-dark)', background: 'var(--pastel-purple)', padding: '0.15rem 0.5rem', borderRadius: '4px', marginBottom: '0.4rem', marginRight: '0.4rem', fontWeight: 600 }}>
-                            🏷️ {rec.tipo}
-                          </span>
-                        )}
-                        {rec.gestor && (
-                          <span style={{ display: 'inline-block', fontSize: '0.72rem', color: '#0369a1', background: '#e0f2fe', padding: '0.15rem 0.5rem', borderRadius: '4px', marginBottom: '0.4rem', fontWeight: 600 }}>
-                            👔 {rec.gestor}
-                          </span>
-                        )}
-                        {associatedEvent && (
-                          <span className="record-associated-event" style={{ display: 'block' }}>
-                            🔗 {associatedEvent.evento}
-                          </span>
-                        )}
-                        <h3 className="record-title">{rec.title}</h3>
-                        <p className="record-desc">{rec.description || 'Sem detalhes descritos para esta evidência.'}</p>
-                        {rec.fileName && (
-                          <span className="record-attachment-indicator">
-                            📎 {rec.fileName} ({rec.fileSize})
-                          </span>
-                        )}
+                      <div style={{ display: 'flex', gap: '0.25rem' }}>
+                        <button className="btn-icon" onClick={() => openEditModal(rec)} title="Editar" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}>
+                          <Pencil size={16} />
+                        </button>
+                        <button className="btn-icon delete" onClick={() => deleteRecord(rec.id)} title="Excluir" style={{ background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.25rem' }}>
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="record-footer">
-
-                      <button className="btn-icon" onClick={() => openEditModal(rec)} title="Editar">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.995.995 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                        </svg>
-                      </button>
-                      <button className="btn-icon delete" style={{ marginLeft: '0.5rem' }} onClick={() => deleteRecord(rec.id)} title="Excluir">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                        </svg>
-                      </button>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                      {rec.tipo && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--color-primary)', background: 'var(--color-primary-light)', padding: '0.25rem 0.6rem', borderRadius: 'var(--radius-sm)', fontWeight: 600 }}>
+                          <Tag size={12} /> {rec.tipo}
+                        </span>
+                      )}
+                      {rec.gestor && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--text-main)', background: 'var(--bg-secondary)', padding: '0.25rem 0.6rem', borderRadius: 'var(--radius-sm)', fontWeight: 600 }}>
+                          <Briefcase size={12} /> {rec.gestor}
+                        </span>
+                      )}
                     </div>
+                    
+                    {associatedEvent && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem', color: 'var(--color-primary)', marginBottom: '0.5rem', fontWeight: 500 }}>
+                        <LinkIcon size={14} /> {associatedEvent.evento}
+                      </span>
+                    )}
+                    <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '0.5rem', lineHeight: 1.4 }}>{rec.title}</h3>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{rec.description || 'Sem detalhes descritos para esta evidência.'}</p>
+                    
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+                  
+                  {rec.fileName && (
+                    <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '0.75rem 1.5rem', borderTop: '1px solid var(--border-light)', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Paperclip size={14} /> <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{rec.fileName}</span> <span style={{ flexShrink: 0, opacity: 0.7 }}>({rec.fileSize})</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Add Record Modal */}
       {isFormModalOpen && (
         <div className="modal-overlay" onClick={() => setIsFormModalOpen(false)}>
           <div className="modal-content" style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header" style={{ flexShrink: 0 }}>
-              <h3>{editingId ? 'Editar Registro de Evidência' : 'Novo Registro de Evidência'}</h3>
-              <button className="btn-icon" onClick={() => setIsFormModalOpen(false)}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
+            <div className="modal-header" style={{ flexShrink: 0, borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.25rem' }}>{editingId ? 'Editar Registro de Evidência' : 'Novo Registro de Evidência'}</h3>
+              <button className="btn-icon" onClick={() => setIsFormModalOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X size={24} color="var(--text-muted)" />
               </button>
             </div>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden', margin: 0 }}>
-              <div className="modal-body" style={{ overflowY: 'auto', flexGrow: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-
-
+              <div className="modal-body" style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '0.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1rem' }}>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>Professor(a) *</label>
-                    <select ref={formFirstInputRef} className="form-control" value={teacher} onChange={(e) => setTeacher(e.target.value)} required>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Professor(a) *</label>
+                    <select ref={formFirstInputRef} className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }} value={teacher} onChange={(e) => setTeacher(e.target.value)} required>
                       <option value="">Selecione um professor</option>
                       {professores.map(p => <option key={p} value={p}>{p}</option>)}
                     </select>
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>Data da Evidência *</label>
-                    <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} required />
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Data da Evidência *</label>
+                    <input type="date" className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }} value={date} onChange={(e) => setDate(e.target.value)} required />
                   </div>
                 </div>
 
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label>Tipo *</label>
-                  <select className="form-control" value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Tipo *</label>
+                  <select className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }} value={tipo} onChange={(e) => setTipo(e.target.value)} required>
                     {tiposEvidencia.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
 
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label>Gestor(a) *</label>
-                  <select className="form-control" value={gestor} onChange={(e) => setGestor(e.target.value)} required>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Gestor(a) *</label>
+                  <select className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }} value={gestor} onChange={(e) => setGestor(e.target.value)} required>
                     <option value="">Selecione um gestor</option>
                     {gestores.map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
 
-
-
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label>Descrição e Contexto</label>
-                  <textarea className="form-control" placeholder="Explique o que esta evidência comprova..." value={description} onChange={(e) => setDescription(e.target.value)} />
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Descrição e Contexto</label>
+                  <textarea className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', minHeight: '100px', resize: 'vertical' }} placeholder="Explique o que esta evidência comprova..." value={description} onChange={(e) => setDescription(e.target.value)} />
                 </div>
 
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label>Anexar Documento</label>
-                  <label className={`upload-dropzone ${mockFileName ? 'has-file' : ''}`}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Anexar Documento</label>
+                  <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', border: '2px dashed var(--border-light)', borderRadius: 'var(--radius-md)', cursor: 'pointer', backgroundColor: mockFileName ? 'var(--color-primary-light)' : 'var(--bg-primary)', transition: 'var(--transition-smooth)', borderColor: mockFileName ? 'var(--color-primary)' : 'var(--border-light)' }}>
                     <input type="file" style={{ display: 'none' }} onChange={handleFileChangeMock} />
-                    <span className="upload-icon">{mockFileName ? '📄' : '☁️'}</span>
-                    <span className="upload-text">
+                    <span style={{ color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
+                      {mockFileName ? <FileText size={32} /> : <UploadCloud size={32} />}
+                    </span>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500, textAlign: 'center' }}>
                       {mockFileName ? `Selecionado: ${mockFileName} (${mockFileSize})` : 'Clique para selecionar PDF, JPG ou PNG'}
                     </span>
-                    {!mockFileName && <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Máx: 20MB</span>}
+                    {!mockFileName && <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>Máx: 20MB</span>}
                   </label>
                 </div>
               </div>
 
-              <div className="modal-footer" style={{ flexShrink: 0, padding: '1.25rem 1.5rem', display: 'flex', gap: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setIsFormModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>{editingId ? 'Salvar Alterações' : 'Registrar Evidência'}</button>
+              <div className="modal-footer" style={{ flexShrink: 0, paddingTop: '1.5rem', marginTop: '1.5rem', display: 'flex', gap: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1, padding: '0.75rem' }} onClick={() => setIsFormModalOpen(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.75rem' }}>{editingId ? 'Salvar Alterações' : 'Registrar Evidência'}</button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-
     </div>
   )
 }

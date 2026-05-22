@@ -1,22 +1,21 @@
 import React, { useState } from 'react'
 import EventDetailModal from './EventDetailModal'
+import { PlusCircle, Calendar, AlertCircle, CheckCircle2, Circle, Pencil, Trash2, ArrowLeft } from 'lucide-react'
 
 export default function Eventos({ setView, events, records, professores, deleteEvent, openEventModal, toggleEventFinalizado, updateEvent }) {
   const [selectedEvent, setSelectedEvent] = useState(null)
 
-  // Color badges based on type
-  const getTypeBadgeClass = (tipo) => {
+  // Clean SaaS badges
+  const getTypeBadgeStyle = (tipo) => {
     switch (tipo) {
-      case 'formulário': return 'badge-aula'   // Pastel Blue
-      case 'email': return 'badge-reuniao'      // Pastel Purple
-      case 'físico': return 'badge-outro'       // Pastel Orange
-      default: return 'badge-outro'
+      case 'formulário': return { backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }
+      case 'email': return { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }
+      case 'físico': return { backgroundColor: 'var(--color-warning-bg)', color: 'var(--color-warning)' }
+      default: return { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }
     }
   }
 
-  // Open detail modal on card click (ignore action button clicks)
   const handleCardClick = (e, ev) => {
-    // Don't open modal if user clicked a button inside the card
     if (e.target.closest('button')) return
     setSelectedEvent(ev)
   }
@@ -33,122 +32,101 @@ export default function Eventos({ setView, events, records, professores, deleteE
   }
 
   return (
-    <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
-      {/* View Header with title and Novo Evento action button */}
-      <div className="dashboard-header">
-        <div className="dashboard-title-section">
-          <button className="btn-back-home" onClick={() => setView('home')} title="Voltar ao início">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-            </svg>
+    <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
+      <div className="dashboard-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button className="btn btn-secondary" onClick={() => setView('home')} title="Voltar ao início" style={{ padding: '0.5rem' }}>
+            <ArrowLeft size={20} />
           </button>
-          <h2>Gestão de Eventos</h2>
+          <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Gestão de Eventos</h2>
         </div>
 
-        {/* Floating action to add new event */}
-        <button
-          className="btn btn-primary"
-          onClick={() => openEventModal()}
-          style={{ gap: '0.4rem', padding: '0.65rem 1.25rem', fontSize: '0.9rem', backgroundColor: 'var(--pastel-green)', color: 'var(--pastel-green-dark)' }}
-        >
-          <span>➕</span>
-          <span>Novo Evento</span>
+        <button className="btn btn-primary" onClick={() => openEventModal()}>
+          <PlusCircle size={18} /> Novo Evento
         </button>
       </div>
 
-      <div className="eventos-layout" style={{ display: 'block' }}>
-        <div className="events-list-container" style={{ width: '100%' }}>
+      <div className="eventos-layout">
+        <div className="events-list-container">
           {events.length === 0 ? (
-            <div className="no-records" style={{ padding: '4rem 2rem' }}>
-              <div className="no-records-icon">📅</div>
-              <h3>Nenhum evento registrado</h3>
-              <p>Clique no botão "+ Novo Evento" no topo para cadastrar seu primeiro evento pedagógico.</p>
+            <div style={{ padding: '4rem 2rem', textAlign: 'center', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)' }}>
+              <div style={{ color: 'var(--color-primary)', display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><Calendar size={48} /></div>
+              <h3 style={{ marginBottom: '0.5rem' }}>Nenhum evento registrado</h3>
+              <p style={{ color: 'var(--text-muted)' }}>Clique no botão "Novo Evento" no topo para cadastrar seu primeiro evento pedagógico.</p>
             </div>
           ) : (
-            <div className="eventos-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
               {events.map(ev => (
                 <div
                   key={ev.id}
-                  className="event-card"
                   style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderRadius: 'var(--radius-md)',
                     minHeight: '230px',
-                    border: ev.finalizado ? '1px solid hsl(145, 60%, 75%)' : '1px solid var(--border-light)',
-                    boxShadow: ev.finalizado ? '0 4px 12px rgba(46, 125, 50, 0.05)' : 'var(--shadow-sm)',
-                    transition: 'all 0.3s ease',
-                    opacity: ev.finalizado ? 0.9 : 1,
-                    cursor: 'pointer'
+                    border: ev.finalizado ? '1px solid var(--color-success)' : '1px solid var(--border-light)',
+                    boxShadow: 'var(--shadow-sm)',
+                    transition: 'var(--transition-smooth)',
+                    opacity: ev.finalizado ? 0.85 : 1,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
                   }}
                   onClick={(e) => handleCardClick(e, ev)}
+                  onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
                   title="Clique para ver detalhes"
                 >
-                  <div>
-                    <div className="event-header">
-                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span className={`event-badge ${getTypeBadgeClass(ev.tipo)}`}>
+                  <div style={{ padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span style={{ ...getTypeBadgeStyle(ev.tipo), padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600 }}>
                           {ev.tipo}
                         </span>
                         {ev.finalizado && (
-                          <span className="event-badge" style={{ backgroundColor: 'var(--pastel-green)', color: 'var(--pastel-green-dark)', fontWeight: 700 }}>
-                            ✓ Finalizado
+                          <span style={{ backgroundColor: 'var(--color-success-bg)', color: 'var(--color-success)', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600 }}>
+                            Finalizado
                           </span>
                         )}
                         {ev.entregouForaDoPrazo?.length > 0 && (
-                          <span className="event-badge" style={{ backgroundColor: 'var(--pastel-pink)', color: 'var(--pastel-pink-dark)', fontWeight: 700 }}>
-                            ⚠️ {ev.entregouForaDoPrazo.length} atraso{ev.entregouForaDoPrazo.length !== 1 ? 's' : ''}
+                          <span style={{ backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <AlertCircle size={12} /> {ev.entregouForaDoPrazo.length} atraso{ev.entregouForaDoPrazo.length !== 1 ? 's' : ''}
                           </span>
                         )}
                       </div>
-                      <div className="event-actions">
-                        <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEventModal(ev) }} title="Editar Evento">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                          </svg>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEventModal(ev) }} title="Editar Evento" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}>
+                          <Pencil size={18} />
                         </button>
-                        <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id) }} title="Excluir Evento">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                          </svg>
+                        <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id) }} title="Excluir Evento" style={{ background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.25rem' }}>
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </div>
-                    <h3 className="event-title" style={{ fontSize: '1.15rem', color: 'var(--text-main)' }}>{ev.evento}</h3>
+                    <h3 style={{ fontSize: '1.15rem', color: 'var(--text-main)', marginBottom: '0.5rem', lineHeight: 1.3 }}>{ev.evento}</h3>
                   </div>
 
-                  <div className="event-footer" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem', borderTop: 'none', paddingTop: '0.5rem' }}>
-                    <div className="event-info-item">
-                      <strong>Solicitante:</strong> <span style={{ color: 'var(--text-main)' }}>{ev.quemSolicitou}</span>
-                    </div>
-                    <div className="event-info-item">
-                      <strong>Solicitado em:</strong> <span>{safeFormatDate(ev.dataSolicitacao)}</span>
-                    </div>
-                    <div className="event-info-item" style={{ color: 'var(--pastel-pink-dark)', fontWeight: 600, marginBottom: '0.5rem' }}>
-                      <strong>Prazo de Entrega:</strong> <span>{safeFormatDate(ev.dataEntrega)}</span>
+                  <div style={{ padding: '1rem 1.5rem', backgroundColor: 'var(--bg-secondary)', borderTop: '1px solid var(--border-light)', borderBottomLeftRadius: 'var(--radius-md)', borderBottomRightRadius: 'var(--radius-md)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem' }}>
+                      <div><strong style={{ color: 'var(--text-muted)' }}>Solicitante:</strong> <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{ev.quemSolicitou}</span></div>
+                      <div><strong style={{ color: 'var(--text-muted)' }}>Solicitado em:</strong> <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{safeFormatDate(ev.dataSolicitacao)}</span></div>
+                      <div style={{ color: 'var(--color-danger)', fontWeight: 600 }}><strong>Prazo de Entrega:</strong> {safeFormatDate(ev.dataEntrega)}</div>
                     </div>
 
-                    {/* Finalizado Action Button */}
                     <button
-                      className={`btn ${ev.finalizado ? 'btn-success' : 'btn-secondary'}`}
+                      className="btn"
                       style={{
                         width: '100%',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.85rem',
-                        marginTop: '0.5rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.4rem',
-                        borderRadius: 'var(--radius-sm)',
-                        backgroundColor: ev.finalizado ? 'var(--pastel-green)' : 'transparent',
-                        color: ev.finalizado ? 'var(--pastel-green-dark)' : 'var(--text-muted)',
-                        border: ev.finalizado ? 'none' : '1px solid var(--border-light)',
-                        fontWeight: 600,
-                        transition: 'var(--transition-smooth)'
+                        marginTop: '1rem',
+                        backgroundColor: ev.finalizado ? 'var(--color-success-bg)' : '#FFFFFF',
+                        color: ev.finalizado ? 'var(--color-success)' : 'var(--text-muted)',
+                        border: `1px solid ${ev.finalizado ? 'var(--color-success)' : 'var(--border-light)'}`,
                       }}
                       onClick={(e) => { e.stopPropagation(); toggleEventFinalizado(ev.id) }}
                       title={ev.finalizado ? 'Reabrir Evento' : 'Marcar como Finalizado'}
                     >
-                      <span>{ev.finalizado ? '✅' : '⬜'}</span>
-                      <span>Finalizado</span>
+                      {ev.finalizado ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                      {ev.finalizado ? 'Finalizado' : 'Marcar como Finalizado'}
                     </button>
                   </div>
                 </div>
@@ -158,7 +136,6 @@ export default function Eventos({ setView, events, records, professores, deleteE
         </div>
       </div>
 
-      {/* Event Detail Modal */}
       {selectedEvent && (
         <EventDetailModal
           event={selectedEvent}
