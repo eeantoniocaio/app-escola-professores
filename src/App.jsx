@@ -342,13 +342,13 @@ export default function App() {
       }
     }
   }
-  const handleUpdateOcorrencia = async (id, intervencaoGestao) => {
-    const { data, error } = await supabase.from('ocorrencias').update({ intervencao_gestao: intervencaoGestao }).eq('id', id).select()
+  const handleUpdateOcorrencia = async (id, intervencaoGestao, status) => {
+    const { data, error } = await supabase.from('ocorrencias').update({ intervencao_gestao: intervencaoGestao, status }).eq('id', id).select()
     if (error) {
       showToast('Erro ao atualizar ocorrência', 'error')
     } else if (data) {
       setOcorrencias(prev => prev.map(o => o.id === id ? data[0] : o))
-      showToast('Intervenção salva com sucesso!')
+      showToast('Ocorrência salva com sucesso!')
     }
   }
 

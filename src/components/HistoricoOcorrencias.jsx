@@ -4,6 +4,7 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
   const [hoveredBtn, setHoveredBtn] = useState(null)
   const [selectedOcorrencia, setSelectedOcorrencia] = useState(null)
   const [intervencaoText, setIntervencaoText] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('Em aberto')
   const [savingIntervencao, setSavingIntervencao] = useState(false)
 
   // Filters
@@ -134,6 +135,16 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {filtered.map(o => {
             const isGestao = userRole === 'gestao'
+            const currentStatus = o.status || 'Em aberto'
+            let statusStyles = {}
+            if (currentStatus === 'Concluída') {
+              statusStyles = { bg: '#f0fdf4', border: '#22c55e', text: '#15803d' }
+            } else if (currentStatus === 'Em andamento') {
+              statusStyles = { bg: '#fff7ed', border: '#f97316', text: '#c2410c' }
+            } else {
+              statusStyles = { bg: '#fef2f2', border: '#ef4444', text: '#b91c1c' }
+            }
+
             return (
             <div key={o.id} 
               className="ocorrencia-card"
@@ -141,11 +152,13 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
                 if (isGestao) {
                   setSelectedOcorrencia(o)
                   setIntervencaoText(o.intervencao_gestao || '')
+                  setSelectedStatus(o.status || 'Em aberto')
                 }
               }}
               style={{
-                background: 'white', borderRadius: '14px', padding: '1.25rem 1.5rem',
+                background: statusStyles.bg, borderRadius: '14px', padding: '1.25rem 1.5rem',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9',
+                borderLeft: `6px solid ${statusStyles.border}`,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem',
                 cursor: isGestao ? 'pointer' : 'default',
                 transition: 'transform 0.2s, box-shadow 0.2s'
@@ -166,6 +179,9 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
                   </span>
                   <span style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <span>📅</span> {new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR')}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', color: statusStyles.text, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(255,255,255,0.6)', padding: '0.1rem 0.5rem', borderRadius: '12px' }}>
+                    {currentStatus === 'Concluída' ? '✅' : currentStatus === 'Em andamento' ? '⏳' : '⚠️'} {currentStatus}
                   </span>
                 </div>
                 {o.alunos && o.alunos.length > 0 && (
@@ -231,6 +247,17 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
               </div>
 
               <div>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Status</label>
+                <select
+                  value={selectedStatus}
+                  onChange={e => setSelectedStatus(e.target.value)}
+                  style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none', marginBottom: '1rem', fontFamily: 'inherit' }}
+                >
+                  <option value="Em aberto">Em aberto</option>
+                  <option value="Em andamento">Em andamento</option>
+                  <option value="Concluída">Concluída</option>
+                </select>
+
                 <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Intervenção da Gestão</label>
                 <textarea
                   placeholder="Descreva as ações ou observações da gestão sobre esta ocorrência..."
@@ -251,7 +278,7 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
                 disabled={savingIntervencao}
                 onClick={async () => {
                   setSavingIntervencao(true)
-                  await updateOcorrencia(selectedOcorrencia.id, intervencaoText.trim())
+                  await updateOcorrencia(selectedOcorrencia.id, intervencaoText.trim(), selectedStatus)
                   setSavingIntervencao(false)
                   setSelectedOcorrencia(null)
                 }}
