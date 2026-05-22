@@ -103,6 +103,12 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
             </select>
           </div>
         )}
+        <div style={{ flex: '1 1 150px' }}>
+          <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Aluno</label>
+          <input type="text" placeholder="Nome do aluno..." value={filterAluno}
+            onChange={e => setFilterAluno(e.target.value)}
+            style={{ ...inputStyle(), width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.87rem' }} />
+        </div>
         <div style={{ flex: '1 1 140px' }}>
           <label style={{ ...labelStyle, marginBottom: '0.25rem' }}>Data</label>
           <input type="date" value={filterData} onChange={e => setFilterData(e.target.value)}
