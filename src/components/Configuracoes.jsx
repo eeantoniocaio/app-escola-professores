@@ -113,7 +113,7 @@ export default function Configuracoes({
       }
       if (nomeIdx === -1) { alert('Coluna "Nome do Aluno" não encontrada no CSV.'); e.target.value = ''; return }
       const novos = []
-      const situacoesIgnoradas = ['TRAN', 'REMA', 'BXTR']
+      const situacoesIgnoradas = ['TRAN', 'REMA', 'BXTR', 'RECL']
       for (let i = headerIdx + 1; i < lines.length; i++) {
         const cols = lines[i].split(sep).map(c => c.replace(/^["']|["']$/g, '').trim())
         const name = cols[nomeIdx] || ''
