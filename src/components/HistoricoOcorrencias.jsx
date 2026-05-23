@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { exportOcorrenciasCSV, exportOcorrenciasPDF } from '../utils/exportOcorrencias'
-import { Book, Calendar, CheckCircle2, Clock, AlertTriangle, User, Zap, Shield, ClipboardList, X, ArrowLeft, Download, FileText, Trash2, Check } from 'lucide-react'
+import { Book, Calendar, CheckCircle2, Clock, AlertTriangle, User, Zap, Shield, ClipboardList, X, ArrowLeft, Download, FileText, Trash2, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
 export default function HistoricoOcorrencias({ setView, ocorrencias, professores, turmas, deleteOcorrencia, updateOcorrencia, userRole }) {
   const [selectedOcorrencia, setSelectedOcorrencia] = useState(null)
@@ -15,6 +15,20 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
   const [filterAluno, setFilterAluno] = useState('')
   const [filterData, setFilterData] = useState('')
 
+  const [expandedSections, setExpandedSections] = useState(() => {
+    const saved = sessionStorage.getItem('expandedOcorrenciasSections');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { }
+    }
+    return null;
+  })
+
+  useEffect(() => {
+    if (expandedSections) {
+      sessionStorage.setItem('expandedOcorrenciasSections', JSON.stringify(expandedSections));
+    }
+  }, [expandedSections]);
+
   const filtered = useMemo(() => (ocorrencias || []).filter(o => {
     if (filterProf && !o.professor.toLowerCase().includes(filterProf.toLowerCase())) return false
     if (filterDisciplina && !o.disciplina.toLowerCase().includes(filterDisciplina.toLowerCase())) return false
@@ -23,6 +37,36 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
     if (filterData && o.data !== filterData) return false
     return true
   }), [ocorrencias, filterProf, filterDisciplina, filterTurma, filterAluno, filterData])
+
+  const sortedFiltered = useMemo(() => {
+    return [...filtered].sort((a, b) => new Date(b.data) - new Date(a.data))
+  }, [filtered])
+
+  const ocorrenciasEmAberto = useMemo(() => sortedFiltered.filter(o => o.status === 'Em aberto' || !o.status), [sortedFiltered])
+  const ocorrenciasEmAndamento = useMemo(() => sortedFiltered.filter(o => o.status === 'Em andamento'), [sortedFiltered])
+  const ocorrenciasConcluidas = useMemo(() => sortedFiltered.filter(o => o.status === 'Concluída'), [sortedFiltered])
+
+  useEffect(() => {
+    if (!expandedSections && sortedFiltered.length > 0) {
+      const abertoNewest = ocorrenciasEmAberto.length > 0 ? new Date(ocorrenciasEmAberto[0].data).getTime() : 0;
+      const andamentoNewest = ocorrenciasEmAndamento.length > 0 ? new Date(ocorrenciasEmAndamento[0].data).getTime() : 0;
+      const concluidasNewest = ocorrenciasConcluidas.length > 0 ? new Date(ocorrenciasConcluidas[0].data).getTime() : 0;
+      
+      const max = Math.max(abertoNewest, andamentoNewest, concluidasNewest);
+      
+      setExpandedSections({
+        aberto: max === abertoNewest && abertoNewest > 0,
+        andamento: max === andamentoNewest && max !== abertoNewest && andamentoNewest > 0,
+        concluidas: max === concluidasNewest && max !== abertoNewest && max !== andamentoNewest && concluidasNewest > 0
+      });
+    } else if (!expandedSections) {
+      setExpandedSections({ aberto: true, andamento: false, concluidas: false });
+    }
+  }, [sortedFiltered, expandedSections, ocorrenciasEmAberto, ocorrenciasEmAndamento, ocorrenciasConcluidas]);
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }))
+  }
 
   const inputStyle = {
     width: '100%', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)',
@@ -121,97 +165,189 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
           <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', fontWeight: 500 }}>Nenhuma ocorrência registrada.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {filtered.map(o => {
-            const isGestao = userRole === 'gestao'
-            const currentStatus = o.status || 'Em aberto'
-            let statusStyles = {}
-            if (currentStatus === 'Concluída') {
-              statusStyles = { bg: 'var(--color-success-bg)', border: 'var(--color-success)', text: 'var(--color-success)', icon: <CheckCircle2 size={14} /> }
-            } else if (currentStatus === 'Em andamento') {
-              statusStyles = { bg: 'var(--color-warning-bg)', border: 'var(--color-warning)', text: 'var(--color-warning)', icon: <Clock size={14} /> }
-            } else {
-              statusStyles = { bg: 'var(--color-danger-bg)', border: 'var(--color-danger)', text: 'var(--color-danger)', icon: <AlertTriangle size={14} /> }
-            }
-
-            return (
-            <div key={o.id} 
-              onClick={() => {
-                if (isGestao) {
-                  setSelectedOcorrencia(o)
-                  setIntervencaoText(o.intervencao_gestao || '')
-                  setSelectedStatus(o.status || 'Em aberto')
-                }
-              }}
-              style={{
-                background: statusStyles.bg, borderRadius: 'var(--radius-md)', padding: '1.25rem 1.5rem',
-                boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)',
-                borderLeft: `6px solid ${statusStyles.border}`,
-                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem',
-                cursor: isGestao ? 'pointer' : 'default',
-                transition: 'var(--transition-smooth)'
-              }}
-              onMouseOver={(e) => { if (isGestao) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; } }}
-              onMouseOut={(e) => { if (isGestao) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; } }}
-            >
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-main)' }}>{o.professor}</span>
-                  {o.turma && (
-                    <span style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', borderRadius: '999px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>
-                      {o.turma}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {(() => {
+            const isGestao = userRole === 'gestao';
+            const renderItem = (o, statusStyles) => (
+              <div key={o.id} 
+                onClick={() => {
+                  if (isGestao) {
+                    setSelectedOcorrencia(o)
+                    setIntervencaoText(o.intervencao_gestao || '')
+                    setSelectedStatus(o.status || 'Em aberto')
+                  }
+                }}
+                style={{
+                  background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', padding: '1.25rem 1.5rem',
+                  boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)',
+                  borderLeft: `6px solid ${statusStyles.border}`,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem',
+                  cursor: isGestao ? 'pointer' : 'default',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  position: 'relative'
+                }}
+                onMouseOver={(e) => { if (isGestao) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; } }}
+                onMouseOut={(e) => { if (isGestao) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; } }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-main)' }}>{o.professor}</span>
+                    {o.turma && (
+                      <span style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', borderRadius: '999px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>
+                        {o.turma}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: (o.descricao || (o.alunos && o.alunos.length > 0)) ? '0.75rem' : 0 }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <Book size={14} /> {o.disciplina}
                     </span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <Calendar size={14} /> {new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: statusStyles.text, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', background: statusStyles.bg, padding: '0.15rem 0.6rem', borderRadius: '999px' }}>
+                      {statusStyles.icon} {o.status || 'Em aberto'}
+                    </span>
+                  </div>
+                  {o.alunos && o.alunos.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: o.descricao ? '0.75rem' : 0 }}>
+                      {o.alunos.map(nome => (
+                        <span key={nome} style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)', borderRadius: '999px', padding: '0.15rem 0.6rem', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <User size={12} /> {nome}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {o.descricao && (
+                    <div style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', borderLeft: '3px solid var(--color-primary)', marginBottom: o.acao_professor ? '0.5rem' : 0 }}>
+                      {o.descricao}
+                    </div>
+                  )}
+                  {o.acao_professor && (
+                    <div style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-success)', background: 'var(--color-success-bg)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', borderLeft: '3px solid var(--color-success)', marginBottom: o.intervencao_gestao ? '0.5rem' : 0, display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                      <Zap size={16} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+                      <div><span style={{ fontWeight: 600, marginRight: '0.35rem' }}>Ação:</span>{o.acao_professor}</div>
+                    </div>
+                  )}
+                  {o.intervencao_gestao && (
+                    <div style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-primary)', background: 'var(--color-primary-light)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', borderLeft: '3px solid var(--color-primary-dark)', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                      <Shield size={16} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+                      <div><span style={{ fontWeight: 600, marginRight: '0.35rem' }}>Intervenção da Gestão:</span>{o.intervencao_gestao}</div>
+                    </div>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: (o.descricao || (o.alunos && o.alunos.length > 0)) ? '0.75rem' : 0 }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Book size={14} /> {o.disciplina}
-                  </span>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Calendar size={14} /> {new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR')}
-                  </span>
-                  <span style={{ fontSize: '0.85rem', color: statusStyles.text, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(255,255,255,0.7)', padding: '0.15rem 0.6rem', borderRadius: '999px' }}>
-                    {statusStyles.icon} {currentStatus}
-                  </span>
-                </div>
-                {o.alunos && o.alunos.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: o.descricao ? '0.75rem' : 0 }}>
-                    {o.alunos.map(nome => (
-                      <span key={nome} style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)', borderRadius: '999px', padding: '0.15rem 0.6rem', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <User size={12} /> {nome}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {o.descricao && (
-                  <div style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', borderLeft: '3px solid var(--color-primary)', marginBottom: o.acao_professor ? '0.5rem' : 0 }}>
-                    {o.descricao}
-                  </div>
-                )}
-                {o.acao_professor && (
-                  <div style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-success)', background: 'var(--color-success-bg)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', borderLeft: '3px solid var(--color-success)', marginBottom: o.intervencao_gestao ? '0.5rem' : 0, display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
-                    <Zap size={16} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
-                    <div><span style={{ fontWeight: 600, marginRight: '0.35rem' }}>Ação:</span>{o.acao_professor}</div>
-                  </div>
-                )}
-                {o.intervencao_gestao && (
-                  <div style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-primary)', background: 'var(--color-primary-light)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', borderLeft: '3px solid var(--color-primary-dark)', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
-                    <Shield size={16} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
-                    <div><span style={{ fontWeight: 600, marginRight: '0.35rem' }}>Intervenção da Gestão:</span>{o.intervencao_gestao}</div>
-                  </div>
-                )}
+                <button
+                  className="btn-icon delete"
+                  onClick={(e) => { e.stopPropagation(); deleteOcorrencia(o.id); }}
+                  title="Excluir"
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-danger)', padding: '0.5rem', transition: 'var(--transition-fast)', flexShrink: 0 }}
+                >
+                  <Trash2 size={20} />
+                </button>
               </div>
-              <button
-                className="btn-icon delete"
-                onClick={(e) => { e.stopPropagation(); deleteOcorrencia(o.id); }}
-                title="Excluir"
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-danger)', padding: '0.5rem', transition: 'var(--transition-fast)', flexShrink: 0 }}
-              >
-                <Trash2 size={20} />
-              </button>
-            </div>
-            )
-          })}
+            );
+
+            const renderAccordion = (key, title, icon, items, theme, emptyText) => {
+              const isExpanded = expandedSections?.[key];
+              return (
+                <div style={{ 
+                  borderRadius: 'var(--radius-md)', 
+                  border: `1px solid ${theme.border}`, 
+                  background: 'var(--bg-card)', 
+                  overflow: 'hidden',
+                  boxShadow: 'var(--shadow-sm)',
+                  transition: 'all 0.3s ease'
+                }}>
+                  <div 
+                    onClick={() => toggleSection(key)}
+                    style={{
+                      background: theme.headerBg,
+                      padding: '1.25rem 1.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      borderBottom: isExpanded ? `1px solid ${theme.border}` : '1px solid transparent',
+                      transition: 'background-color 0.2s ease, border-bottom 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ color: theme.iconColor, display: 'flex' }}>{icon}</span>
+                      <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: theme.textColor }}>
+                        {title}
+                      </h3>
+                      <span style={{ 
+                        background: theme.badgeBg, 
+                        color: theme.badgeColor, 
+                        padding: '0.15rem 0.6rem', 
+                        borderRadius: '999px', 
+                        fontSize: '0.8rem', 
+                        fontWeight: 700 
+                      }}>
+                        {items.length}
+                      </span>
+                    </div>
+                    <div style={{ color: theme.iconColor, transition: 'transform 0.3s ease', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', display: 'flex' }}>
+                      <ChevronDown size={20} />
+                    </div>
+                  </div>
+                  
+                  <div style={{ 
+                    maxHeight: isExpanded ? '5000px' : '0', 
+                    opacity: isExpanded ? 1 : 0, 
+                    overflow: 'hidden', 
+                    transition: 'all 0.4s ease-in-out' 
+                  }}>
+                    <div style={{ padding: '1.5rem', background: 'var(--bg-primary)' }}>
+                      {items.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)', background: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-light)' }}>
+                          <p style={{ margin: 0, fontStyle: 'italic', fontSize: '0.95rem' }}>{emptyText}</p>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                          {items.map(o => renderItem(o, theme.itemStyles))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            };
+
+            return (
+              <>
+                {renderAccordion('aberto', 'Em aberto', <AlertTriangle size={20} />, ocorrenciasEmAberto, {
+                  border: 'var(--color-danger)',
+                  headerBg: 'var(--color-danger-bg)',
+                  iconColor: 'var(--color-danger)',
+                  textColor: 'var(--color-danger)',
+                  badgeBg: 'var(--color-danger)',
+                  badgeColor: '#fff',
+                  itemStyles: { bg: 'var(--color-danger-bg)', border: 'var(--color-danger)', text: 'var(--color-danger)', icon: <AlertTriangle size={14} /> }
+                }, 'Nenhuma ocorrência em aberto')}
+                
+                {renderAccordion('andamento', 'Em andamento', <Clock size={20} />, ocorrenciasEmAndamento, {
+                  border: 'var(--color-warning)',
+                  headerBg: 'var(--color-warning-bg)',
+                  iconColor: 'var(--color-warning)',
+                  textColor: 'var(--text-main)',
+                  badgeBg: 'var(--color-warning)',
+                  badgeColor: '#fff',
+                  itemStyles: { bg: 'var(--color-warning-bg)', border: 'var(--color-warning)', text: 'var(--color-warning)', icon: <Clock size={14} /> }
+                }, 'Nenhuma ocorrência em andamento')}
+                
+                {renderAccordion('concluidas', 'Concluídas', <CheckCircle2 size={20} />, ocorrenciasConcluidas, {
+                  border: 'var(--color-success)',
+                  headerBg: 'var(--color-success-bg)',
+                  iconColor: 'var(--color-success)',
+                  textColor: 'var(--color-success)',
+                  badgeBg: 'var(--color-success)',
+                  badgeColor: '#fff',
+                  itemStyles: { bg: 'var(--color-success-bg)', border: 'var(--color-success)', text: 'var(--color-success)', icon: <CheckCircle2 size={14} /> }
+                }, 'Nenhuma ocorrência concluída')}
+              </>
+            );
+          })()}
         </div>
       )}
 
