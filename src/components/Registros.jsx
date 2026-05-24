@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { PlusCircle, Calendar, Pencil, Trash2, ArrowLeft, User, Shield, Tag, Search, FolderOpen, Paperclip, Briefcase, UploadCloud, FileText, X, Link as LinkIcon } from 'lucide-react'
+import { PlusCircle, Calendar, Pencil, Trash2, ArrowLeft, User, Shield, Tag, Search, FolderOpen, Paperclip, Briefcase, UploadCloud, FileText, X, Link as LinkIcon, ChevronRight, ChevronLeft, Check } from 'lucide-react'
 
 export default function Registros({ setView, records, events, tiposEvidencia, professores = [], gestores = [], addRecord, updateRecord, deleteRecord }) {
   const [filterTeacher, setFilterTeacher] = useState('todos')
@@ -22,14 +22,17 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
   const [status, setStatus] = useState('pendente')
   const [feedback, setFeedback] = useState('')
 
+  const [currentStep, setCurrentStep] = useState(1)
+  const [errors, setErrors] = useState({})
+
   const formFirstInputRef = useRef(null)
 
   useEffect(() => {
-    if (isFormModalOpen && formFirstInputRef.current) {
+    if (isFormModalOpen && formFirstInputRef.current && currentStep === 1) {
       const timer = setTimeout(() => formFirstInputRef.current.focus(), 150)
       return () => clearTimeout(timer)
     }
-  }, [isFormModalOpen])
+  }, [isFormModalOpen, currentStep])
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -63,6 +66,8 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
     setMockFileSize('')
     setStatus('pendente')
     setFeedback('')
+    setCurrentStep(1)
+    setErrors({})
     setIsFormModalOpen(true)
   }
 
@@ -79,6 +84,8 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
     setMockFileSize(rec.fileSize || '')
     setStatus(rec.status || 'pendente')
     setFeedback(rec.feedback || '')
+    setCurrentStep(1)
+    setErrors({})
     setIsFormModalOpen(true)
   }
 
@@ -90,9 +97,39 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
     }
   }
 
+  const validateStep = (step) => {
+    const e = {}
+    if (step === 1) {
+      if (!teacher) e.teacher = 'Campo obrigatório'
+      if (!date) e.date = 'Campo obrigatório'
+      if (!tipo) e.tipo = 'Campo obrigatório'
+      if (!gestor) e.gestor = 'Campo obrigatório'
+    }
+    return e
+  }
+
+  const handleNextStep = () => {
+    const errs = validateStep(currentStep)
+    if (Object.keys(errs).length) {
+      setErrors(errs)
+      return
+    }
+    setErrors({})
+    setCurrentStep(prev => prev + 1)
+  }
+
+  const handlePrevStep = () => {
+    setCurrentStep(prev => prev - 1)
+    setErrors({})
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!teacher || !date || !gestor) return
+    const errs = validateStep(currentStep)
+    if (Object.keys(errs).length) {
+      setErrors(errs)
+      return
+    }
     const recordData = {
       title: tipo, teacher, eventId: null, date, tipo, gestor,
       description,
@@ -331,61 +368,126 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
                 <X size={24} color="var(--text-muted)" />
               </button>
             </div>
+            
+            {/* Progress indicator */}
+            <div style={{ padding: '0.5rem 4rem 2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {[
+                { num: 1, label: 'Dados Iniciais' },
+                { num: 2, label: 'Detalhes' },
+                { num: 3, label: 'Anexos' }
+              ].map((step, idx, arr) => {
+                const isCompleted = currentStep > step.num;
+                const isCurrent = currentStep === step.num;
+                const color = isCompleted ? 'var(--color-success)' : (isCurrent ? '#3b82f6' : 'var(--border-light)');
+                const textColor = isCompleted ? 'var(--color-success)' : (isCurrent ? '#3b82f6' : 'var(--text-muted)');
+                const bgColor = isCompleted || isCurrent ? color : 'var(--bg-secondary)';
+                
+                return (
+                  <React.Fragment key={step.num}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 2 }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: bgColor, color: (isCompleted || isCurrent) ? '#fff' : 'var(--text-muted)', border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1rem', transition: 'all 0.3s' }}>
+                        {isCompleted ? <Check size={20} strokeWidth={3} /> : step.num}
+                      </div>
+                      <span style={{ position: 'absolute', top: '44px', fontSize: '0.85rem', fontWeight: 600, color: textColor, whiteSpace: 'nowrap' }}>
+                        {step.label}
+                      </span>
+                    </div>
+                    {idx < arr.length - 1 && (
+                      <div style={{ flex: 1, height: '2px', backgroundColor: currentStep > step.num ? 'var(--color-success)' : 'var(--border-light)', margin: '0 8px', transition: 'all 0.3s' }} />
+                    )}
+                  </React.Fragment>
+                )
+              })}
+            </div>
+
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden', margin: 0 }}>
-              <div className="modal-body" style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '0.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="modal-body" style={{ overflowY: 'auto', flexGrow: 1, padding: '0.5rem 2rem 1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1rem' }}>
+                {/* Step 1 */}
+                <div style={{ display: currentStep === 1 ? 'flex' : 'none', flexDirection: 'column', gap: '1.25rem', animation: 'fadeIn 0.3s' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1rem' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Professor(a) *</label>
+                      <select ref={formFirstInputRef} className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: `1px solid ${errors.teacher ? 'var(--color-danger)' : 'var(--border-light)'}` }} value={teacher} onChange={(e) => setTeacher(e.target.value)}>
+                        <option value="">Selecione um professor</option>
+                        {professores.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                      {errors.teacher && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.teacher}</span>}
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Data da Evidência *</label>
+                      <input type="date" className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: `1px solid ${errors.date ? 'var(--color-danger)' : 'var(--border-light)'}` }} value={date} onChange={(e) => setDate(e.target.value)} />
+                      {errors.date && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.date}</span>}
+                    </div>
+                  </div>
+
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Professor(a) *</label>
-                    <select ref={formFirstInputRef} className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }} value={teacher} onChange={(e) => setTeacher(e.target.value)} required>
-                      <option value="">Selecione um professor</option>
-                      {professores.map(p => <option key={p} value={p}>{p}</option>)}
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Tipo *</label>
+                    <select className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: `1px solid ${errors.tipo ? 'var(--color-danger)' : 'var(--border-light)'}` }} value={tipo} onChange={(e) => setTipo(e.target.value)}>
+                      <option value="">Selecione um tipo</option>
+                      {tiposEvidencia.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
+                    {errors.tipo && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.tipo}</span>}
                   </div>
+
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Data da Evidência *</label>
-                    <input type="date" className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }} value={date} onChange={(e) => setDate(e.target.value)} required />
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Gestor(a) *</label>
+                    <select className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: `1px solid ${errors.gestor ? 'var(--color-danger)' : 'var(--border-light)'}` }} value={gestor} onChange={(e) => setGestor(e.target.value)}>
+                      <option value="">Selecione um gestor</option>
+                      {gestores.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                    {errors.gestor && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.gestor}</span>}
                   </div>
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Tipo *</label>
-                  <select className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }} value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                    {tiposEvidencia.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                {/* Step 2 */}
+                <div style={{ display: currentStep === 2 ? 'flex' : 'none', flexDirection: 'column', gap: '1.25rem', animation: 'fadeIn 0.3s' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Descrição e Contexto</label>
+                    <textarea className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', minHeight: '150px', resize: 'vertical' }} placeholder="Explique o que esta evidência comprova..." value={description} onChange={(e) => setDescription(e.target.value)} />
+                  </div>
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Gestor(a) *</label>
-                  <select className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }} value={gestor} onChange={(e) => setGestor(e.target.value)} required>
-                    <option value="">Selecione um gestor</option>
-                    {gestores.map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
+                {/* Step 3 */}
+                <div style={{ display: currentStep === 3 ? 'flex' : 'none', flexDirection: 'column', gap: '1.25rem', animation: 'fadeIn 0.3s' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Anexar Documento</label>
+                    <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', border: '2px dashed var(--border-light)', borderRadius: 'var(--radius-md)', cursor: 'pointer', backgroundColor: mockFileName ? 'var(--color-primary-light)' : 'var(--bg-primary)', transition: 'var(--transition-smooth)', borderColor: mockFileName ? 'var(--color-primary)' : 'var(--border-light)' }}>
+                      <input type="file" style={{ display: 'none' }} onChange={handleFileChangeMock} />
+                      <span style={{ color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
+                        {mockFileName ? <FileText size={40} /> : <UploadCloud size={40} />}
+                      </span>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500, textAlign: 'center' }}>
+                        {mockFileName ? `Selecionado: ${mockFileName} (${mockFileSize})` : 'Clique para selecionar PDF, JPG ou PNG'}
+                      </span>
+                      {!mockFileName && <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>Máx: 20MB</span>}
+                    </label>
+                  </div>
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Descrição e Contexto</label>
-                  <textarea className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', minHeight: '100px', resize: 'vertical' }} placeholder="Explique o que esta evidência comprova..." value={description} onChange={(e) => setDescription(e.target.value)} />
-                </div>
-
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Anexar Documento</label>
-                  <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', border: '2px dashed var(--border-light)', borderRadius: 'var(--radius-md)', cursor: 'pointer', backgroundColor: mockFileName ? 'var(--color-primary-light)' : 'var(--bg-primary)', transition: 'var(--transition-smooth)', borderColor: mockFileName ? 'var(--color-primary)' : 'var(--border-light)' }}>
-                    <input type="file" style={{ display: 'none' }} onChange={handleFileChangeMock} />
-                    <span style={{ color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
-                      {mockFileName ? <FileText size={32} /> : <UploadCloud size={32} />}
-                    </span>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500, textAlign: 'center' }}>
-                      {mockFileName ? `Selecionado: ${mockFileName} (${mockFileSize})` : 'Clique para selecionar PDF, JPG ou PNG'}
-                    </span>
-                    {!mockFileName && <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>Máx: 20MB</span>}
-                  </label>
-                </div>
               </div>
 
-              <div className="modal-footer" style={{ flexShrink: 0, paddingTop: '1.5rem', marginTop: '1.5rem', display: 'flex', gap: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1, padding: '0.75rem' }} onClick={() => setIsFormModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.75rem' }}>{editingId ? 'Salvar Alterações' : 'Registrar Evidência'}</button>
+              <div className="modal-footer" style={{ flexShrink: 0, padding: '1.25rem 2rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', gap: '1rem', borderTop: '1px solid var(--border-light)', background: 'var(--bg-secondary)', borderBottomLeftRadius: 'var(--radius-md)', borderBottomRightRadius: 'var(--radius-md)' }}>
+                <div>
+                  {currentStep > 1 && (
+                    <button type="button" className="btn btn-secondary" style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'transparent', border: '1px solid var(--border-light)' }} onClick={handlePrevStep}>
+                      <ChevronLeft size={18} /> Voltar
+                    </button>
+                  )}
+                </div>
+                
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button type="button" className="btn btn-secondary" style={{ padding: '0.75rem 1.25rem', background: 'transparent', border: 'none' }} onClick={() => setIsFormModalOpen(false)}>Cancelar</button>
+                  {currentStep < 3 ? (
+                    <button type="button" className="btn btn-primary" style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={handleNextStep}>
+                      Próximo <ChevronRight size={18} />
+                    </button>
+                  ) : (
+                    <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem 1.25rem' }}>
+                      {editingId ? 'Salvar Alterações' : 'Registrar Evidência'}
+                    </button>
+                  )}
+                </div>
               </div>
             </form>
           </div>
