@@ -4,8 +4,14 @@ import ReportSummaryCards from './ReportSummaryCards';
 import ReportFilters from './ReportFilters';
 import ReportTable from './ReportTable';
 import { exportCSV, exportPDF } from './exportUtils';
+import { useRegistros } from '../../../registros/hooks/useRegistros';
+import { useEventos } from '../../../eventos/hooks/useEventos';
+import { useGlobalData } from '../../../../app/providers/GlobalDataProvider';
 
-export default function Relatorios({ setView, records, events, professores, tiposEvidencia }) {
+export default function Relatorios() {
+  const { records } = useRegistros();
+  const { events } = useEventos();
+  const { professores, tiposEvidencia } = useGlobalData();
   // filters
   const [filterEvent, setFilterEvent] = useState('todos');
   const [filterTeacher, setFilterTeacher] = useState('todos');
@@ -111,7 +117,7 @@ export default function Relatorios({ setView, records, events, professores, tipo
 
   return (
     <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
-      <ReportHeader setView={setView} />
+      <ReportHeader />
       
       <ReportSummaryCards 
         total={total} 

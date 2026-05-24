@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Calendar, Tag, Users, Briefcase, School, Link as LinkIcon, X, Trash2, UploadCloud, ArrowLeft, Settings, Check } from 'lucide-react'
+import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 
 const SECTIONS = [
   { key: 'tiposEvento',    icon: <Calendar size={32} />, label: 'Tipos de Evento',    color: 'var(--color-warning-bg)', border: 'var(--color-warning)', dark: 'var(--color-warning)' },
@@ -9,15 +11,16 @@ const SECTIONS = [
   { key: 'turmas',         icon: <School size={32} />, label: 'Turmas',             color: 'var(--color-danger-bg)', border: 'var(--color-danger)', dark: 'var(--color-danger)' },
 ]
 
-export default function Configuracoes({
-  setView,
-  tiposEvento, addTipoEvento, removeTipoEvento,
-  tiposEvidencia, addTipoEvidencia, removeTipoEvidencia,
-  professores, addProfessor, removeProfessor, importProfessores,
-  gestores, addGestor, removeGestor,
-  turmas, addTurma, removeTurma, updateTurmaLink,
-  alunos, importAlunosTurma, clearAlunosTurma, removeAlunosPorNome
-}) {
+export default function Configuracoes() {
+  const navigate = useNavigate();
+  const {
+    tiposEvento, addTipoEvento, removeTipoEvento,
+    tiposEvidencia, addTipoEvidencia, removeTipoEvidencia,
+    professores, addProfessor, removeProfessor, importProfessores,
+    gestores, addGestor, removeGestor,
+    turmas, addTurma, removeTurma, updateTurmaLink,
+    alunos, importAlunosTurma, clearAlunosTurma, removeAlunosPorNome
+  } = useGlobalData();
   const [activeSection, setActiveSection] = useState(null)
   const [novoTipoEvento, setNovoTipoEvento] = useState('')
   const [novoTipoEvidencia, setNovoTipoEvidencia] = useState('')
@@ -342,7 +345,7 @@ export default function Configuracoes({
       <div className="dashboard-header" style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button className="btn btn-secondary"
-            onClick={() => activeSection ? setActiveSection(null) : setView('home')}
+            onClick={() => activeSection ? setActiveSection(null) : navigate('/')}
             style={{ padding: '0.5rem' }}
             title={activeSection ? 'Voltar às configurações' : 'Voltar ao início'}>
             <ArrowLeft size={20} />

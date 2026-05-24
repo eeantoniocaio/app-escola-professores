@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../services/supabase';
 
 export default function BoasPraticasModal({ isOpen, onClose, professores = [], turmas = [] }) {
   const [professor, setProfessor] = useState('');

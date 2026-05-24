@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { supabase } from '../supabaseClient'
+import { supabase } from '../../shared/services/supabase'
 
 export default function Login({ setSession }) {
   const [loading, setLoading] = useState(false)

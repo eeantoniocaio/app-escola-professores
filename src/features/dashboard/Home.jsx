@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import BoasPraticasModal from './BoasPraticasModal';
+import { useNavigate } from 'react-router-dom';
+import BoasPraticasModal from '../../shared/ui/BoasPraticasModal';
 import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star } from 'lucide-react';
+import { useAuth } from '../../app/providers/AuthProvider';
+import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 
-export default function Home({ setView, openEventModal, openOcorrenciaModal, userRole, professores = [], turmas = [] }) {
+export default function Home() {
+  const navigate = useNavigate();
+  const { userRole } = useAuth();
+  const { professores, turmas } = useGlobalData();
   const [isBoasPraticasOpen, setIsBoasPraticasOpen] = useState(false);
 
   return (
@@ -15,40 +21,41 @@ export default function Home({ setView, openEventModal, openOcorrenciaModal, use
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', width: '100%', maxWidth: '1000px', padding: '0 1rem' }}>
         {userRole === 'gestao' && (
           <>
-            <button className="dashboard-action-card" onClick={() => openEventModal()}>
+            {/* Navigates to a specific route or we could open a modal context */}
+            <button className="dashboard-action-card" onClick={() => navigate('/eventos/novo')}>
               <PlusCircle />
               <span>Novo Evento</span>
             </button>
-            <button className="dashboard-action-card" onClick={() => setView('eventos')}>
+            <button className="dashboard-action-card" onClick={() => navigate('/eventos')}>
               <Calendar />
               <span>Eventos</span>
             </button>
-            <button className="dashboard-action-card" onClick={() => setView('registros')}>
+            <button className="dashboard-action-card" onClick={() => navigate('/registros')}>
               <BookOpen />
               <span>Registros</span>
             </button>
-            <button className="dashboard-action-card" onClick={() => setView('relatorios')}>
+            <button className="dashboard-action-card" onClick={() => navigate('/relatorios')}>
               <BarChart2 />
               <span>Relatórios</span>
             </button>
-            <button className="dashboard-action-card" onClick={() => setView('historico-ocorrencias')}>
+            <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias')}>
               <ShieldAlert />
               <span>Histórico de Ocorrências</span>
             </button>
           </>
         )}
 
-        <button className="dashboard-action-card" onClick={() => setView('mapa-de-classe')}>
+        <button className="dashboard-action-card" onClick={() => navigate('/turmas')}>
           <Users />
           <span>Mapa de Classe</span>
         </button>
 
-        <button className="dashboard-action-card" onClick={() => openOcorrenciaModal()}>
+        <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias/nova')}>
           <AlertTriangle />
           <span style={{ textAlign: 'center' }}>Ocorrências em Sala</span>
         </button>
 
-        <button className="dashboard-action-card" onClick={() => setView('envio-questoes')}>
+        <button className="dashboard-action-card" onClick={() => navigate('/reposicoes')}>
           <PenTool />
           <span style={{ textAlign: 'center', fontSize: '1rem' }}>Envio de Reposições</span>
         </button>

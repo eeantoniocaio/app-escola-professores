@@ -1,47 +1,68 @@
-import React, { useState } from 'react'
-import EventDetailModal from './EventDetailModal'
-import { PlusCircle, Calendar, AlertCircle, CheckCircle2, Circle, Pencil, Trash2, ArrowLeft } from 'lucide-react'
+import React, { useState } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import EventDetailModal from './EventDetailModal';
+import EventModal from './EventModal';
+import { PlusCircle, Calendar, AlertCircle, CheckCircle2, Circle, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { useEventos } from './hooks/useEventos';
+import { useRegistros } from '../registros/hooks/useRegistros';
+import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 
-export default function Eventos({ setView, events, records, professores, deleteEvent, openEventModal, toggleEventFinalizado, updateEvent }) {
-  const [selectedEvent, setSelectedEvent] = useState(null)
+export default function Eventos() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id } = useParams();
+  
+  const { events, deleteEvent, updateEvent, addEvent, toggleEventFinalizado, loading } = useEventos();
+  const { records } = useRegistros();
+  const { professores, tiposEvento } = useGlobalData();
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
-  // Clean SaaS badges
+  const isNovoModalOpen = location.pathname === '/eventos/novo';
+  const eventToEdit = id ? events.find(e => e.id?.toString() === id) : null;
+  const isEditModalOpen = location.pathname.includes('/editar/') && eventToEdit;
+
+  const closeModals = () => navigate('/eventos');
+
   const getTypeBadgeStyle = (tipo) => {
     switch (tipo) {
-      case 'formulário': return { backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }
-      case 'email': return { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }
-      case 'físico': return { backgroundColor: 'var(--color-warning-bg)', color: 'var(--color-warning)' }
-      default: return { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }
+      case 'formulário': return { backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' };
+      case 'email': return { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' };
+      case 'físico': return { backgroundColor: 'var(--color-warning-bg)', color: 'var(--color-warning)' };
+      default: return { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' };
     }
-  }
+  };
 
   const handleCardClick = (e, ev) => {
-    if (e.target.closest('button')) return
-    setSelectedEvent(ev)
-  }
+    if (e.target.closest('button')) return;
+    setSelectedEvent(ev);
+  };
 
   const safeFormatDate = (dateStr) => {
-    if (!dateStr) return 'Não informada'
+    if (!dateStr) return 'Não informada';
     try {
-      const d = new Date(dateStr + 'T00:00:00')
-      if (isNaN(d.getTime())) return 'Data Inválida'
-      return d.toLocaleDateString('pt-BR')
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return 'Data Inválida';
+      return d.toLocaleDateString('pt-BR');
     } catch(e) {
-      return 'Data Inválida'
+      return 'Data Inválida';
     }
+  };
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', padding: '3rem' }}>Carregando eventos...</div>;
   }
 
   return (
     <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
       <div className="dashboard-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="btn btn-secondary" onClick={() => setView('home')} title="Voltar ao início" style={{ padding: '0.5rem' }}>
+          <button className="btn btn-secondary" onClick={() => navigate('/')} title="Voltar ao início" style={{ padding: '0.5rem' }}>
             <ArrowLeft size={20} />
           </button>
           <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Gestão de Eventos</h2>
         </div>
 
-        <button className="btn btn-primary" onClick={() => openEventModal()}>
+        <button className="btn btn-primary" onClick={() => navigate('/eventos/novo')}>
           <PlusCircle size={18} /> Novo Evento
         </button>
       </div>
@@ -95,10 +116,10 @@ export default function Eventos({ setView, events, records, professores, deleteE
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEventModal(ev) }} title="Editar Evento" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}>
+                        <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/eventos/editar/${ev.id}`); }} title="Editar Evento" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}>
                           <Pencil size={18} />
                         </button>
-                        <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id) }} title="Excluir Evento" style={{ background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.25rem' }}>
+                        <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id); }} title="Excluir Evento" style={{ background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.25rem' }}>
                           <Trash2 size={18} />
                         </button>
                       </div>
@@ -122,7 +143,7 @@ export default function Eventos({ setView, events, records, professores, deleteE
                         color: ev.finalizado ? 'var(--color-success)' : 'var(--text-muted)',
                         border: `1px solid ${ev.finalizado ? 'var(--color-success)' : 'var(--border-light)'}`,
                       }}
-                      onClick={(e) => { e.stopPropagation(); toggleEventFinalizado(ev.id) }}
+                      onClick={(e) => { e.stopPropagation(); toggleEventFinalizado(ev.id); }}
                       title={ev.finalizado ? 'Reabrir Evento' : 'Marcar como Finalizado'}
                     >
                       {ev.finalizado ? <CheckCircle2 size={16} /> : <Circle size={16} />}
@@ -143,11 +164,22 @@ export default function Eventos({ setView, events, records, professores, deleteE
           professores={professores || []}
           onClose={() => setSelectedEvent(null)}
           onSave={(updatedEvent) => {
-            updateEvent(updatedEvent)
-            setSelectedEvent(null)
+            updateEvent(updatedEvent);
+            setSelectedEvent(null);
           }}
         />
       )}
+
+      {(isNovoModalOpen || isEditModalOpen) && (
+        <EventModal
+          isOpen={true}
+          onClose={closeModals}
+          onSave={isEditModalOpen ? updateEvent : addEvent}
+          tiposEvento={tiposEvento}
+          professores={professores}
+          eventToEdit={eventToEdit}
+        />
+      )}
     </div>
-  )
+  );
 }

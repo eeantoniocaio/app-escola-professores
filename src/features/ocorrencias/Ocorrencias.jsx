@@ -1,9 +1,16 @@
 import React, { useState, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, CheckCircle2, Check, X, ChevronRight, ChevronLeft } from 'lucide-react'
+import { useOcorrencias } from './hooks/useOcorrencias'
+import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 
 const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', descricao: '', alunos: [], acao_professor: '' }
 
-export default function Ocorrencias({ onClose, professores, turmas, alunos, addOcorrencia }) {
+export default function Ocorrencias() {
+  const navigate = useNavigate();
+  const { addOcorrencia } = useOcorrencias();
+  const { professores, turmas, alunos } = useGlobalData();
+  const onClose = () => navigate(-1);
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})

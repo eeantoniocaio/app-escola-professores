@@ -1,8 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { exportOcorrenciasCSV, exportOcorrenciasPDF } from '../utils/exportOcorrencias'
 import { Book, Calendar, CheckCircle2, Clock, AlertTriangle, User, Zap, Shield, ClipboardList, X, ArrowLeft, Download, FileText, Trash2, Check, ChevronDown, ChevronUp } from 'lucide-react'
+import { useOcorrencias } from './hooks/useOcorrencias'
+import { useGlobalData } from '../../app/providers/GlobalDataProvider'
+import { useAuth } from '../../app/providers/AuthProvider'
 
-export default function HistoricoOcorrencias({ setView, ocorrencias, professores, turmas, deleteOcorrencia, updateOcorrencia, userRole }) {
+export default function HistoricoOcorrencias() {
+  const navigate = useNavigate();
+  const { ocorrencias, deleteOcorrencia, updateOcorrencia } = useOcorrencias();
+  const { professores, turmas } = useGlobalData();
+  const { userRole } = useAuth();
+  
   const [selectedOcorrencia, setSelectedOcorrencia] = useState(null)
   const [intervencaoText, setIntervencaoText] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('Em aberto')
@@ -84,7 +93,7 @@ export default function HistoricoOcorrencias({ setView, ocorrencias, professores
       <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
-            <button className="btn btn-secondary" onClick={() => setView('home')} style={{ padding: '0.5rem' }} title="Voltar">
+            <button className="btn btn-secondary" onClick={() => navigate('/')} style={{ padding: '0.5rem' }} title="Voltar">
               <ArrowLeft size={20} />
             </button>
             <h2 style={{ fontSize: '1.75rem', margin: 0, fontWeight: 700 }}>Histórico de Ocorrências</h2>

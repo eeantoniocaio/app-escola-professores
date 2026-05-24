@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useRegistros } from './hooks/useRegistros'
+import { useEventos } from '../eventos/hooks/useEventos'
+import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 import { PlusCircle, Calendar, Pencil, Trash2, ArrowLeft, User, Shield, Tag, Search, FolderOpen, Paperclip, Briefcase, UploadCloud, FileText, X, Link as LinkIcon, ChevronRight, ChevronLeft, Check } from 'lucide-react'
 
-export default function Registros({ setView, records, events, tiposEvidencia, professores = [], gestores = [], addRecord, updateRecord, deleteRecord }) {
+export default function Registros() {
+  const navigate = useNavigate();
+  const { records, addRecord, updateRecord, deleteRecord } = useRegistros();
+  const { events } = useEventos();
+  const { gestores, professores, tiposEvidencia } = useGlobalData();
   const [filterTeacher, setFilterTeacher] = useState('todos')
   const [filterGestor, setFilterGestor] = useState('todos')
   const [filterDate, setFilterDate] = useState('')
@@ -181,7 +189,7 @@ export default function Registros({ setView, records, events, tiposEvidencia, pr
       {/* Header */}
       <div className="dashboard-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="btn btn-secondary" onClick={() => setView('home')} title="Voltar ao início" style={{ padding: '0.5rem' }}>
+          <button className="btn btn-secondary" onClick={() => navigate('/')} title="Voltar ao início" style={{ padding: '0.5rem' }}>
             <ArrowLeft size={20} />
           </button>
           <div>

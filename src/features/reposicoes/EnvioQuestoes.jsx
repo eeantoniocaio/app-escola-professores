@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuestoes } from './hooks/useQuestoes';
+import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 
 const EMPTY_FORM = { 
   professor: '', 
@@ -12,7 +15,10 @@ const EMPTY_FORM = {
   alternativas: { A: '', B: '', C: '', D: '', E: '' } 
 };
 
-export default function EnvioQuestoes({ setView, professores, turmas, questoes, addQuestao, deleteQuestao }) {
+export default function EnvioQuestoes() {
+  const navigate = useNavigate();
+  const { questoes, addQuestao, deleteQuestao } = useQuestoes();
+  const { professores, turmas } = useGlobalData();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -79,7 +85,7 @@ export default function EnvioQuestoes({ setView, professores, turmas, questoes, 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-            <button onClick={() => setView('home')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }} title="Voltar">
+            <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }} title="Voltar">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                 <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
               </svg>
