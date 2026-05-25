@@ -311,15 +311,19 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                     border: '1px solid #cbd5e1',
                     padding: '0.65rem 1.25rem',
                     borderRadius: '10px',
-                    color: '#64748b',
+                    color: '#475569',
                     fontWeight: 600,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.4rem'
+                    gap: '0.4rem',
+                    fontSize: '0.9rem',
+                    transition: 'background-color 0.2s'
                   }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
                 >
-                  <ChevronLeft size={18} /> Voltar
+                  <ChevronLeft size={16} /> Voltar
                 </button>
               )}
             </div>
@@ -329,13 +333,18 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                 type="button"
                 onClick={onClose}
                 style={{
-                  background: 'none',
+                  background: '#f1f5f9',
                   border: 'none',
-                  padding: '0.65rem 1.25rem',
-                  color: '#64748b',
+                  padding: '0.65rem 1.5rem',
+                  color: '#1e293b',
                   fontWeight: 600,
-                  cursor: 'pointer'
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  transition: 'background-color 0.2s'
                 }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e2e8f0'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
               >
                 Cancelar
               </button>
@@ -344,7 +353,7 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                   type="button"
                   onClick={handleNextStep}
                   style={{
-                    background: '#3b82f6',
+                    background: '#2563eb',
                     border: 'none',
                     padding: '0.65rem 1.5rem',
                     borderRadius: '10px',
@@ -353,10 +362,14 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.4rem'
+                    gap: '0.4rem',
+                    fontSize: '0.9rem',
+                    transition: 'background-color 0.2s'
                   }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                 >
-                  Próximo <ChevronRight size={18} />
+                  Próximo <ChevronRight size={16} />
                 </button>
               ) : (
                 <button
@@ -374,10 +387,14 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                     opacity: saving ? 0.7 : 1,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.4rem'
+                    gap: '0.4rem',
+                    fontSize: '0.9rem',
+                    transition: 'background-color 0.2s'
                   }}
+                  onMouseOver={(e) => { if(!saving) e.currentTarget.style.backgroundColor = '#059669' }}
+                  onMouseOut={(e) => { if(!saving) e.currentTarget.style.backgroundColor = '#10b981' }}
                 >
-                  {saving ? 'Salvando...' : <><Check size={18} /> Salvar Prática</>}
+                  {saving ? 'Salvando...' : <><Check size={16} /> Salvar Prática</>}
                 </button>
               )}
             </div>
