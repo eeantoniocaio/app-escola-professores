@@ -4,9 +4,9 @@ import ReportSummaryCards from './ReportSummaryCards';
 import ReportFilters from './ReportFilters';
 import ReportTable from './ReportTable';
 import { exportCSV, exportPDF } from './exportUtils';
-import { useRegistros } from '../../../registros/hooks/useRegistros';
-import { useEventos } from '../../../eventos/hooks/useEventos';
-import { useGlobalData } from '../../../../app/providers/GlobalDataProvider';
+import { useRegistros } from '../../registros/hooks/useRegistros';
+import { useEventos } from '../../eventos/hooks/useEventos';
+import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 
 export default function Relatorios() {
   const { records } = useRegistros();

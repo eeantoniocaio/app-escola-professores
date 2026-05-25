@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { exportOcorrenciasCSV, exportOcorrenciasPDF } from '../utils/exportOcorrencias'
+import { exportOcorrenciasCSV, exportOcorrenciasPDF } from '../../utils/exportOcorrencias'
 import { Book, Calendar, CheckCircle2, Clock, AlertTriangle, User, Zap, Shield, ClipboardList, X, ArrowLeft, Download, FileText, Trash2, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { useOcorrencias } from './hooks/useOcorrencias'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'

@@ -25,7 +25,7 @@ export default function MainLayout() {
           <img src={logoUrl} alt="Logo" style={{ height: '44px', objectFit: 'contain' }} />
           <div className="brand-title">
             <h1>Portal de Evidências</h1>
-            <p>E.E. Antônio Caio — Coordenação Pedagógica</p>
+            <p>E.E. Antônio Caio</p>
           </div>
         </div>
         
@@ -46,11 +46,8 @@ export default function MainLayout() {
               <Link to="/registros" className={`nav-link ${isActive('/registros')}`} onClick={() => setIsMobileMenuOpen(false)}>
                 <BookOpen size={18} /> Registros
               </Link>
-              <Link to="/relatorios" className={`nav-link ${isActive('/relatorios')}`} onClick={() => setIsMobileMenuOpen(false)}>
-                <BarChart2 size={18} /> Relatórios
-              </Link>
               <Link to="/ocorrencias" className={`nav-link ${isActive('/ocorrencias')}`} onClick={() => setIsMobileMenuOpen(false)}>
-                <ShieldAlert size={18} /> Ocorrências (Histórico)
+                <ShieldAlert size={18} /> Histórico de Ocorrências
               </Link>
             </>
           )}
@@ -59,13 +56,8 @@ export default function MainLayout() {
             <Users size={18} /> Mapa de Classe
           </Link>
           
-          {/* We'll use a local state or dedicated route for New Ocorrencia */}
           <Link to="/ocorrencias/nova" className={`nav-link ${isActive('/ocorrencias/nova')}`} onClick={() => setIsMobileMenuOpen(false)}>
             <PlusCircle size={18} /> Ocorrências
-          </Link>
-          
-          <Link to="/reposicoes" className={`nav-link ${isActive('/reposicoes')}`} onClick={() => setIsMobileMenuOpen(false)}>
-            <PenTool size={18} /> Reposições
           </Link>
           
           <div className="nav-divider" style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
