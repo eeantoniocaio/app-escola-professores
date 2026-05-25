@@ -57,7 +57,7 @@ export default function Home() {
 
         <button className="dashboard-action-card" onClick={() => navigate('/reposicoes')}>
           <PenTool />
-          <span style={{ textAlign: 'center', fontSize: '1rem' }}>Envio de Reposições</span>
+          <span style={{ textAlign: 'center', fontSize: '1rem' }}>Questões de reposições</span>
         </button>
 
         <button className="dashboard-action-card" onClick={() => setIsBoasPraticasOpen(true)}>
