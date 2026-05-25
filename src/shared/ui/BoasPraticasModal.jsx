@@ -8,6 +8,7 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
   const [dataRealizacao, setDataRealizacao] = useState(new Date().toISOString().split('T')[0]);
   const [relato, setRelato] = useState('');
   const [habilidade, setHabilidade] = useState('');
+  const [linkDrive, setLinkDrive] = useState('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -72,7 +73,8 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
       serie,
       data_realizacao: dataRealizacao,
       relato,
-      habilidade
+      habilidade,
+      link_drive: linkDrive.trim() || null
     }]);
 
     setSaving(false);
@@ -89,6 +91,7 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
         setDataRealizacao(new Date().toISOString().split('T')[0]);
         setRelato('');
         setHabilidade('');
+        setLinkDrive('');
         setCurrentStep(1);
         setErrors({});
         onClose();
@@ -258,6 +261,20 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                     style={{ ...getInputStyle('relato'), minHeight: '120px', resize: 'vertical', fontFamily: 'inherit' }}
                   />
                   {errors.relato && <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{errors.relato}</span>}
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Link de Drive <span style={{ color: '#94a3b8', fontWeight: 400 }}>(opcional)</span></label>
+                  <input
+                    type="url"
+                    placeholder="Cole o link do Google Drive, OneDrive, etc."
+                    value={linkDrive}
+                    onChange={e => setLinkDrive(e.target.value)}
+                    style={getInputStyle('linkDrive')}
+                  />
+                  <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>
+                    Se o registro estiver em algum drive, pode compartilhar o link aqui.
+                  </span>
                 </div>
 
                 <div style={{ background: '#fef3c7', borderLeft: '4px solid #f59e0b', padding: '1rem', borderRadius: '8px', color: '#92400e', fontSize: '0.85rem', fontWeight: 500, lineHeight: 1.5, marginTop: '0.5rem' }}>
