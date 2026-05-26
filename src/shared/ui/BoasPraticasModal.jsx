@@ -307,11 +307,11 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                   type="button"
                   onClick={handlePrevStep}
                   style={{
-                    background: 'white',
-                    border: '1px solid #cbd5e1',
+                    background: '#f1f5f9',
+                    border: 'none',
                     padding: '0.65rem 1.25rem',
                     borderRadius: '10px',
-                    color: '#475569',
+                    color: '#1e293b',
                     fontWeight: 600,
                     cursor: 'pointer',
                     display: 'flex',
@@ -320,8 +320,8 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                     fontSize: '0.9rem',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e2e8f0'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
                 >
                   <ChevronLeft size={16} /> Voltar
                 </button>
