@@ -699,40 +699,42 @@ export default function EnvioQuestoes() {
                   )}
                 </div>
 
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b', paddingRight: '1rem' }}>{q.disciplina}</span>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b', paddingRight: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.disciplina}</span>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
                       {q.habilidade && <span style={{ background: '#fef08a', color: '#854d0e', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.habilidade}</span>}
                       <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.turma}</span>
                       
                       {/* Action Buttons */}
-                      <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.4rem' }}>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleEditQuestao(q); }}
-                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
-                          onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'}
-                          onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                          title="Editar Questão"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); deleteQuestao && deleteQuestao(q.id); }}
-                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
-                          onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'}
-                          onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                          title="Excluir Questão"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                      {(userRole === 'gestao' || q.professor === userName) && (
+                        <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.4rem' }}>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleEditQuestao(q); }}
+                            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                            onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'}
+                            onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
+                            title="Editar Questão"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); deleteQuestao && deleteQuestao(q.id); }}
+                            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                            onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'}
+                            onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
+                            title="Excluir Questão"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
                     Por {q.professor} em {new Date(q.data + 'T12:00:00').toLocaleDateString('pt-BR')}
                   </div>
-                  <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-all' }}>
                     {q.enunciado}
                   </p>
                   <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>
