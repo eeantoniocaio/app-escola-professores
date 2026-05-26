@@ -4,6 +4,7 @@ import { useQuestoes } from './hooks/useQuestoes';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import { Pencil, Trash2, Check, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
+import { supabase } from '../../shared/services/supabase';
 import QuestaoDetailModal from './QuestaoDetailModal';
 
 const EMPTY_FORM = { 
@@ -15,6 +16,7 @@ const EMPTY_FORM = {
   habilidade: '',
   enunciado: '', 
   imagem_base64: '',
+  imagem_url: '',
   numAlternativas: '4', // default 4
   alternativas: { A: '', B: '', C: '', D: '', E: '' },
   alternativaCorreta: ''
@@ -45,6 +47,32 @@ export default function EnvioQuestoes() {
   // Profile linking states
   const [selectedNameForLink, setSelectedNameForLink] = useState('');
   const [linking, setLinking] = useState(false);
+
+  // Storage Image state
+  const [imageFile, setImageFile] = useState(null);
+
+  const uploadImage = async (file) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('questoes-imagens')
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('questoes-imagens')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (err) {
+      console.error('Erro ao fazer upload da imagem:', err);
+      return null;
+    }
+  };
 
   const handleLinkProfile = async (e) => {
     e.preventDefault();
@@ -132,6 +160,7 @@ export default function EnvioQuestoes() {
     setShowModal(false);
     setQuestaoToEdit(null);
     setForm(EMPTY_FORM);
+    setImageFile(null);
     setErrors({});
     setCurrentStep(1);
   };
@@ -146,6 +175,7 @@ export default function EnvioQuestoes() {
       habilidade: q.habilidade || '',
       enunciado: q.enunciado || '',
       imagem_base64: q.imagem_base64 || '',
+      imagem_url: q.imagem_url || '',
       numAlternativas: q.num_alternativas?.toString() || '4',
       alternativas: {
         A: q.alternativas?.A || '',
@@ -157,6 +187,7 @@ export default function EnvioQuestoes() {
       alternativaCorreta: q.alternativa_correta || ''
     });
     setQuestaoToEdit(q);
+    setImageFile(null);
     setCurrentStep(1);
     setShowModal(true);
   };
@@ -182,6 +213,17 @@ export default function EnvioQuestoes() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     
     setSaving(true);
+
+    let finalImageUrl = form.imagem_url;
+    if (imageFile) {
+      const uploadedUrl = await uploadImage(imageFile);
+      if (uploadedUrl) {
+        finalImageUrl = uploadedUrl;
+      } else {
+        alert('Falha ao enviar a imagem. Salvando a questão sem imagem.');
+      }
+    }
+
     const combinedTurma = getCombinedTurmaName(form.serie, form.turma);
     const questionData = {
       professor: form.professor.trim(),
@@ -193,7 +235,8 @@ export default function EnvioQuestoes() {
       enunciado: form.enunciado.trim(),
       num_alternativas: parseInt(form.numAlternativas, 10),
       alternativas: form.alternativas,
-      imagem_base64: form.imagem_base64 || null,
+      imagem_base64: null, // Clear Base64 string from database
+      imagem_url: finalImageUrl || null,
       alternativa_correta: form.alternativaCorreta
     };
 
@@ -207,6 +250,7 @@ export default function EnvioQuestoes() {
     setSaving(false);
     if (success) {
       setForm(EMPTY_FORM);
+      setImageFile(null);
       setErrors({});
       setQuestaoToEdit(null);
       setShowModal(false);
@@ -846,16 +890,19 @@ export default function EnvioQuestoes() {
                   {/* Imagem da Questão */}
                   <div>
                     <label style={labelStyle}>Imagem da Questão <span style={{ color: '#94a3b8', fontWeight: 400 }}>(opcional)</span></label>
-                    {form.imagem_base64 ? (
+                    {form.imagem_base64 || form.imagem_url ? (
                       <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
                         <img
-                          src={form.imagem_base64}
+                          src={form.imagem_base64 || form.imagem_url}
                           alt="Preview"
                           style={{ width: '100%', maxHeight: '220px', objectFit: 'contain', display: 'block', background: '#f8fafc' }}
                         />
                         <button
                           type="button"
-                          onClick={() => setForm(p => ({ ...p, imagem_base64: '' }))}
+                          onClick={() => {
+                            setForm(p => ({ ...p, imagem_base64: '', imagem_url: '' }));
+                            setImageFile(null);
+                          }}
                           style={{
                             position: 'absolute', top: '8px', right: '8px',
                             background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%',
@@ -893,6 +940,7 @@ export default function EnvioQuestoes() {
                               alert('Imagem muito grande! O tamanho máximo é 2MB.');
                               return;
                             }
+                            setImageFile(file);
                             const reader = new FileReader();
                             reader.onload = ev => setForm(p => ({ ...p, imagem_base64: ev.target.result }));
                             reader.readAsDataURL(file);

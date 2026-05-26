@@ -130,7 +130,7 @@ export default function QuestaoDetailModal({ questao, onClose }) {
           </div>
 
           {/* Imagem (if present) */}
-          {questao.imagem_base64 && (
+          {(questao.imagem_base64 || questao.imagem_url) && (
             <div>
               <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Imagem de Apoio</h4>
               <div style={{ 
@@ -143,7 +143,7 @@ export default function QuestaoDetailModal({ questao, onClose }) {
                 padding: '1rem'
               }}>
                 <img 
-                  src={questao.imagem_base64} 
+                  src={questao.imagem_url || questao.imagem_base64} 
                   alt="Apoio da questão" 
                   style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '8px' }} 
                 />
