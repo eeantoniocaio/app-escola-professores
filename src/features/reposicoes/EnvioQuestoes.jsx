@@ -64,9 +64,11 @@ export default function EnvioQuestoes() {
   const [filterProfessor, setFilterProfessor] = useState('');
   const [filterDisciplina, setFilterDisciplina] = useState('');
   const [filterHabilidade, setFilterHabilidade] = useState('');
-  const [filterSerie, setFilterSerie] = useState('');
+  const [activeTab, setActiveTab] = useState('Todas');
 
   const letrasAlternativas = ['A', 'B', 'C', 'D', 'E'];
+
+  const seriesTabs = ['Todas', '6º ano', '7º ano', '8º ano', '9º ano', '1ºEM', '2ºEM', '3ºEM'];
 
   // Derived filter options from database questions
   const uniqueProfessores = Array.from(new Set(questoes.map(q => q.professor).filter(Boolean))).sort();
@@ -78,6 +80,11 @@ export default function EnvioQuestoes() {
     // SECURITY LIMITATION: If user is a professor, they only see their own questions
     if (userRole !== 'gestao' && userName) {
       if (q.professor !== userName) return false;
+    }
+
+    // Active Series Tab filter
+    if (activeTab !== 'Todas' && q.serie !== activeTab) {
+      return false;
     }
 
     if (filterText.trim()) {
@@ -94,7 +101,6 @@ export default function EnvioQuestoes() {
     if (filterProfessor && q.professor !== filterProfessor) return false;
     if (filterDisciplina && q.disciplina !== filterDisciplina) return false;
     if (filterHabilidade && q.habilidade !== filterHabilidade) return false;
-    if (filterSerie && q.serie !== filterSerie) return false;
     return true;
   });
 
@@ -393,14 +399,14 @@ export default function EnvioQuestoes() {
               )}
             </div>
 
-            {(filterText || filterProfessor || filterDisciplina || filterHabilidade || filterSerie) && (
+            {(filterText || filterProfessor || filterDisciplina || filterHabilidade || activeTab !== 'Todas') && (
               <button
                 onClick={() => {
                   setFilterText('');
                   setFilterProfessor('');
                   setFilterDisciplina('');
                   setFilterHabilidade('');
-                  setFilterSerie('');
+                  setActiveTab('Todas');
                 }}
                 style={{
                   background: '#f1f5f9',
@@ -500,30 +506,68 @@ export default function EnvioQuestoes() {
               </select>
             </div>
 
-            {/* Série Filter */}
-            <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>Série</label>
-              <select
-                value={filterSerie}
-                onChange={e => setFilterSerie(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.55rem 0.75rem',
-                  borderRadius: '8px',
-                  border: '1.5px solid #e2e8f0',
-                  fontSize: '0.85rem',
-                  color: '#334155',
-                  outline: 'none',
-                  backgroundColor: 'white'
-                }}
-              >
-                <option value="">Todas</option>
-                {['6º ano', '7º ano', '8º ano', '1ºEM', '2ºEM', '3ºEM'].map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
           </div>
+        </div>
+      )}
+
+      {/* Series Tabs */}
+      {questoes.length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          overflowX: 'auto',
+          paddingBottom: '0.75rem',
+          marginBottom: '1.5rem',
+          borderBottom: '1px solid #e2e8f0',
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none' // IE/Edge
+        }}>
+          {seriesTabs.map(tab => {
+            const countForTab = (questoes || []).filter(q => {
+              if (userRole !== 'gestao' && userName && q.professor !== userName) return false;
+              if (tab !== 'Todas' && q.serie !== tab) return false;
+              return true;
+            }).length;
+
+            const isSelected = activeTab === tab;
+
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  background: isSelected ? 'linear-gradient(135deg, #0ea5e9, #3b82f6)' : '#f1f5f9',
+                  color: isSelected ? 'white' : '#475569',
+                  border: 'none',
+                  padding: '0.55rem 1.25rem',
+                  borderRadius: '30px',
+                  fontWeight: 600,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  whiteSpace: 'nowrap',
+                  boxShadow: isSelected ? '0 4px 10px rgba(14, 165, 233, 0.2)' : 'none',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={e => { if(!isSelected) e.currentTarget.style.backgroundColor = '#e2e8f0' }}
+                onMouseOut={e => { if(!isSelected) e.currentTarget.style.backgroundColor = '#f1f5f9' }}
+              >
+                {tab}
+                <span style={{
+                  background: isSelected ? 'rgba(255, 255, 255, 0.25)' : '#cbd5e1',
+                  color: isSelected ? 'white' : '#64748b',
+                  fontSize: '0.72rem',
+                  padding: '0.1rem 0.4rem',
+                  borderRadius: '20px',
+                  fontWeight: 700
+                }}>
+                  {countForTab}
+                </span>
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -544,7 +588,7 @@ export default function EnvioQuestoes() {
               setFilterProfessor('');
               setFilterDisciplina('');
               setFilterHabilidade('');
-              setFilterSerie('');
+              setActiveTab('Todas');
             }}
             style={{
               marginTop: '1rem',
@@ -742,7 +786,7 @@ export default function EnvioQuestoes() {
                       <label style={labelStyle}>Série <span style={{ color: '#ef4444' }}>*</span></label>
                       <select value={form.serie} onChange={e => setForm(p => ({ ...p, serie: e.target.value }))} style={inputStyle('serie')}>
                         <option value="">Selecione...</option>
-                        {['6º ano', '7º ano', '8º ano', '1ºEM', '2ºEM', '3ºEM'].map(s => (
+                        {['6º ano', '7º ano', '8º ano', '9º ano', '1ºEM', '2ºEM', '3ºEM'].map(s => (
                           <option key={s} value={s}>{s}</option>
                         ))}
                       </select>
