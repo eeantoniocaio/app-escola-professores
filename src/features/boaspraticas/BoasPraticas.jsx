@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBoasPraticas } from './hooks/useBoasPraticas';
 import { Pencil, Trash2, Search, X, Star } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
+import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import BoasPraticasFormModal from './components/BoasPraticasFormModal';
 import BoasPraticasDetailModal from './components/BoasPraticasDetailModal';
 
@@ -30,10 +31,25 @@ const parseCombinedSerieTurma = (combinedName) => {
 
 export default function BoasPraticas() {
   const navigate = useNavigate();
-  const { userRole, userName, authLoading } = useAuth();
+  const { userRole, userName, linkProfileName, authLoading } = useAuth();
   const { praticas, loading, addPratica, updatePratica, deletePratica } = useBoasPraticas();
+  const { professores = [] } = useGlobalData();
+
+  const [selectedNameForLink, setSelectedNameForLink] = useState('');
+  const [linking, setLinking] = useState(false);
 
   const [showFormModal, setShowFormModal] = useState(false);
+
+  const handleLinkProfile = async (e) => {
+    e.preventDefault();
+    if (!selectedNameForLink) return;
+    setLinking(true);
+    const success = await linkProfileName(selectedNameForLink);
+    setLinking(false);
+    if (!success) {
+      alert('Erro ao vincular conta. Tente novamente.');
+    }
+  };
   const [praticaToEdit, setPraticaToEdit] = useState(null);
   const [selectedPraticaForDetail, setSelectedPraticaForDetail] = useState(null);
 
@@ -100,6 +116,83 @@ export default function BoasPraticas() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#94a3b8', fontWeight: 600 }}>
         Carregando informações...
+      </div>
+    );
+  }
+
+  if (userRole !== 'gestao' && !userName) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+        animation: 'fadeIn 0.5s ease-out'
+      }}>
+        <div style={{
+          background: 'white',
+          borderRadius: '20px',
+          padding: '2.5rem',
+          maxWidth: '450px',
+          width: '100%',
+          boxShadow: '0 20px 40px rgba(15, 23, 42, 0.08)',
+          border: '1px solid #f1f5f9',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: '1.25rem' }}>👋</div>
+          <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.75rem 0' }}>Identifique-se</h3>
+          <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.5, margin: '0 0 1.75rem 0' }}>
+            Para ver e gerenciar suas boas práticas, selecione o seu nome de Professor(a) para vincular à sua conta de e-mail.
+          </p>
+          <form onSubmit={handleLinkProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ textAlign: 'left' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: '#475569', marginBottom: '0.5rem' }}>
+                Seu nome de Professor(a) <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <select
+                value={selectedNameForLink}
+                onChange={e => setSelectedNameForLink(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid #e2e8f0',
+                  fontSize: '0.95rem',
+                  color: '#1e293b',
+                  outline: 'none',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">Selecione...</option>
+                {professores.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={!selectedNameForLink || linking}
+              style={{
+                background: 'linear-gradient(135deg, #0ea5e9, #3b82f6)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.8rem 1.5rem',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                cursor: (!selectedNameForLink || linking) ? 'not-allowed' : 'pointer',
+                opacity: (!selectedNameForLink || linking) ? 0.6 : 1,
+                boxShadow: '0 4px 12px rgba(14, 165, 233, 0.25)',
+                transition: 'transform 0.2s'
+              }}
+              onMouseOver={e => { if (selectedNameForLink && !linking) e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)' }}
+            >
+              {linking ? 'Vinculando...' : 'Confirmar e Continuar'}
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
