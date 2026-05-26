@@ -9,7 +9,7 @@ export function useQuestoes() {
 
   const fetchQuestoes = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('questoes_reposicao').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('questoes').select('*').order('created_at', { ascending: false });
     if (error) console.error('Erro questoes:', error);
     else setQuestoes(data || []);
     setLoading(false);
@@ -18,7 +18,7 @@ export function useQuestoes() {
   useEffect(() => { fetchQuestoes(); }, [fetchQuestoes]);
 
   const addQuestao = async (novaQuestao) => {
-    const { data, error } = await supabase.from('questoes_reposicao').insert([novaQuestao]).select();
+    const { data, error } = await supabase.from('questoes').insert([novaQuestao]).select();
     if (error) {
       showToast('Erro ao enviar atividade', 'error');
       return false;
@@ -30,7 +30,7 @@ export function useQuestoes() {
   };
 
   const updateQuestao = async (id, status, feedback) => {
-    const { data, error } = await supabase.from('questoes_reposicao').update({ status, feedback }).eq('id', id).select();
+    const { data, error } = await supabase.from('questoes').update({ status, feedback }).eq('id', id).select();
     if (error) {
       showToast('Erro ao atualizar status', 'error');
       return false;
@@ -43,7 +43,7 @@ export function useQuestoes() {
 
   const deleteQuestao = async (id) => {
     if (!window.confirm('Tem certeza que deseja excluir esta atividade?')) return false;
-    const { error } = await supabase.from('questoes_reposicao').delete().eq('id', id);
+    const { error } = await supabase.from('questoes').delete().eq('id', id);
     if (error) {
       showToast('Erro ao excluir', 'error');
       return false;
