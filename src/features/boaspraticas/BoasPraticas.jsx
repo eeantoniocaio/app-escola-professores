@@ -6,6 +6,28 @@ import { useAuth } from '../../app/providers/AuthProvider';
 import BoasPraticasFormModal from './components/BoasPraticasFormModal';
 import BoasPraticasDetailModal from './components/BoasPraticasDetailModal';
 
+const parseCombinedSerieTurma = (combinedName) => {
+  if (!combinedName) return { serie: '', turma: '' };
+  
+  const grade = combinedName.charAt(0);
+  const lastChar = combinedName.charAt(combinedName.length - 1);
+  const isHighSchool = ['1', '2', '3'].includes(grade);
+  const isElementary = ['6', '7', '8', '9'].includes(grade);
+  
+  if (isHighSchool) {
+    return {
+      serie: `${grade}ºEM`,
+      turma: lastChar
+    };
+  } else if (isElementary) {
+    return {
+      serie: `${grade}º ano`,
+      turma: lastChar
+    };
+  }
+  return { serie: combinedName, turma: '' };
+};
+
 export default function BoasPraticas() {
   const navigate = useNavigate();
   const { userRole, userName, authLoading } = useAuth();
@@ -36,16 +58,19 @@ export default function BoasPraticas() {
 
     // Active Series Tab filter
     if (activeTab !== 'Todas') {
-      if (!p.serie || !p.serie.includes(activeTab)) return false;
+      const parsed = parseCombinedSerieTurma(p.serie);
+      if (parsed.serie !== activeTab) return false;
     }
 
     if (filterText.trim()) {
       const search = filterText.toLowerCase();
+      const parsed = parseCombinedSerieTurma(p.serie);
       const matchText = 
         (p.relato || '').toLowerCase().includes(search) ||
         (p.professor || '').toLowerCase().includes(search) ||
         (p.habilidade || '').toLowerCase().includes(search) ||
-        (p.serie || '').toLowerCase().includes(search);
+        (p.serie || '').toLowerCase().includes(search) ||
+        parsed.serie.toLowerCase().includes(search);
       if (!matchText) return false;
     }
     if (filterProfessor && p.professor !== filterProfessor) return false;
@@ -269,7 +294,10 @@ export default function BoasPraticas() {
           {seriesTabs.map(tab => {
             const countForTab = (praticas || []).filter(p => {
               if (userRole !== 'gestao' && userName && p.professor !== userName) return false;
-              if (tab !== 'Todas' && (!p.serie || !p.serie.includes(tab))) return false;
+              if (tab !== 'Todas') {
+                const parsed = parseCombinedSerieTurma(p.serie);
+                if (parsed.serie !== tab) return false;
+              }
               return true;
             }).length;
 
