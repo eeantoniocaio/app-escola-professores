@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuestoes } from './hooks/useQuestoes';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
-import { Pencil, Trash2, Check, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { Pencil, Trash2, Check, ChevronLeft, ChevronRight, Search, X, FileText } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { supabase } from '../../shared/services/supabase';
 import QuestaoDetailModal from './QuestaoDetailModal';
+import QuestionPrintPreviewModal from './components/QuestionPrintPreviewModal';
 
 const EMPTY_FORM = { 
   professor: '', 
@@ -43,6 +44,10 @@ export default function EnvioQuestoes() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // Print & Selection States
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState([]);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   // Profile linking states
   const [selectedNameForLink, setSelectedNameForLink] = useState('');
@@ -131,6 +136,28 @@ export default function EnvioQuestoes() {
     if (filterHabilidade && q.habilidade !== filterHabilidade) return false;
     return true;
   });
+
+  const handleSelectAllFiltered = () => {
+    const filteredIds = filteredQuestoes.map(q => q.id);
+    setSelectedQuestionIds(prev => {
+      const newSelection = new Set([...prev, ...filteredIds]);
+      return Array.from(newSelection);
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedQuestionIds([]);
+  };
+
+  const toggleSelectQuestion = (id) => {
+    setSelectedQuestionIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(item => item !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
 
   const validateStep = (step) => {
     const e = {};
@@ -615,6 +642,63 @@ export default function EnvioQuestoes() {
         </div>
       )}
 
+      {/* Batch selection controls */}
+      {questoes.length > 0 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          fontSize: '0.88rem'
+        }}>
+          <div style={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontWeight: 600 }}>{selectedQuestionIds.length} selecionada(s)</span>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={handleSelectAllFiltered}
+              style={{
+                background: '#f1f5f9',
+                border: 'none',
+                color: '#475569',
+                padding: '0.45rem 0.9rem',
+                borderRadius: '8px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '0.82rem',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.backgroundColor = '#e2e8f0'}
+              onMouseOut={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+            >
+              Selecionar Todas ({filteredQuestoes.length})
+            </button>
+            {selectedQuestionIds.length > 0 && (
+              <button
+                onClick={handleClearSelection}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  color: '#ef4444',
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={e => e.currentTarget.style.backgroundColor = '#fee2e2'}
+                onMouseOut={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+              >
+                Limpar Seleção
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* List */}
       {questoes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
@@ -657,7 +741,7 @@ export default function EnvioQuestoes() {
             <div 
               key={q.id} 
               onClick={(e) => {
-                if (e.target.closest('button')) return;
+                if (e.target.closest('button') || e.target.closest('.card-checkbox')) return;
                 setSelectedQuestaoForDetail(q);
               }}
               style={{ 
@@ -665,7 +749,7 @@ export default function EnvioQuestoes() {
                 borderRadius: '14px', 
                 padding: '1.5rem', 
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05)', 
-                border: '1px solid #f1f5f9', 
+                border: selectedQuestionIds.includes(q.id) ? '1.5px solid #3b82f6' : '1px solid #f1f5f9', 
                 position: 'relative',
                 cursor: 'pointer',
                 transition: 'transform 0.2s, box-shadow 0.2s'
@@ -679,43 +763,74 @@ export default function EnvioQuestoes() {
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b', paddingRight: '1rem' }}>{q.disciplina}</span>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  {q.habilidade && <span style={{ background: '#fef08a', color: '#854d0e', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.habilidade}</span>}
-                  <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.turma}</span>
-                  
-                  {/* Action Buttons */}
-                  <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.4rem' }}>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleEditQuestao(q); }}
-                      style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
-                      onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'}
-                      onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                      title="Editar Questão"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); deleteQuestao && deleteQuestao(q.id); }}
-                      style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
-                      onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'}
-                      onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                      title="Excluir Questão"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                {/* Checkbox */}
+                <div 
+                  className="card-checkbox"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelectQuestion(q.id);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '6px',
+                    border: `2px solid ${selectedQuestionIds.includes(q.id) ? '#3b82f6' : '#cbd5e1'}`,
+                    backgroundColor: selectedQuestionIds.includes(q.id) ? '#3b82f6' : 'transparent',
+                    cursor: 'pointer',
+                    marginTop: '2px',
+                    flexShrink: 0,
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {selectedQuestionIds.includes(q.id) && (
+                    <Check size={14} strokeWidth={3} color="white" />
+                  )}
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b', paddingRight: '1rem' }}>{q.disciplina}</span>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      {q.habilidade && <span style={{ background: '#fef08a', color: '#854d0e', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.habilidade}</span>}
+                      <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.turma}</span>
+                      
+                      {/* Action Buttons */}
+                      <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.4rem' }}>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleEditQuestao(q); }}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                          onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'}
+                          onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
+                          title="Editar Questão"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); deleteQuestao && deleteQuestao(q.id); }}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                          onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'}
+                          onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
+                          title="Excluir Questão"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
+                    Por {q.professor} em {new Date(q.data + 'T12:00:00').toLocaleDateString('pt-BR')}
+                  </div>
+                  <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {q.enunciado}
+                  </p>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>
+                    {q.num_alternativas} Alternativas
                   </div>
                 </div>
-              </div>
-              <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
-                Por {q.professor} em {new Date(q.data + 'T12:00:00').toLocaleDateString('pt-BR')}
-              </div>
-              <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                {q.enunciado}
-              </p>
-              <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>
-                {q.num_alternativas} Alternativas
               </div>
             </div>
           ))}
@@ -1124,6 +1239,112 @@ export default function EnvioQuestoes() {
           onClose={() => setSelectedQuestaoForDetail(null)} 
         />
       )}
+
+      {showPrintModal && (
+        <QuestionPrintPreviewModal
+          selectedQuestions={questoes.filter(q => selectedQuestionIds.includes(q.id))}
+          onClose={() => setShowPrintModal(false)}
+        />
+      )}
+
+      {/* Fixed bottom action bar */}
+      {selectedQuestionIds.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(30, 41, 59, 0.95)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid #334155',
+          borderRadius: '16px',
+          padding: '1rem 2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '2rem',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
+          zIndex: 100,
+          color: 'white',
+          animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          maxWidth: '90%',
+          width: '550px',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              background: '#3b82f6',
+              borderRadius: '50%',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '0.85rem'
+            }}>
+              {selectedQuestionIds.length}
+            </div>
+            <span style={{ fontSize: '0.92rem', fontWeight: 600 }}>Questões selecionadas</span>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <button
+              onClick={handleClearSelection}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.88rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                transition: 'color 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.color = '#f87171'}
+              onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}
+            >
+              Limpar
+            </button>
+            <button
+              onClick={() => setShowPrintModal(true)}
+              style={{
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.65rem 1.25rem',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                transition: 'transform 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              <FileText size={18} /> Gerar Prova
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from {
+            transform: translate(-50%, 50px);
+            opacity: 0;
+          }
+          to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
