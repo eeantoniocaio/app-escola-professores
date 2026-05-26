@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuestoes } from './hooks/useQuestoes';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
+import { Pencil, Trash2 } from 'lucide-react';
+import QuestaoDetailModal from './QuestaoDetailModal';
 
 const EMPTY_FORM = { 
   professor: '', 
@@ -17,9 +19,11 @@ const EMPTY_FORM = {
 
 export default function EnvioQuestoes() {
   const navigate = useNavigate();
-  const { questoes, addQuestao, deleteQuestao } = useQuestoes();
+  const { questoes, addQuestao, deleteQuestao, updateQuestao } = useQuestoes();
   const { professores, turmas } = useGlobalData();
   const [showModal, setShowModal] = useState(false);
+  const [questaoToEdit, setQuestaoToEdit] = useState(null);
+  const [selectedQuestaoForDetail, setSelectedQuestaoForDetail] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -46,13 +50,42 @@ export default function EnvioQuestoes() {
     return e;
   };
 
+  const handleCloseFormModal = () => {
+    setShowModal(false);
+    setQuestaoToEdit(null);
+    setForm(EMPTY_FORM);
+    setErrors({});
+  };
+
+  const handleEditQuestao = (q) => {
+    setForm({
+      professor: q.professor || '',
+      disciplina: q.disciplina || '',
+      turma: q.turma || '',
+      data: q.data || '',
+      habilidade: q.habilidade || '',
+      enunciado: q.enunciado || '',
+      imagem_base64: q.imagem_base64 || '',
+      numAlternativas: q.num_alternativas?.toString() || '4',
+      alternativas: {
+        A: q.alternativas?.A || '',
+        B: q.alternativas?.B || '',
+        C: q.alternativas?.C || '',
+        D: q.alternativas?.D || '',
+        E: q.alternativas?.E || ''
+      }
+    });
+    setQuestaoToEdit(q);
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
     
     setSaving(true);
-    await addQuestao({
+    const questionData = {
       professor: form.professor.trim(),
       disciplina: form.disciplina.trim(),
       turma: form.turma,
@@ -62,11 +95,22 @@ export default function EnvioQuestoes() {
       num_alternativas: parseInt(form.numAlternativas, 10),
       alternativas: form.alternativas,
       imagem_base64: form.imagem_base64 || null
-    });
-    setForm(EMPTY_FORM);
-    setErrors({});
-    setShowModal(false);
+    };
+
+    let success = false;
+    if (questaoToEdit) {
+      success = await updateQuestao(questaoToEdit.id, questionData);
+    } else {
+      success = await addQuestao(questionData);
+    }
+
     setSaving(false);
+    if (success) {
+      setForm(EMPTY_FORM);
+      setErrors({});
+      setQuestaoToEdit(null);
+      setShowModal(false);
+    }
   };
 
   const inputStyle = (field) => ({
@@ -123,23 +167,60 @@ export default function EnvioQuestoes() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
           {questoes && questoes.map(q => (
-            <div key={q.id} style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9', position: 'relative' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b', paddingRight: '2rem' }}>{q.disciplina}</span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div 
+              key={q.id} 
+              onClick={(e) => {
+                if (e.target.closest('button')) return;
+                setSelectedQuestaoForDetail(q);
+              }}
+              style={{ 
+                background: 'white', 
+                borderRadius: '14px', 
+                padding: '1.5rem', 
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)', 
+                border: '1px solid #f1f5f9', 
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.08)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b', paddingRight: '1rem' }}>{q.disciplina}</span>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   {q.habilidade && <span style={{ background: '#fef08a', color: '#854d0e', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.habilidade}</span>}
                   <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{q.turma}</span>
+                  
+                  {/* Action Buttons */}
+                  <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.4rem' }}>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleEditQuestao(q); }}
+                      style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                      onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'}
+                      onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
+                      title="Editar Questão"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); deleteQuestao && deleteQuestao(q.id); }}
+                      style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                      onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'}
+                      onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
+                      title="Excluir Questão"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <button 
-                onClick={() => deleteQuestao && deleteQuestao(q.id)}
-                style={{ position: 'absolute', top: '1.25rem', right: '1.5rem', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.6 }}
-                onMouseOver={(e) => e.currentTarget.style.opacity = 1}
-                onMouseOut={(e) => e.currentTarget.style.opacity = 0.6}
-                title="Excluir"
-              >
-                ✕
-              </button>
               <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
                 Por {q.professor} em {new Date(q.data + 'T12:00:00').toLocaleDateString('pt-BR')}
               </div>
@@ -161,8 +242,8 @@ export default function EnvioQuestoes() {
             
             {/* Modal header */}
             <div style={{ padding: '1.5rem 2rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#1e293b' }}>📝 Nova Questão</h3>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.4rem', lineHeight: 1 }}>×</button>
+              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#1e293b' }}>{questaoToEdit ? '📝 Editar Questão' : '📝 Nova Questão'}</h3>
+              <button onClick={handleCloseFormModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.4rem', lineHeight: 1 }}>×</button>
             </div>
 
             {/* Modal body */}
@@ -335,7 +416,7 @@ export default function EnvioQuestoes() {
 
             {/* Modal footer */}
             <div style={{ padding: '1rem 2rem 1.5rem', display: 'flex', gap: '0.75rem', flexShrink: 0 }}>
-              <button type="button" onClick={() => setShowModal(false)}
+              <button type="button" onClick={handleCloseFormModal}
                 style={{ flex: 1, padding: '0.75rem', border: '1.5px solid #e2e8f0', borderRadius: '12px', background: 'white', cursor: 'pointer', fontWeight: 600, color: '#64748b', fontSize: '0.95rem' }}>
                 Cancelar
               </button>
@@ -347,6 +428,13 @@ export default function EnvioQuestoes() {
             
           </div>
         </div>
+      )}
+
+      {selectedQuestaoForDetail && (
+        <QuestaoDetailModal 
+          questao={selectedQuestaoForDetail} 
+          onClose={() => setSelectedQuestaoForDetail(null)} 
+        />
       )}
     </div>
   );

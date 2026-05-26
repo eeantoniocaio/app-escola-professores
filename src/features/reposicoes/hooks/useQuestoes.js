@@ -29,14 +29,14 @@ export function useQuestoes() {
     }
   };
 
-  const updateQuestao = async (id, status, feedback) => {
-    const { data, error } = await supabase.from('questoes').update({ status, feedback }).eq('id', id).select();
+  const updateQuestao = async (id, updatedFields) => {
+    const { data, error } = await supabase.from('questoes').update(updatedFields).eq('id', id).select();
     if (error) {
-      showToast('Erro ao atualizar status', 'error');
+      showToast('Erro ao atualizar atividade', 'error');
       return false;
     } else if (data) {
       setQuestoes(prev => prev.map(q => q.id === id ? data[0] : q));
-      showToast('Status da atividade atualizado!');
+      showToast('Atividade de reposição atualizada com sucesso!');
       return true;
     }
   };
