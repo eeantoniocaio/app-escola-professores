@@ -53,8 +53,8 @@ export function useOcorrencias() {
     }
   };
 
-  const updateOcorrencia = async (id, intervencaoGestao, status) => {
-    const { data, error } = await supabase.from('ocorrencias').update({ intervencao_gestao: intervencaoGestao, status }).eq('id', id).select();
+  const updateOcorrencia = async (id, updatedFields) => {
+    const { data, error } = await supabase.from('ocorrencias').update(updatedFields).eq('id', id).select();
     if (error) {
       showToast('Erro ao atualizar ocorrência', 'error');
       return false;

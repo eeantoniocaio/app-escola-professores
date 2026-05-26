@@ -1,21 +1,51 @@
-import React, { useState, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { AlertTriangle, CheckCircle2, Check, X, ChevronRight, ChevronLeft } from 'lucide-react'
 import { useOcorrencias } from './hooks/useOcorrencias'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
+import { useAuth } from '../../app/providers/AuthProvider'
 
 const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', descricao: '', alunos: [], acao_professor: '' }
 
-export default function Ocorrencias() {
-  const navigate = useNavigate();
-  const { addOcorrencia } = useOcorrencias();
+export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }) {
+  const { addOcorrencia, updateOcorrencia } = useOcorrencias();
   const { professores, turmas, alunos } = useGlobalData();
-  const onClose = () => navigate(-1);
+  const { userRole, userName } = useAuth();
+  
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
   const [success, setSuccess] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      if (ocorrenciaToEdit) {
+        setForm({
+          professor: ocorrenciaToEdit.professor || '',
+          disciplina: ocorrenciaToEdit.disciplina || '',
+          data: ocorrenciaToEdit.data || '',
+          turma: ocorrenciaToEdit.turma || '',
+          descricao: ocorrenciaToEdit.descricao || '',
+          alunos: ocorrenciaToEdit.alunos || [],
+          acao_professor: ocorrenciaToEdit.acao_professor || ''
+        });
+        setCurrentStep(1);
+        setErrors({});
+      } else {
+        setForm({
+          ...EMPTY_FORM,
+          professor: (userRole !== 'gestao' && userName) ? userName : '',
+          data: new Date().toISOString().split('T')[0]
+        });
+        setCurrentStep(1);
+        setErrors({});
+      }
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isOpen, ocorrenciaToEdit, userRole, userName]);
 
   // Alunos da turma selecionada no formulário
   const alunosDaTurma = useMemo(
@@ -66,7 +96,8 @@ export default function Ocorrencias() {
     const errs = validateStep(3)
     if (Object.keys(errs).length) { setErrors(errs); return }
     setSaving(true)
-    await addOcorrencia({
+
+    const payload = {
       professor: form.professor.trim(),
       disciplina: form.disciplina.trim(),
       data: form.data,
@@ -74,15 +105,26 @@ export default function Ocorrencias() {
       descricao: form.descricao.trim() || null,
       alunos: form.alunos.length > 0 ? form.alunos : [],
       acao_professor: form.acao_professor.trim() || null,
-    })
-    setForm(EMPTY_FORM)
-    setErrors({})
+    }
+
+    let successResult = false;
+    if (ocorrenciaToEdit) {
+      successResult = await updateOcorrencia(ocorrenciaToEdit.id, payload);
+    } else {
+      successResult = await addOcorrencia(payload);
+    }
+
     setSaving(false)
-    setSuccess(true)
-    setTimeout(() => {
-      setSuccess(false)
-      if (onClose) onClose()
-    }, 2000)
+    if (successResult) {
+      setSuccess(true)
+      setTimeout(() => {
+        setSuccess(false)
+        setForm(EMPTY_FORM)
+        setErrors({})
+        setCurrentStep(1)
+        if (onClose) onClose()
+      }, 2000)
+    }
   }
 
   const handleTurmaChange = (turma) => {
@@ -98,15 +140,19 @@ export default function Ocorrencias() {
 
   const labelStyle = { display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }
 
+  if (!isOpen) return null;
+
   return (
-    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && onClose) onClose() }}>
+    <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={(e) => { if (e.target === e.currentTarget && onClose) onClose() }}>
       <div className="modal-content" style={{ width: '100%', maxWidth: '650px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
 
         {/* Modal header */}
         <div className="modal-header" style={{ padding: '1.5rem 2rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid var(--border-light)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-warning)' }}>
             <AlertTriangle size={24} />
-            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-main)' }}>Nova Ocorrência</h3>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-main)' }}>
+              {ocorrenciaToEdit ? 'Editar Ocorrência' : 'Nova Ocorrência'}
+            </h3>
           </div>
           {onClose && (
             <button className="btn-icon" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -163,7 +209,19 @@ export default function Ocorrencias() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
                 <div>
                   <label style={labelStyle}>Professor(a) <span style={{ color: 'var(--color-danger)' }}>*</span></label>
-                  {professores && professores.length > 0 ? (
+                  {userRole !== 'gestao' && userName ? (
+                    <div style={{
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-light)',
+                      color: 'var(--text-muted)',
+                      fontWeight: 600,
+                      fontSize: '0.95rem'
+                    }}>
+                      {userName}
+                    </div>
+                  ) : professores && professores.length > 0 ? (
                     <select value={form.professor} onChange={e => setForm({...form, professor: e.target.value})} style={inputStyle('professor')}>
                       <option value="">Selecione...</option>
                       {professores.map(p => <option key={p} value={p}>{p}</option>)}
@@ -293,7 +351,7 @@ export default function Ocorrencias() {
                 </button>
               ) : (
                 <button className="btn btn-primary" type="submit" form="ocorrencia-form" disabled={saving} style={{ padding: '0.75rem 1.25rem', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {saving ? 'Salvando...' : <><Check size={18} /> Registrar Ocorrência</>}
+                  {saving ? 'Salvando...' : <><Check size={18} /> {ocorrenciaToEdit ? 'Salvar Alterações' : 'Registrar Ocorrência'}</>}
                 </button>
               )}
             </div>

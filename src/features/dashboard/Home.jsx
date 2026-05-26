@@ -34,10 +34,6 @@ export default function Home() {
               <BarChart2 />
               <span>Relatórios</span>
             </button>
-            <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias')}>
-              <ShieldAlert />
-              <span>Histórico de Ocorrências</span>
-            </button>
           </>
         )}
 
@@ -46,9 +42,9 @@ export default function Home() {
           <span>Mapa de Classe</span>
         </button>
 
-        <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias/nova')}>
-          <AlertTriangle />
-          <span style={{ textAlign: 'center' }}>Ocorrências em Sala</span>
+        <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias')}>
+          <ShieldAlert />
+          <span>Ocorrências</span>
         </button>
 
         <button className="dashboard-action-card" onClick={() => navigate('/reposicoes')}>

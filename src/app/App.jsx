@@ -11,7 +11,6 @@ const Home = React.lazy(() => import('../features/dashboard/Home'));
 const Eventos = React.lazy(() => import('../features/eventos/Eventos'));
 const Registros = React.lazy(() => import('../features/registros/Registros'));
 const HistoricoOcorrencias = React.lazy(() => import('../features/ocorrencias/HistoricoOcorrencias'));
-const Ocorrencias = React.lazy(() => import('../features/ocorrencias/Ocorrencias'));
 const EnvioQuestoes = React.lazy(() => import('../features/reposicoes/EnvioQuestoes'));
 const Configuracoes = React.lazy(() => import('../features/settings/Configuracoes'));
 const Turmas = React.lazy(() => import('../features/turmas/Turmas'));
@@ -43,7 +42,6 @@ function AppRoutes() {
             <Route path="eventos/editar/:id" element={<Eventos />} />
             <Route path="registros" element={<Registros />} />
             <Route path="ocorrencias" element={<HistoricoOcorrencias />} />
-            <Route path="ocorrencias/nova" element={<Ocorrencias />} />
             <Route path="reposicoes" element={<EnvioQuestoes />} />
             <Route path="configuracoes" element={<Configuracoes />} />
             <Route path="turmas" element={<Turmas />} />
