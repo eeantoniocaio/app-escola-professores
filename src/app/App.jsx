@@ -38,6 +38,8 @@ function AppRoutes() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="eventos" element={<Eventos />} />
+            <Route path="eventos/novo" element={<Eventos />} />
+            <Route path="eventos/editar/:id" element={<Eventos />} />
             <Route path="registros" element={<Registros />} />
             <Route path="ocorrencias" element={<HistoricoOcorrencias />} />
             <Route path="ocorrencias/nova" element={<Ocorrencias />} />
