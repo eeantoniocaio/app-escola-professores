@@ -3,12 +3,44 @@ import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 
+const parseCombinedSerieTurma = (combinedName) => {
+  if (!combinedName) return { serie: '', turma: '' };
+  
+  const grade = combinedName.charAt(0);
+  const lastChar = combinedName.charAt(combinedName.length - 1);
+  const isHighSchool = ['1', '2', '3'].includes(grade);
+  const isElementary = ['6', '7', '8', '9'].includes(grade);
+  
+  if (isHighSchool) {
+    return {
+      serie: `${grade}ºEM`,
+      turma: lastChar
+    };
+  } else if (isElementary) {
+    return {
+      serie: `${grade}º ano`,
+      turma: lastChar
+    };
+  }
+  return { serie: combinedName, turma: '' };
+};
+
+const getCombinedTurmaName = (serie, turma) => {
+  if (!serie) return turma;
+  const match = serie.match(/^\d+º/);
+  if (match) {
+    return `${match[0]}${turma}`;
+  }
+  return `${serie}${turma}`;
+};
+
 export default function BoasPraticasFormModal({ isOpen, onClose, praticaToEdit = null, onSave }) {
   const { userRole, userName } = useAuth();
-  const { professores = [], turmas = [] } = useGlobalData();
+  const { professores = [] } = useGlobalData();
 
   const [professor, setProfessor] = useState('');
   const [serie, setSerie] = useState('');
+  const [turma, setTurma] = useState('');
   const [dataRealizacao, setDataRealizacao] = useState(new Date().toISOString().split('T')[0]);
   const [relato, setRelato] = useState('');
   const [habilidade, setHabilidade] = useState('');
@@ -27,8 +59,10 @@ export default function BoasPraticasFormModal({ isOpen, onClose, praticaToEdit =
       setCurrentStep(1);
       setErrors({});
       if (praticaToEdit) {
+        const parsed = parseCombinedSerieTurma(praticaToEdit.serie);
         setProfessor(praticaToEdit.professor || '');
-        setSerie(praticaToEdit.serie || '');
+        setSerie(parsed.serie);
+        setTurma(parsed.turma);
         setDataRealizacao(praticaToEdit.data_realizacao || new Date().toISOString().split('T')[0]);
         setRelato(praticaToEdit.relato || '');
         setHabilidade(praticaToEdit.habilidade || '');
@@ -36,6 +70,7 @@ export default function BoasPraticasFormModal({ isOpen, onClose, praticaToEdit =
       } else {
         setProfessor(userRole !== 'gestao' && userName ? userName : '');
         setSerie('');
+        setTurma('');
         setDataRealizacao(new Date().toISOString().split('T')[0]);
         setRelato('');
         setHabilidade('');
@@ -55,6 +90,7 @@ export default function BoasPraticasFormModal({ isOpen, onClose, praticaToEdit =
     if (step === 1) {
       if (!professor) e.professor = 'Campo obrigatório';
       if (!serie) e.serie = 'Campo obrigatório';
+      if (!turma) e.turma = 'Campo obrigatório';
       if (!dataRealizacao) e.dataRealizacao = 'Campo obrigatório';
       if (!habilidade?.trim()) e.habilidade = 'Campo obrigatório';
     } else if (step === 2) {
@@ -87,9 +123,10 @@ export default function BoasPraticasFormModal({ isOpen, onClose, praticaToEdit =
     }
 
     setSaving(true);
+    const combinedSerie = getCombinedTurmaName(serie, turma);
     const successResult = await onSave({
       professor,
-      serie,
+      serie: combinedSerie,
       data_realizacao: dataRealizacao,
       relato,
       habilidade,
@@ -103,6 +140,7 @@ export default function BoasPraticasFormModal({ isOpen, onClose, praticaToEdit =
         setSuccess(false);
         setProfessor('');
         setSerie('');
+        setTurma('');
         setDataRealizacao(new Date().toISOString().split('T')[0]);
         setRelato('');
         setHabilidade('');
@@ -137,7 +175,7 @@ export default function BoasPraticasFormModal({ isOpen, onClose, praticaToEdit =
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={(e) => { if(e.target === e.currentTarget) onClose() }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyIntent: 'center', zIndex: 1000, padding: '1rem' }} onClick={(e) => { if(e.target === e.currentTarget) onClose() }}>
       <div style={{ background: 'white', borderRadius: '20px', width: '100%', maxWidth: '600px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', maxHeight: '90vh', animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
         
         {/* Header */}
@@ -211,59 +249,77 @@ export default function BoasPraticasFormModal({ isOpen, onClose, praticaToEdit =
               
               {/* Step 1: Contexto */}
               <div style={{ display: currentStep === 1 ? 'flex' : 'none', flexDirection: 'column', gap: '1.25rem', animation: 'fadeIn 0.3s' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+                
+                {/* Professor */}
+                <div>
+                  <label style={labelStyle}>Professor(a) <span style={{ color: '#ef4444' }}>*</span></label>
+                  {userRole !== 'gestao' && userName ? (
+                    <div style={{
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '10px',
+                      background: '#f8fafc',
+                      border: '1.5px solid #e2e8f0',
+                      color: '#475569',
+                      fontWeight: 600,
+                      fontSize: '0.95rem'
+                    }}>
+                      {userName}
+                    </div>
+                  ) : professores.length > 0 ? (
+                    <select
+                      value={professor}
+                      onChange={e => setProfessor(e.target.value)}
+                      style={getInputStyle('professor')}
+                      ref={firstInputRef}
+                    >
+                      <option value="" disabled>Selecione um professor</option>
+                      {professores.map(p => (
+                        <option key={p.nome || p} value={p.nome || p}>{p.nome || p}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input 
+                      type="text" 
+                      placeholder="Nome do professor" 
+                      value={professor} 
+                      onChange={e => setProfessor(e.target.value)} 
+                      style={getInputStyle('professor')} 
+                      ref={firstInputRef}
+                    />
+                  )}
+                  {errors.professor && <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{errors.professor}</span>}
+                </div>
+
+                {/* Série e Turma lado a lado */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                   <div>
-                    <label style={labelStyle}>Professor(a) <span style={{ color: '#ef4444' }}>*</span></label>
-                    {userRole !== 'gestao' && userName ? (
-                      <div style={{
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '10px',
-                        background: '#f8fafc',
-                        border: '1.5px solid #e2e8f0',
-                        color: '#475569',
-                        fontWeight: 600,
-                        fontSize: '0.95rem'
-                      }}>
-                        {userName}
-                      </div>
-                    ) : professores.length > 0 ? (
-                      <select
-                        value={professor}
-                        onChange={e => setProfessor(e.target.value)}
-                        style={getInputStyle('professor')}
-                        ref={firstInputRef}
-                      >
-                        <option value="" disabled>Selecione um professor</option>
-                        {professores.map(p => (
-                          <option key={p.nome || p} value={p.nome || p}>{p.nome || p}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input 
-                        type="text" 
-                        placeholder="Nome do professor" 
-                        value={professor} 
-                        onChange={e => setProfessor(e.target.value)} 
-                        style={getInputStyle('professor')} 
-                        ref={firstInputRef}
-                      />
-                    )}
-                    {errors.professor && <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{errors.professor}</span>}
-                  </div>
-                  
-                  <div>
-                    <label style={labelStyle}>Série / Turma <span style={{ color: '#ef4444' }}>*</span></label>
+                    <label style={labelStyle}>Série <span style={{ color: '#ef4444' }}>*</span></label>
                     <select
                       value={serie}
                       onChange={e => setSerie(e.target.value)}
                       style={getInputStyle('serie')}
                     >
-                      <option value="" disabled>Selecione a série</option>
-                      {turmas.map(t => (
-                        <option key={t.id || t} value={t.nome || t}>{t.nome || t}</option>
+                      <option value="">Selecione...</option>
+                      {['6º ano', '7º ano', '8º ano', '9º ano', '1ºEM', '2ºEM', '3ºEM'].map(s => (
+                        <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                     {errors.serie && <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{errors.serie}</span>}
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Turma <span style={{ color: '#ef4444' }}>*</span></label>
+                    <select
+                      value={turma}
+                      onChange={e => setTurma(e.target.value)}
+                      style={getInputStyle('turma')}
+                    >
+                      <option value="">Selecione...</option>
+                      {['A', 'B', 'C', 'D', 'E'].map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                    {errors.turma && <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{errors.turma}</span>}
                   </div>
                 </div>
 
