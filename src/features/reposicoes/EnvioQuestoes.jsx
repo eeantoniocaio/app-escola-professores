@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuestoes } from './hooks/useQuestoes';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
-import { Pencil, Trash2, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Pencil, Trash2, Check, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import QuestaoDetailModal from './QuestaoDetailModal';
 
 const EMPTY_FORM = { 
@@ -40,7 +40,39 @@ export default function EnvioQuestoes() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // Filter States
+  const [filterText, setFilterText] = useState('');
+  const [filterProfessor, setFilterProfessor] = useState('');
+  const [filterDisciplina, setFilterDisciplina] = useState('');
+  const [filterHabilidade, setFilterHabilidade] = useState('');
+  const [filterSerie, setFilterSerie] = useState('');
+
   const letrasAlternativas = ['A', 'B', 'C', 'D', 'E'];
+
+  // Derived filter options from database questions
+  const uniqueProfessores = Array.from(new Set(questoes.map(q => q.professor).filter(Boolean))).sort();
+  const uniqueDisciplinas = Array.from(new Set(questoes.map(q => q.disciplina).filter(Boolean))).sort();
+  const uniqueHabilidades = Array.from(new Set(questoes.map(q => q.habilidade).filter(Boolean))).sort();
+
+  // Filter logic
+  const filteredQuestoes = (questoes || []).filter(q => {
+    if (filterText.trim()) {
+      const search = filterText.toLowerCase();
+      const matchText = 
+        (q.enunciado || '').toLowerCase().includes(search) ||
+        (q.professor || '').toLowerCase().includes(search) ||
+        (q.disciplina || '').toLowerCase().includes(search) ||
+        (q.habilidade || '').toLowerCase().includes(search) ||
+        (q.serie || '').toLowerCase().includes(search) ||
+        (q.turma || '').toLowerCase().includes(search);
+      if (!matchText) return false;
+    }
+    if (filterProfessor && q.professor !== filterProfessor) return false;
+    if (filterDisciplina && q.disciplina !== filterDisciplina) return false;
+    if (filterHabilidade && q.habilidade !== filterHabilidade) return false;
+    if (filterSerie && q.serie !== filterSerie) return false;
+    return true;
+  });
 
   const validateStep = (step) => {
     const e = {};
@@ -176,7 +208,10 @@ export default function EnvioQuestoes() {
             <h2 style={{ fontSize: '1.8rem', margin: 0, fontWeight: 800 }}>Questões de reposições</h2>
           </div>
           <p style={{ color: '#94a3b8', margin: 0, marginLeft: '2.5rem', fontSize: '0.9rem' }}>
-            {questoes.length} questão(ões) enviada(s)
+            {filteredQuestoes.length === (questoes || []).length 
+              ? `${(questoes || []).length} questão(ões) enviada(s)`
+              : `${filteredQuestoes.length} de ${(questoes || []).length} questão(ões) filtrada(s)`
+            }
           </p>
         </div>
         <button
@@ -196,6 +231,187 @@ export default function EnvioQuestoes() {
         </button>
       </div>
 
+      {/* Filtros */}
+      {questoes.length > 0 && (
+        <div style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '1.25rem',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          border: '1px solid #e2e8f0',
+          marginBottom: '2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem'
+        }}>
+          {/* Row 1: Search & Reset */}
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '280px' }}>
+              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Pesquisar por enunciado, professor, disciplina..."
+                value={filterText}
+                onChange={e => setFilterText(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 1rem 0.65rem 2.5rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid #e2e8f0',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={e => e.target.style.borderColor = '#3b82f6'}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              />
+              {filterText && (
+                <button
+                  onClick={() => setFilterText('')}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
+                    display: 'flex', alignItems: 'center', padding: 0
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {(filterText || filterProfessor || filterDisciplina || filterHabilidade || filterSerie) && (
+              <button
+                onClick={() => {
+                  setFilterText('');
+                  setFilterProfessor('');
+                  setFilterDisciplina('');
+                  setFilterHabilidade('');
+                  setFilterSerie('');
+                }}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  color: '#475569',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={e => e.currentTarget.style.backgroundColor = '#e2e8f0'}
+                onMouseOut={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+              >
+                <X size={16} /> Limpar Filtros
+              </button>
+            )}
+          </div>
+
+          {/* Row 2: Select Dropdowns */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
+            {/* Professor Filter */}
+            <div>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>Professor(a)</label>
+              <select
+                value={filterProfessor}
+                onChange={e => setFilterProfessor(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '8px',
+                  border: '1.5px solid #e2e8f0',
+                  fontSize: '0.85rem',
+                  color: '#334155',
+                  outline: 'none',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">Todos</option>
+                {uniqueProfessores.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Disciplina Filter */}
+            <div>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>Disciplina</label>
+              <select
+                value={filterDisciplina}
+                onChange={e => setFilterDisciplina(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '8px',
+                  border: '1.5px solid #e2e8f0',
+                  fontSize: '0.85rem',
+                  color: '#334155',
+                  outline: 'none',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">Todas</option>
+                {uniqueDisciplinas.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Habilidade Filter */}
+            <div>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>Habilidade</label>
+              <select
+                value={filterHabilidade}
+                onChange={e => setFilterHabilidade(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '8px',
+                  border: '1.5px solid #e2e8f0',
+                  fontSize: '0.85rem',
+                  color: '#334155',
+                  outline: 'none',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">Todas</option>
+                {uniqueHabilidades.map(h => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Série Filter */}
+            <div>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>Série</label>
+              <select
+                value={filterSerie}
+                onChange={e => setFilterSerie(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '8px',
+                  border: '1.5px solid #e2e8f0',
+                  fontSize: '0.85rem',
+                  color: '#334155',
+                  outline: 'none',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">Todas</option>
+                {['6º ano', '7º ano', '8º ano', '1ºEM', '2ºEM', '3ºEM'].map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* List */}
       {questoes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
@@ -203,9 +419,38 @@ export default function EnvioQuestoes() {
           <p style={{ color: '#94a3b8', fontSize: '1.05rem', fontWeight: 500 }}>Nenhuma questão enviada ainda.</p>
           <p style={{ color: '#cbd5e1', fontSize: '0.88rem' }}>Clique em "+ Nova Questão" para criar uma.</p>
         </div>
+      ) : filteredQuestoes.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+          <p style={{ color: '#94a3b8', fontSize: '1.05rem', fontWeight: 500 }}>Nenhuma questão encontrada para os filtros aplicados.</p>
+          <button
+            onClick={() => {
+              setFilterText('');
+              setFilterProfessor('');
+              setFilterDisciplina('');
+              setFilterHabilidade('');
+              setFilterSerie('');
+            }}
+            style={{
+              marginTop: '1rem',
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.6rem 1.25rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+            onMouseOut={e => e.currentTarget.style.backgroundColor = '#2563eb'}
+          >
+            Limpar Filtros
+          </button>
+        </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
-          {questoes && questoes.map(q => (
+          {filteredQuestoes && filteredQuestoes.map(q => (
             <div 
               key={q.id} 
               onClick={(e) => {
