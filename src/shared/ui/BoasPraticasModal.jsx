@@ -377,7 +377,7 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                   form="boas-praticas-form"
                   disabled={saving}
                   style={{
-                    background: '#10b981',
+                    background: '#2563eb',
                     border: 'none',
                     padding: '0.65rem 1.5rem',
                     borderRadius: '10px',
@@ -391,8 +391,8 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                     fontSize: '0.9rem',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseOver={(e) => { if(!saving) e.currentTarget.style.backgroundColor = '#059669' }}
-                  onMouseOut={(e) => { if(!saving) e.currentTarget.style.backgroundColor = '#10b981' }}
+                  onMouseOver={(e) => { if(!saving) e.currentTarget.style.backgroundColor = '#1d4ed8' }}
+                  onMouseOut={(e) => { if(!saving) e.currentTarget.style.backgroundColor = '#2563eb' }}
                 >
                   {saving ? 'Salvando...' : <><Check size={16} /> Salvar Prática</>}
                 </button>
