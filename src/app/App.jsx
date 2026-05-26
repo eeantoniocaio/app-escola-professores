@@ -16,6 +16,7 @@ const EnvioQuestoes = React.lazy(() => import('../features/reposicoes/EnvioQuest
 const Configuracoes = React.lazy(() => import('../features/settings/Configuracoes'));
 const Turmas = React.lazy(() => import('../features/turmas/Turmas'));
 const Relatorios = React.lazy(() => import('../features/relatorios/Relatorios/Relatorios'));
+const BoasPraticas = React.lazy(() => import('../features/boaspraticas/BoasPraticas'));
 
 function AppRoutes() {
   const { session, authLoading } = useAuth();
@@ -47,6 +48,7 @@ function AppRoutes() {
             <Route path="configuracoes" element={<Configuracoes />} />
             <Route path="turmas" element={<Turmas />} />
             <Route path="relatorios" element={<Relatorios />} />
+            <Route path="boas-praticas" element={<BoasPraticas />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

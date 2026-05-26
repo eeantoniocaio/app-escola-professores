@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../services/supabase';
 import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '../../../app/providers/AuthProvider';
+import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 
-export default function BoasPraticasModal({ isOpen, onClose, professores = [], turmas = [] }) {
+export default function BoasPraticasFormModal({ isOpen, onClose, praticaToEdit = null, onSave }) {
+  const { userRole, userName } = useAuth();
+  const { professores = [], turmas = [] } = useGlobalData();
+
   const [professor, setProfessor] = useState('');
   const [serie, setSerie] = useState('');
   const [dataRealizacao, setDataRealizacao] = useState(new Date().toISOString().split('T')[0]);
@@ -22,6 +26,21 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
       document.body.style.overflow = 'hidden';
       setCurrentStep(1);
       setErrors({});
+      if (praticaToEdit) {
+        setProfessor(praticaToEdit.professor || '');
+        setSerie(praticaToEdit.serie || '');
+        setDataRealizacao(praticaToEdit.data_realizacao || new Date().toISOString().split('T')[0]);
+        setRelato(praticaToEdit.relato || '');
+        setHabilidade(praticaToEdit.habilidade || '');
+        setLinkDrive(praticaToEdit.link_drive || '');
+      } else {
+        setProfessor(userRole !== 'gestao' && userName ? userName : '');
+        setSerie('');
+        setDataRealizacao(new Date().toISOString().split('T')[0]);
+        setRelato('');
+        setHabilidade('');
+        setLinkDrive('');
+      }
       if (firstInputRef.current) {
         setTimeout(() => firstInputRef.current.focus(), 150);
       }
@@ -29,7 +48,7 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
       document.body.style.overflow = 'unset';
     }
     return () => { document.body.style.overflow = 'unset'; };
-  }, [isOpen]);
+  }, [isOpen, praticaToEdit, userRole, userName]);
 
   const validateStep = (step) => {
     const e = {};
@@ -68,21 +87,17 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
     }
 
     setSaving(true);
-    const { error } = await supabase.from('boas_praticas').insert([{
+    const successResult = await onSave({
       professor,
       serie,
       data_realizacao: dataRealizacao,
       relato,
       habilidade,
       link_drive: linkDrive.trim() || null
-    }]);
-
+    });
     setSaving(false);
 
-    if (error) {
-      console.error(error);
-      alert('Erro ao salvar as Boas Práticas. Tente novamente.');
-    } else {
+    if (successResult) {
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
@@ -128,7 +143,9 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
         {/* Header */}
         <div style={{ padding: '1.5rem 2rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid #f1f5f9' }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#1e293b' }}>Registro de Boas Práticas</h3>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#1e293b' }}>
+              {praticaToEdit ? '📝 Editar Boa Prática' : '📝 Registro de Boas Práticas'}
+            </h3>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
             <X size={24} />
@@ -172,7 +189,9 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
           {success ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <div style={{ fontSize: '3.5rem', marginBottom: '1rem', animation: 'scaleIn 0.5s ease-out' }}>✨</div>
-              <h3 style={{ color: '#16a34a', margin: '0 0 0.5rem 0', fontSize: '1.2rem' }}>Prática Registrada!</h3>
+              <h3 style={{ color: '#16a34a', margin: '0 0 0.5rem 0', fontSize: '1.2rem' }}>
+                {praticaToEdit ? 'Prática Atualizada!' : 'Prática Registrada!'}
+              </h3>
               <p style={{ color: '#64748b' }}>Muito obrigado por compartilhar essa boa prática.</p>
             </div>
           ) : (
@@ -195,17 +214,40 @@ export default function BoasPraticasModal({ isOpen, onClose, professores = [], t
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
                   <div>
                     <label style={labelStyle}>Professor(a) <span style={{ color: '#ef4444' }}>*</span></label>
-                    <select
-                      value={professor}
-                      onChange={e => setProfessor(e.target.value)}
-                      style={getInputStyle('professor')}
-                      ref={firstInputRef}
-                    >
-                      <option value="" disabled>Selecione um professor</option>
-                      {professores.map(p => (
-                        <option key={p.nome || p} value={p.nome || p}>{p.nome || p}</option>
-                      ))}
-                    </select>
+                    {userRole !== 'gestao' && userName ? (
+                      <div style={{
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '10px',
+                        background: '#f8fafc',
+                        border: '1.5px solid #e2e8f0',
+                        color: '#475569',
+                        fontWeight: 600,
+                        fontSize: '0.95rem'
+                      }}>
+                        {userName}
+                      </div>
+                    ) : professores.length > 0 ? (
+                      <select
+                        value={professor}
+                        onChange={e => setProfessor(e.target.value)}
+                        style={getInputStyle('professor')}
+                        ref={firstInputRef}
+                      >
+                        <option value="" disabled>Selecione um professor</option>
+                        {professores.map(p => (
+                          <option key={p.nome || p} value={p.nome || p}>{p.nome || p}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input 
+                        type="text" 
+                        placeholder="Nome do professor" 
+                        value={professor} 
+                        onChange={e => setProfessor(e.target.value)} 
+                        style={getInputStyle('professor')} 
+                        ref={firstInputRef}
+                      />
+                    )}
                     {errors.professor && <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{errors.professor}</span>}
                   </div>
                   
