@@ -176,7 +176,7 @@ export default function MainLayout() {
       </main>
 
       <footer style={{ padding: '2rem', textAlign: 'center', borderTop: '1px solid var(--border-light)', fontSize: '0.85rem', color: 'var(--text-light)', marginTop: 'auto' }}>
-        © {new Date().getFullYear()} E.E. Antônio Caio - Sistema de Avaliação Docente. Todos os direitos reservados.
+        © {new Date().getFullYear()} E.E. Antônio Caio. Todos os direitos reservados.
       </footer>
     </div>
   );
