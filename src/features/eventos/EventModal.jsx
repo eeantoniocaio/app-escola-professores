@@ -91,6 +91,7 @@ export default function EventModal({ isOpen, eventToEdit, tiposEvento, onClose, 
     }
 
     onSave({
+      ...(eventToEdit ? { id: eventToEdit.id } : {}),
       dataSolicitacao: dataSolicitacao ? dataSolicitacao : null,
       evento,
       tipo,
