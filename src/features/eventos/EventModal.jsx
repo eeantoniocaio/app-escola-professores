@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react'
+import { useAuth } from '../../app/providers/AuthProvider'
+
 export default function EventModal({ isOpen, eventToEdit, tiposEvento, onClose, onSave }) {
+  const { userName } = useAuth()
   // Input states
   const [dataSolicitacao, setDataSolicitacao] = useState('')
   const [evento, setEvento] = useState('')
@@ -25,12 +28,12 @@ export default function EventModal({ isOpen, eventToEdit, tiposEvento, onClose, 
       setDataSolicitacao('')
       setEvento('')
       setTipo(tiposEvento[0] || '')
-      setQuemSolicitou('')
+      setQuemSolicitou(userName || '')
       setDataEntrega('')
     }
     setCurrentStep(1)
     setErrors({})
-  }, [eventToEdit])
+  }, [eventToEdit, userName])
 
   // Focus the first input field on mount
   useEffect(() => {
@@ -95,7 +98,7 @@ export default function EventModal({ isOpen, eventToEdit, tiposEvento, onClose, 
       dataSolicitacao: dataSolicitacao ? dataSolicitacao : null,
       evento,
       tipo,
-      quemSolicitou,
+      quemSolicitou: quemSolicitou || userName || '',
       dataEntrega: dataEntrega ? dataEntrega : null
     })
   }
@@ -228,14 +231,28 @@ export default function EventModal({ isOpen, eventToEdit, tiposEvento, onClose, 
                 <label style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)', marginBottom: '0.4rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                   Quem solicitou *
                 </label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  placeholder="Ex: Coordenação Pedagógica..." 
-                  value={quemSolicitou} 
-                  onChange={(e) => setQuemSolicitou(e.target.value)} 
-                  style={{ border: errors.quemSolicitou ? '1px solid var(--color-danger)' : undefined }}
-                />
+                {userName ? (
+                  <div style={{
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-light)',
+                    color: 'var(--text-muted)',
+                    fontWeight: 600,
+                    fontSize: '0.95rem'
+                  }}>
+                    {quemSolicitou || userName}
+                  </div>
+                ) : (
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="Ex: Coordenação Pedagógica..." 
+                    value={quemSolicitou} 
+                    onChange={(e) => setQuemSolicitou(e.target.value)} 
+                    style={{ border: errors.quemSolicitou ? '1px solid var(--color-danger)' : undefined }}
+                  />
+                )}
                 {errors.quemSolicitou && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.quemSolicitou}</span>}
               </div>
 

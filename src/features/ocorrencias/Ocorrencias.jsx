@@ -105,6 +105,7 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
       descricao: form.descricao.trim() || null,
       alunos: form.alunos.length > 0 ? form.alunos : [],
       acao_professor: form.acao_professor.trim() || null,
+      ...(userRole === 'gestao' && userName ? { gestor: userName } : {})
     }
 
     let successResult = false;

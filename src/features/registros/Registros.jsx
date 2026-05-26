@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useRegistros } from './hooks/useRegistros'
 import { useEventos } from '../eventos/hooks/useEventos'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
+import { useAuth } from '../../app/providers/AuthProvider'
 import { PlusCircle, Calendar, Pencil, Trash2, ArrowLeft, User, Shield, Tag, Search, FolderOpen, Paperclip, Briefcase, UploadCloud, FileText, X, Link as LinkIcon, ChevronRight, ChevronLeft, Check } from 'lucide-react'
 
 export default function Registros() {
   const navigate = useNavigate();
+  const { userName } = useAuth();
   const { records, addRecord, updateRecord, deleteRecord } = useRegistros();
   const { events } = useEventos();
   const { gestores, professores, tiposEvidencia } = useGlobalData();
@@ -68,7 +70,7 @@ export default function Registros() {
     setEventId(events[0]?.id || '')
     setDate(new Date().toISOString().split('T')[0])
     setTipo(tiposEvidencia[0] || '')
-    setGestor('')
+    setGestor(userName || '')
     setDescription('')
     setMockFileName('')
     setMockFileSize('')
@@ -139,7 +141,8 @@ export default function Registros() {
       return
     }
     const recordData = {
-      title: tipo, teacher, eventId: null, date, tipo, gestor,
+      title: tipo, teacher, eventId: null, date, tipo,
+      gestor: gestor || userName || '',
       description,
       fileName: mockFileName || 'documento.pdf',
       fileSize: mockFileSize || '1.0 MB',
@@ -440,10 +443,24 @@ export default function Registros() {
 
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Gestor(a) *</label>
-                    <select className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: `1px solid ${errors.gestor ? 'var(--color-danger)' : 'var(--border-light)'}` }} value={gestor} onChange={(e) => setGestor(e.target.value)}>
-                      <option value="">Selecione um gestor</option>
-                      {gestores.map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
+                    {userName ? (
+                      <div style={{
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-muted)',
+                        fontWeight: 600,
+                        fontSize: '0.95rem'
+                      }}>
+                        {gestor || userName}
+                      </div>
+                    ) : (
+                      <select className="form-control" style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: `1px solid ${errors.gestor ? 'var(--color-danger)' : 'var(--border-light)'}` }} value={gestor} onChange={(e) => setGestor(e.target.value)}>
+                        <option value="">Selecione um gestor</option>
+                        {gestores.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    )}
                     {errors.gestor && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.gestor}</span>}
                   </div>
                 </div>
