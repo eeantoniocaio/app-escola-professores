@@ -1,11 +1,43 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { exportOcorrenciasCSV, exportOcorrenciasPDF } from '../../utils/exportOcorrencias'
-import { Book, Calendar, CheckCircle2, Clock, AlertTriangle, User, Zap, Shield, ClipboardList, X, ArrowLeft, Download, FileText, Trash2, Check, ChevronDown, ChevronUp, Pencil } from 'lucide-react'
+import { Book, Calendar, CheckCircle2, Clock, AlertTriangle, User, Zap, Shield, ClipboardList, X, ArrowLeft, Download, FileText, Trash2, Check, Pencil } from 'lucide-react'
 import { useOcorrencias } from './hooks/useOcorrencias'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 import { useAuth } from '../../app/providers/AuthProvider'
 import Ocorrencias from './Ocorrencias'
+
+const getStatusStyles = (status) => {
+  const s = status || 'Em aberto';
+  if (s === 'Em aberto') {
+    return {
+      border: 'var(--color-danger)',
+      bg: 'var(--color-danger-bg)',
+      text: 'var(--color-danger)',
+      icon: <AlertTriangle size={14} />
+    };
+  } else if (s === 'Em andamento') {
+    return {
+      border: 'var(--color-warning)',
+      bg: 'var(--color-warning-bg)',
+      text: 'var(--color-warning)',
+      icon: <Clock size={14} />
+    };
+  } else if (s === 'Concluída') {
+    return {
+      border: 'var(--color-success)',
+      bg: 'var(--color-success-bg)',
+      text: 'var(--color-success)',
+      icon: <CheckCircle2 size={14} />
+    };
+  }
+  return {
+    border: 'var(--border-light)',
+    bg: 'var(--bg-secondary)',
+    text: 'var(--text-muted)',
+    icon: <ClipboardList size={14} />
+  };
+};
 
 export default function HistoricoOcorrencias() {
   const navigate = useNavigate();
@@ -33,19 +65,8 @@ export default function HistoricoOcorrencias() {
   const [filterAluno, setFilterAluno] = useState('')
   const [filterData, setFilterData] = useState('')
 
-  const [expandedSections, setExpandedSections] = useState(() => {
-    const saved = sessionStorage.getItem('expandedOcorrenciasSections');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { }
-    }
-    return null;
-  })
-
-  useEffect(() => {
-    if (expandedSections) {
-      sessionStorage.setItem('expandedOcorrenciasSections', JSON.stringify(expandedSections));
-    }
-  }, [expandedSections]);
+  // Active Tab Filter
+  const [activeTab, setActiveTab] = useState('Todas');
 
   const handleLinkProfile = async (e) => {
     e.preventDefault();
@@ -85,27 +106,20 @@ export default function HistoricoOcorrencias() {
   const ocorrenciasEmAndamento = useMemo(() => sortedFiltered.filter(o => o.status === 'Em andamento'), [sortedFiltered])
   const ocorrenciasConcluidas = useMemo(() => sortedFiltered.filter(o => o.status === 'Concluída'), [sortedFiltered])
 
-  useEffect(() => {
-    if (!expandedSections && sortedFiltered.length > 0) {
-      const abertoNewest = ocorrenciasEmAberto.length > 0 ? new Date(ocorrenciasEmAberto[0].data).getTime() : 0;
-      const andamentoNewest = ocorrenciasEmAndamento.length > 0 ? new Date(ocorrenciasEmAndamento[0].data).getTime() : 0;
-      const concluidasNewest = ocorrenciasConcluidas.length > 0 ? new Date(ocorrenciasConcluidas[0].data).getTime() : 0;
-      
-      const max = Math.max(abertoNewest, andamentoNewest, concluidasNewest);
-      
-      setExpandedSections({
-        aberto: max === abertoNewest && abertoNewest > 0,
-        andamento: max === andamentoNewest && max !== abertoNewest && andamentoNewest > 0,
-        concluidas: max === concluidasNewest && max !== abertoNewest && max !== andamentoNewest && concluidasNewest > 0
-      });
-    } else if (!expandedSections) {
-      setExpandedSections({ aberto: true, andamento: false, concluidas: false });
-    }
-  }, [sortedFiltered, expandedSections, ocorrenciasEmAberto, ocorrenciasEmAndamento, ocorrenciasConcluidas]);
+  const itemsToDisplay = useMemo(() => {
+    if (activeTab === 'Todas') return sortedFiltered;
+    if (activeTab === 'Em aberto') return ocorrenciasEmAberto;
+    if (activeTab === 'Em andamento') return ocorrenciasEmAndamento;
+    if (activeTab === 'Concluída') return ocorrenciasConcluidas;
+    return sortedFiltered;
+  }, [sortedFiltered, ocorrenciasEmAberto, ocorrenciasEmAndamento, ocorrenciasConcluidas, activeTab]);
 
-  const toggleSection = (section) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }))
-  }
+  const tabs = [
+    { key: 'Todas', label: 'Todas', color: '#3b82f6', bgGradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', count: sortedFiltered.length, icon: <ClipboardList size={16} /> },
+    { key: 'Em aberto', label: 'Em aberto', color: 'var(--color-danger)', bgGradient: 'linear-gradient(135deg, #ef4444, #b91c1c)', count: ocorrenciasEmAberto.length, icon: <AlertTriangle size={16} /> },
+    { key: 'Em andamento', label: 'Em andamento', color: 'var(--color-warning)', bgGradient: 'linear-gradient(135deg, #f59e0b, #d97706)', count: ocorrenciasEmAndamento.length, icon: <Clock size={16} /> },
+    { key: 'Concluída', label: 'Concluídas', color: 'var(--color-success)', bgGradient: 'linear-gradient(135deg, #10b981, #047857)', count: ocorrenciasConcluidas.length, icon: <CheckCircle2 size={16} /> }
+  ];
 
   const inputStyle = {
     width: '100%', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)',
@@ -291,11 +305,70 @@ export default function HistoricoOcorrencias() {
         )}
       </div>
 
+      {/* Tabs */}
+      {filtered.length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '0.75rem',
+          overflowX: 'auto',
+          paddingBottom: '0.75rem',
+          marginBottom: '1.5rem',
+          borderBottom: '1px solid var(--border-light)',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}>
+          {tabs.map(tab => {
+            const isSelected = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                style={{
+                  background: isSelected ? tab.bgGradient : 'var(--bg-card)',
+                  color: isSelected ? 'white' : 'var(--text-main)',
+                  border: isSelected ? 'none' : '1px solid var(--border-light)',
+                  padding: '0.55rem 1.25rem',
+                  borderRadius: '30px',
+                  fontWeight: 600,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  whiteSpace: 'nowrap',
+                  boxShadow: isSelected ? `0 4px 10px ${tab.color}33` : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={e => { if(!isSelected) e.currentTarget.style.backgroundColor = 'var(--bg-secondary)' }}
+                onMouseOut={e => { if(!isSelected) e.currentTarget.style.backgroundColor = 'var(--bg-card)' }}
+              >
+                <span style={{ display: 'flex', color: isSelected ? 'white' : tab.color }}>
+                  {tab.icon}
+                </span>
+                {tab.label}
+                <span style={{
+                  background: isSelected ? 'rgba(255, 255, 255, 0.25)' : 'var(--bg-secondary)',
+                  color: isSelected ? 'white' : 'var(--text-muted)',
+                  fontSize: '0.72rem',
+                  padding: '0.1rem 0.4rem',
+                  borderRadius: '20px',
+                  fontWeight: 700,
+                  border: isSelected ? 'none' : '1px solid var(--border-light)',
+                  marginLeft: '0.2rem'
+                }}>
+                  {tab.count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* List */}
-      {filtered.length === 0 ? (
+      {itemsToDisplay.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
           <div style={{ color: 'var(--color-primary)', display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><ClipboardList size={48} /></div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', fontWeight: 500 }}>Nenhuma ocorrência registrada.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', fontWeight: 500 }}>Nenhuma ocorrência encontrada nesta aba.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -396,105 +469,10 @@ export default function HistoricoOcorrencias() {
               );
             };
 
-            const renderAccordion = (key, title, icon, items, theme, emptyText) => {
-              const isExpanded = expandedSections?.[key];
-              return (
-                <div style={{ 
-                  borderRadius: 'var(--radius-md)', 
-                  border: `1px solid ${theme.border}`, 
-                  background: 'var(--bg-card)', 
-                  overflow: 'hidden',
-                  boxShadow: 'var(--shadow-sm)',
-                  transition: 'all 0.3s ease'
-                }}>
-                  <div 
-                    onClick={() => toggleSection(key)}
-                    style={{
-                      background: theme.headerBg,
-                      padding: '1.25rem 1.5rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                      borderBottom: isExpanded ? `1px solid ${theme.border}` : '1px solid transparent',
-                      transition: 'background-color 0.2s ease, border-bottom 0.2s ease'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ color: theme.iconColor, display: 'flex' }}>{icon}</span>
-                      <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: theme.textColor }}>
-                        {title}
-                      </h3>
-                      <span style={{ 
-                        background: theme.badgeBg, 
-                        color: theme.badgeColor, 
-                        padding: '0.15rem 0.6rem', 
-                        borderRadius: '999px', 
-                        fontSize: '0.8rem', 
-                        fontWeight: 700 
-                      }}>
-                        {items.length}
-                      </span>
-                    </div>
-                    <div style={{ color: theme.iconColor, transition: 'transform 0.3s ease', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', display: 'flex' }}>
-                      <ChevronDown size={20} />
-                    </div>
-                  </div>
-                  
-                  <div style={{ 
-                    maxHeight: isExpanded ? '5000px' : '0', 
-                    opacity: isExpanded ? 1 : 0, 
-                    overflow: 'hidden', 
-                    transition: 'all 0.4s ease-in-out' 
-                  }}>
-                    <div style={{ padding: '1.5rem', background: 'var(--bg-primary)' }}>
-                      {items.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)', background: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-light)' }}>
-                          <p style={{ margin: 0, fontStyle: 'italic', fontSize: '0.95rem' }}>{emptyText}</p>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                          {items.map(o => renderItem(o, theme.itemStyles))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            };
-
             return (
-              <>
-                {renderAccordion('aberto', 'Em aberto', <AlertTriangle size={20} />, ocorrenciasEmAberto, {
-                  border: 'var(--color-danger)',
-                  headerBg: 'var(--color-danger-bg)',
-                  iconColor: 'var(--color-danger)',
-                  textColor: 'var(--color-danger)',
-                  badgeBg: 'var(--color-danger)',
-                  badgeColor: '#fff',
-                  itemStyles: { bg: 'var(--color-danger-bg)', border: 'var(--color-danger)', text: 'var(--color-danger)', icon: <AlertTriangle size={14} /> }
-                }, 'Nenhuma ocorrência em aberto')}
-                
-                {renderAccordion('andamento', 'Em andamento', <Clock size={20} />, ocorrenciasEmAndamento, {
-                  border: 'var(--color-warning)',
-                  headerBg: 'var(--color-warning-bg)',
-                  iconColor: 'var(--color-warning)',
-                  textColor: 'var(--text-main)',
-                  badgeBg: 'var(--color-warning)',
-                  badgeColor: '#fff',
-                  itemStyles: { bg: 'var(--color-warning-bg)', border: 'var(--color-warning)', text: 'var(--color-warning)', icon: <Clock size={14} /> }
-                }, 'Nenhuma ocorrência em andamento')}
-                
-                {renderAccordion('concluidas', 'Concluídas', <CheckCircle2 size={20} />, ocorrenciasConcluidas, {
-                  border: 'var(--color-success)',
-                  headerBg: 'var(--color-success-bg)',
-                  iconColor: 'var(--color-success)',
-                  textColor: 'var(--color-success)',
-                  badgeBg: 'var(--color-success)',
-                  badgeColor: '#fff',
-                  itemStyles: { bg: 'var(--color-success-bg)', border: 'var(--color-success)', text: 'var(--color-success)', icon: <CheckCircle2 size={14} /> }
-                }, 'Nenhuma ocorrência concluída')}
-              </>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {itemsToDisplay.map(o => renderItem(o, getStatusStyles(o.status)))}
+              </div>
             );
           })()}
         </div>
