@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, Calendar, User, BookOpen, Users, Bookmark } from 'lucide-react';
+import { X, Calendar, User, BookOpen, Users, Bookmark, Check } from 'lucide-react';
 
 export default function QuestaoDetailModal({ questao, onClose }) {
   useEffect(() => {
@@ -95,11 +95,20 @@ export default function QuestaoDetailModal({ questao, onClose }) {
               </div>
             </div>
             {questao.habilidade && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', gridColumn: 'span 2' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <Bookmark size={18} style={{ color: '#8b5cf6' }} />
                 <div>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>Habilidade</span>
                   <span style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 600 }}>{questao.habilidade}</span>
+                </div>
+              </div>
+            )}
+            {questao.alternativa_correta && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Check size={18} style={{ color: '#10b981' }} />
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>Alt. Correta</span>
+                  <span style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 700 }}>Alternativa {questao.alternativa_correta}</span>
                 </div>
               </div>
             )}
@@ -146,25 +155,33 @@ export default function QuestaoDetailModal({ questao, onClose }) {
           <div>
             <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Alternativas</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {letrasAlternativas.map(letra => (
-                <div 
-                  key={letra} 
-                  style={{ 
-                    display: 'flex', 
-                    gap: '0.85rem', 
-                    padding: '0.85rem 1.1rem', 
-                    background: '#f8fafc', 
-                    borderRadius: '10px', 
-                    border: '1px solid #f1f5f9',
-                    alignItems: 'flex-start'
-                  }}
-                >
-                  <span style={{ fontWeight: 800, color: '#64748b', fontSize: '0.95rem', minWidth: '20px' }}>{letra})</span>
-                  <span style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.5 }}>
-                    {questao.alternativas?.[letra] || '—'}
-                  </span>
-                </div>
-              ))}
+              {letrasAlternativas.map(letra => {
+                const isCorrect = letra === questao.alternativa_correta;
+                return (
+                  <div 
+                    key={letra} 
+                    style={{ 
+                      display: 'flex', 
+                      gap: '0.85rem', 
+                      padding: '0.85rem 1.1rem', 
+                      background: isCorrect ? '#f0fdf4' : '#f8fafc', 
+                      borderRadius: '10px', 
+                      border: isCorrect ? '1.5px solid #22c55e' : '1px solid #f1f5f9',
+                      alignItems: 'flex-start'
+                    }}
+                  >
+                    <span style={{ fontWeight: 800, color: isCorrect ? '#16a34a' : '#64748b', fontSize: '0.95rem', minWidth: '20px' }}>{letra})</span>
+                    <span style={{ fontSize: '0.95rem', color: isCorrect ? '#15803d' : '#334155', fontWeight: isCorrect ? 600 : 400, lineHeight: 1.5, flex: 1 }}>
+                      {questao.alternativas?.[letra] || '—'}
+                    </span>
+                    {isCorrect && (
+                      <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: '0.75rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '12px', border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>
+                        Correta
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
