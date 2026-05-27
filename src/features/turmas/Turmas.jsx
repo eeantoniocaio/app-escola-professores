@@ -2,6 +2,25 @@ import React from 'react';
 import { Users, Link as LinkIcon, ChevronRight } from 'lucide-react';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 
+const GRADE_COLORS = {
+  '6': '#1CB0F6', // Macaw
+  '7': '#FF4B4B', // Cardinal
+  '8': '#FFC800', // Bee
+  '9': '#FF9600', // Fox
+  '1': '#CE82FF', // Beetle
+  '2': '#2B70C9', // Humpback
+  '3': '#58CC02'  // Feather Green
+};
+
+const getTurmaColor = (nome) => {
+  const match = nome.match(/^(\d+)/);
+  if (match) {
+    const num = match[1];
+    return GRADE_COLORS[num] || 'var(--color-primary)';
+  }
+  return 'var(--color-primary)';
+};
+
 export default function Turmas() {
   const { turmas } = useGlobalData();
 
@@ -22,13 +41,14 @@ export default function Turmas() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
           {turmas.map((turma) => {
             const hasLink = turma.link && turma.link.trim() !== '';
+            const cardColor = getTurmaColor(turma.nome);
             return (
               <div
                 key={turma.id}
                 style={{
                   backgroundColor: 'var(--bg-card)',
                   border: '1px solid var(--border-light)',
-                  borderLeft: '4px solid var(--color-primary)',
+                  borderLeft: `4px solid ${cardColor}`,
                   borderRadius: 'var(--radius-md)',
                   padding: '1.5rem',
                   cursor: hasLink ? 'pointer' : 'default',
@@ -40,7 +60,7 @@ export default function Turmas() {
                   opacity: hasLink ? 1 : 0.75
                 }}
                 onClick={() => hasLink && window.open(turma.link, '_blank', 'noopener')}
-                onMouseOver={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.borderColor = 'var(--color-primary)' } }}
+                onMouseOver={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.borderColor = cardColor } }}
                 onMouseOut={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.borderColor = 'var(--border-light)' } }}
                 title={hasLink ? `Abrir ${turma.nome}` : 'Link não configurado'}
               >
@@ -51,7 +71,7 @@ export default function Turmas() {
                     <span>{hasLink ? 'Clique para abrir' : 'Sem link'}</span>
                   </div>
                 </div>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: cardColor }}>
                   {hasLink ? <ChevronRight size={18} /> : ''}
                 </div>
               </div>
