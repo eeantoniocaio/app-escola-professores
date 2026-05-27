@@ -3,6 +3,28 @@ import { supabase } from '../../shared/services/supabase';
 import { useAuth } from './AuthProvider';
 import { useToast } from './ToastProvider';
 
+const sortTurmasPedagogically = (turmasList) => {
+  const getTurmaRank = (nome) => {
+    const order = ['6', '7', '8', '9', '1', '2', '3'];
+    const match = nome.match(/^(\d+)/);
+    if (match) {
+      const num = match[1];
+      const index = order.indexOf(num);
+      return index !== -1 ? index : 999;
+    }
+    return 999;
+  };
+
+  return [...turmasList].sort((a, b) => {
+    const rankA = getTurmaRank(a.nome);
+    const rankB = getTurmaRank(b.nome);
+    if (rankA !== rankB) {
+      return rankA - rankB;
+    }
+    return a.nome.localeCompare(b.nome);
+  });
+};
+
 const GlobalDataContext = createContext(null);
 
 export function GlobalDataProvider({ children }) {
@@ -39,7 +61,7 @@ export function GlobalDataProvider({ children }) {
       if (profRes.data) setProfessores(profRes.data.map(p => p.nome));
       if (tipEvtRes.data) setTiposEvento(tipEvtRes.data.map(t => t.nome));
       if (tipEviRes.data) setTiposEvidencia(tipEviRes.data.map(t => t.nome));
-      if (turmasRes.data) setTurmas(turmasRes.data);
+      if (turmasRes.data) setTurmas(sortTurmasPedagogically(turmasRes.data));
       if (alunosRes.data) setAlunos(alunosRes.data);
       if (gestRes.data) setGestores(gestRes.data.map(g => g.nome));
     } catch (error) {
@@ -150,7 +172,7 @@ export function GlobalDataProvider({ children }) {
     if (error) {
       showToast('Erro ao adicionar turma', 'error');
     } else if (data) {
-      setTurmas(prev => [...prev, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)));
+      setTurmas(prev => sortTurmasPedagogically([...prev, data[0]]));
       showToast('Turma adicionada com sucesso!');
     }
   };
