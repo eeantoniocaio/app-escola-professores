@@ -21,11 +21,11 @@ const getTurmaColor = (nome) => {
   return 'var(--color-primary)';
 };
 
-const getTurmaTextColor = () => '#1e293b';
+const getTurmaTextColor = () => '#ffffff';
 
-const getTurmaSubtextColor = () => 'rgba(30, 41, 59, 0.8)';
+const getTurmaSubtextColor = () => 'rgba(255, 255, 255, 0.8)';
 
-const getChevronBg = () => 'rgba(30, 41, 59, 0.12)';
+const getChevronBg = () => 'rgba(255, 255, 255, 0.2)';
 
 export default function Turmas() {
   const { turmas } = useGlobalData();
