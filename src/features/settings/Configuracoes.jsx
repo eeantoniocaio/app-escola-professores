@@ -4,11 +4,11 @@ import { Calendar, Tag, Users, Briefcase, School, Link as LinkIcon, X, Trash2, U
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 
 const SECTIONS = [
-  { key: 'tiposEvento',    icon: <Calendar size={32} />, label: 'Tipos de Evento',    color: 'var(--color-warning-bg)', border: 'var(--color-warning)', dark: 'var(--color-warning)' },
-  { key: 'tiposEvidencia', icon: <Tag size={32} />, label: 'Tipos de Evidência', color: 'var(--color-primary-light)', border: 'var(--color-primary)', dark: 'var(--color-primary)' },
-  { key: 'professores',    icon: <Users size={32} />, label: 'Corpo Docente',      color: 'var(--color-success-bg)', border: 'var(--color-success)', dark: 'var(--color-success)' },
-  { key: 'gestores',       icon: <Briefcase size={32} />, label: 'Equipe de Gestão',   color: 'var(--bg-secondary)', border: 'var(--border-light)', dark: 'var(--text-main)' },
-  { key: 'turmas',         icon: <School size={32} />, label: 'Turmas',             color: 'var(--color-danger-bg)', border: 'var(--color-danger)', dark: 'var(--color-danger)' },
+  { key: 'tiposEvento',    icon: <Calendar size={32} />, label: 'Tipos de Evento',    color: '#FFC800' },
+  { key: 'tiposEvidencia', icon: <Tag size={32} />, label: 'Tipos de Evidência', color: '#1CB0F6' },
+  { key: 'professores',    icon: <Users size={32} />, label: 'Corpo Docente',      color: '#58CC02' },
+  { key: 'gestores',       icon: <Briefcase size={32} />, label: 'Equipe de Gestão',   color: '#FF9600' },
+  { key: 'turmas',         icon: <School size={32} />, label: 'Turmas',             color: '#FF4B4B' },
 ]
 
 export default function Configuracoes() {
@@ -377,7 +377,7 @@ export default function Configuracoes() {
               onClick={() => setActiveSection(sec.key)}
               style={{
                 background: sec.color,
-                border: `1px solid ${sec.border}`,
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: 'var(--radius-lg)',
                 padding: '2rem 1.5rem',
                 cursor: 'pointer',
@@ -388,18 +388,27 @@ export default function Configuracoes() {
                 textAlign: 'left',
                 transition: 'var(--transition-smooth)',
                 boxShadow: 'var(--shadow-sm)',
+                color: '#ffffff'
               }}
-              onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.borderColor = sec.dark }}
-              onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.borderColor = sec.border }}
+              onMouseOver={e => { 
+                e.currentTarget.style.transform = 'translateY(-4px)'; 
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)'; 
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'; 
+              }}
+              onMouseOut={e => { 
+                e.currentTarget.style.transform = 'translateY(0)'; 
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; 
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'; 
+              }}
             >
-              <div style={{ color: sec.dark, marginBottom: '0.5rem' }}>{sec.icon}</div>
-              <span style={{ fontWeight: 700, fontSize: '1.1rem', color: sec.dark }}>{sec.label}</span>
+              <div style={{ color: '#ffffff', marginBottom: '0.5rem', display: 'flex' }}>{sec.icon}</div>
+              <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#ffffff' }}>{sec.label}</span>
               <span style={{
                 fontSize: '0.8rem', fontWeight: 600,
-                background: 'rgba(255,255,255,0.8)',
+                background: 'rgba(255, 255, 255, 0.2)',
                 borderRadius: '999px', padding: '0.2rem 0.75rem',
-                color: sec.dark,
-                border: `1px solid ${sec.border}`
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
               }}>
                 {counts[sec.key]} {counts[sec.key] === 1 ? 'item' : 'itens'}
               </span>
