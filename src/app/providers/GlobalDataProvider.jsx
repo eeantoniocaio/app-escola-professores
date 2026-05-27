@@ -54,6 +54,162 @@ export function GlobalDataProvider({ children }) {
     fetchGlobalData();
   }, [fetchGlobalData]);
 
+  const addTipoEvento = async (nome) => {
+    const { data, error } = await supabase.from('tiposEvento').insert([{ nome }]).select();
+    if (error) {
+      showToast('Erro ao adicionar tipo de evento', 'error');
+    } else if (data) {
+      setTiposEvento(prev => [...prev, data[0].nome]);
+      showToast('Tipo de evento adicionado com sucesso!');
+    }
+  };
+
+  const removeTipoEvento = async (nome) => {
+    const { error } = await supabase.from('tiposEvento').delete().eq('nome', nome);
+    if (error) {
+      showToast('Erro ao remover tipo de evento', 'error');
+    } else {
+      setTiposEvento(prev => prev.filter(t => t !== nome));
+      showToast('Tipo de evento removido com sucesso!');
+    }
+  };
+
+  const addTipoEvidencia = async (nome) => {
+    const { data, error } = await supabase.from('tiposEvidencia').insert([{ nome }]).select();
+    if (error) {
+      showToast('Erro ao adicionar tipo de evidência', 'error');
+    } else if (data) {
+      setTiposEvidencia(prev => [...prev, data[0].nome]);
+      showToast('Tipo de evidência adicionado com sucesso!');
+    }
+  };
+
+  const removeTipoEvidencia = async (nome) => {
+    const { error } = await supabase.from('tiposEvidencia').delete().eq('nome', nome);
+    if (error) {
+      showToast('Erro ao remover tipo de evidência', 'error');
+    } else {
+      setTiposEvidencia(prev => prev.filter(t => t !== nome));
+      showToast('Tipo de evidência removido com sucesso!');
+    }
+  };
+
+  const addProfessor = async (nome) => {
+    const { data, error } = await supabase.from('professores').insert([{ nome }]).select();
+    if (error) {
+      showToast('Erro ao adicionar professor', 'error');
+    } else if (data) {
+      setProfessores(prev => [...prev, data[0].nome]);
+      showToast('Professor adicionado com sucesso!');
+    }
+  };
+
+  const removeProfessor = async (nome) => {
+    const { error } = await supabase.from('professores').delete().eq('nome', nome);
+    if (error) {
+      showToast('Erro ao remover professor', 'error');
+    } else {
+      setProfessores(prev => prev.filter(p => p !== nome));
+      showToast('Professor removido com sucesso!');
+    }
+  };
+
+  const importProfessores = async (nomes) => {
+    const payloads = nomes.map(nome => ({ nome }));
+    const { data, error } = await supabase.from('professores').insert(payloads).select();
+    if (error) {
+      showToast('Erro ao importar professores', 'error');
+    } else if (data) {
+      setProfessores(prev => [...prev, ...data.map(p => p.nome)]);
+      showToast('Professores importados com sucesso!');
+    }
+  };
+
+  const addGestor = async (nome) => {
+    const { data, error } = await supabase.from('gestores').insert([{ nome }]).select();
+    if (error) {
+      showToast('Erro ao adicionar gestor', 'error');
+    } else if (data) {
+      setGestores(prev => [...prev, data[0].nome]);
+      showToast('Gestor adicionado com sucesso!');
+    }
+  };
+
+  const removeGestor = async (nome) => {
+    const { error } = await supabase.from('gestores').delete().eq('nome', nome);
+    if (error) {
+      showToast('Erro ao remover gestor', 'error');
+    } else {
+      setGestores(prev => prev.filter(g => g !== nome));
+      showToast('Gestor removido com sucesso!');
+    }
+  };
+
+  const addTurma = async (nome) => {
+    const { data, error } = await supabase.from('turmas').insert([{ nome }]).select();
+    if (error) {
+      showToast('Erro ao adicionar turma', 'error');
+    } else if (data) {
+      setTurmas(prev => [...prev, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)));
+      showToast('Turma adicionada com sucesso!');
+    }
+  };
+
+  const removeTurma = async (nome) => {
+    if (!window.confirm(`Isso removerá a turma ${nome} e todos os alunos associados. Deseja continuar?`)) return;
+    await supabase.from('alunos').delete().eq('turma', nome);
+    const { error } = await supabase.from('turmas').delete().eq('nome', nome);
+    if (error) {
+      showToast('Erro ao remover turma', 'error');
+    } else {
+      setTurmas(prev => prev.filter(t => t.nome !== nome));
+      setAlunos(prev => prev.filter(a => a.turma !== nome));
+      showToast('Turma removida com sucesso!');
+    }
+  };
+
+  const updateTurmaLink = async (id, link) => {
+    const { data, error } = await supabase.from('turmas').update({ link }).eq('id', id).select();
+    if (error) {
+      showToast('Erro ao salvar link da turma', 'error');
+    } else if (data) {
+      setTurmas(prev => prev.map(t => t.id === id ? { ...t, link: data[0].link } : t));
+      showToast('Link da turma salvo com sucesso!');
+    }
+  };
+
+  const importAlunosTurma = async (turmaNome, nomes) => {
+    const payloads = nomes.map(nome => ({ nome, turma: turmaNome }));
+    const { data, error } = await supabase.from('alunos').insert(payloads).select();
+    if (error) {
+      showToast('Erro ao importar alunos', 'error');
+    } else if (data) {
+      setAlunos(prev => [...prev, ...data]);
+      showToast('Alunos importados com sucesso!');
+    }
+  };
+
+  const clearAlunosTurma = async (turmaNome) => {
+    if (!window.confirm(`Deseja realmente limpar a lista de alunos da turma ${turmaNome}?`)) return;
+    const { error } = await supabase.from('alunos').delete().eq('turma', turmaNome);
+    if (error) {
+      showToast('Erro ao limpar lista de alunos', 'error');
+    } else {
+      setAlunos(prev => prev.filter(a => a.turma !== turmaNome));
+      showToast('Lista de alunos limpa com sucesso!');
+    }
+  };
+
+  const removeAlunosPorNome = async (turmaNome, nomes) => {
+    const { error } = await supabase.from('alunos').delete().eq('turma', turmaNome).in('nome', nomes);
+    if (error) {
+      showToast('Erro ao remover alunos', 'error');
+    } else {
+      setAlunos(prev => prev.filter(a => !(a.turma === turmaNome && nomes.includes(a.nome))));
+      showToast('Alunos removidos com sucesso!');
+    }
+  };
+
   const value = {
     professores, setProfessores,
     gestores, setGestores,
@@ -62,7 +218,13 @@ export function GlobalDataProvider({ children }) {
     tiposEvento, setTiposEvento,
     tiposEvidencia, setTiposEvidencia,
     loadingData,
-    refreshGlobalData: fetchGlobalData
+    refreshGlobalData: fetchGlobalData,
+    addTipoEvento, removeTipoEvento,
+    addTipoEvidencia, removeTipoEvidencia,
+    addProfessor, removeProfessor, importProfessores,
+    addGestor, removeGestor,
+    addTurma, removeTurma, updateTurmaLink,
+    importAlunosTurma, clearAlunosTurma, removeAlunosPorNome
   };
 
   return (
