@@ -409,6 +409,16 @@ export default function HistoricoOcorrencias() {
               <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
                 <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>{selectedOcorrencia.professor} - {selectedOcorrencia.turma}</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Calendar size={12} /> {new Date(selectedOcorrencia.data + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+                {selectedOcorrencia.alunos && selectedOcorrencia.alunos.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.75rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>Alunos:</span>
+                    {selectedOcorrencia.alunos.map(nome => (
+                      <span key={nome} style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)', borderRadius: '999px', padding: '0.15rem 0.6rem', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <User size={12} /> {nome}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}><strong>Descrição:</strong> {selectedOcorrencia.descricao}</div>
                 <div style={{ fontSize: '0.9rem', color: 'var(--color-success)' }}><strong>Ação do Prof:</strong> {selectedOcorrencia.acao_professor}</div>
               </div>
