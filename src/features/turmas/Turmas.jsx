@@ -21,6 +21,33 @@ const getTurmaColor = (nome) => {
   return 'var(--color-primary)';
 };
 
+const getTurmaTextColor = (nome) => {
+  const match = nome.match(/^(\d+)/);
+  if (match) {
+    const num = match[1];
+    return num === '8' ? '#1e293b' : '#ffffff';
+  }
+  return '#ffffff';
+};
+
+const getTurmaSubtextColor = (nome) => {
+  const match = nome.match(/^(\d+)/);
+  if (match) {
+    const num = match[1];
+    return num === '8' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+  }
+  return 'rgba(255, 255, 255, 0.8)';
+};
+
+const getChevronBg = (nome) => {
+  const match = nome.match(/^(\d+)/);
+  if (match) {
+    const num = match[1];
+    return num === '8' ? 'rgba(30, 41, 59, 0.1)' : 'rgba(255, 255, 255, 0.2)';
+  }
+  return 'rgba(255, 255, 255, 0.2)';
+};
+
 export default function Turmas() {
   const { turmas } = useGlobalData();
 
@@ -42,13 +69,16 @@ export default function Turmas() {
           {turmas.map((turma) => {
             const hasLink = turma.link && turma.link.trim() !== '';
             const cardColor = getTurmaColor(turma.nome);
+            const textColor = getTurmaTextColor(turma.nome);
+            const subtextColor = getTurmaSubtextColor(turma.nome);
+            const chevronBg = getChevronBg(turma.nome);
+            
             return (
               <div
                 key={turma.id}
                 style={{
-                  backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border-light)',
-                  borderLeft: `4px solid ${cardColor}`,
+                  backgroundColor: cardColor,
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: 'var(--radius-md)',
                   padding: '1.5rem',
                   cursor: hasLink ? 'pointer' : 'default',
@@ -57,21 +87,21 @@ export default function Turmas() {
                   alignItems: 'center',
                   transition: 'var(--transition-smooth)',
                   boxShadow: 'var(--shadow-sm)',
-                  opacity: hasLink ? 1 : 0.75
+                  opacity: hasLink ? 1 : 0.65
                 }}
                 onClick={() => hasLink && window.open(turma.link, '_blank', 'noopener')}
-                onMouseOver={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.borderColor = cardColor } }}
-                onMouseOut={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.borderColor = 'var(--border-light)' } }}
+                onMouseOver={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.15)' } }}
+                onMouseOut={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' } }}
                 title={hasLink ? `Abrir ${turma.nome}` : 'Link não configurado'}
               >
                 <div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-main)' }}>{turma.nome}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: textColor }}>{turma.nome}</div>
+                  <div style={{ fontSize: '0.85rem', color: subtextColor, marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     {hasLink ? <LinkIcon size={14} /> : <Users size={14} />}
                     <span>{hasLink ? 'Clique para abrir' : 'Sem link'}</span>
                   </div>
                 </div>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: cardColor }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: chevronBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: textColor }}>
                   {hasLink ? <ChevronRight size={18} /> : ''}
                 </div>
               </div>
