@@ -21,32 +21,11 @@ const getTurmaColor = (nome) => {
   return 'var(--color-primary)';
 };
 
-const getTurmaTextColor = (nome) => {
-  const match = nome.match(/^(\d+)/);
-  if (match) {
-    const num = match[1];
-    return num === '8' ? '#1e293b' : '#ffffff';
-  }
-  return '#ffffff';
-};
+const getTurmaTextColor = () => '#1e293b';
 
-const getTurmaSubtextColor = (nome) => {
-  const match = nome.match(/^(\d+)/);
-  if (match) {
-    const num = match[1];
-    return num === '8' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)';
-  }
-  return 'rgba(255, 255, 255, 0.8)';
-};
+const getTurmaSubtextColor = () => 'rgba(30, 41, 59, 0.8)';
 
-const getChevronBg = (nome) => {
-  const match = nome.match(/^(\d+)/);
-  if (match) {
-    const num = match[1];
-    return num === '8' ? 'rgba(30, 41, 59, 0.1)' : 'rgba(255, 255, 255, 0.2)';
-  }
-  return 'rgba(255, 255, 255, 0.2)';
-};
+const getChevronBg = () => 'rgba(30, 41, 59, 0.12)';
 
 export default function Turmas() {
   const { turmas } = useGlobalData();
