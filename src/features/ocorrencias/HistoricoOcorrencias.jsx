@@ -329,6 +329,11 @@ export default function HistoricoOcorrencias() {
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                         <Calendar size={14} /> {new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR')}
                       </span>
+                      {o.aula && (
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Clock size={14} /> {o.aula}
+                        </span>
+                      )}
                       <span style={{ fontSize: '0.85rem', color: statusStyles.text, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', background: statusStyles.bg, padding: '0.15rem 0.6rem', borderRadius: '999px' }}>
                         {statusStyles.icon} {o.status || 'Em aberto'}
                       </span>
@@ -408,7 +413,14 @@ export default function HistoricoOcorrencias() {
             <div className="modal-body" style={{ overflowY: 'auto', padding: '1.5rem 2rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
                 <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>{selectedOcorrencia.professor} - {selectedOcorrencia.turma}</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Calendar size={12} /> {new Date(selectedOcorrencia.data + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Calendar size={12} /> {new Date(selectedOcorrencia.data + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                  {selectedOcorrencia.aula && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <Clock size={12} /> {selectedOcorrencia.aula}
+                    </span>
+                  )}
+                </div>
                 {selectedOcorrencia.alunos && selectedOcorrencia.alunos.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.75rem', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>Alunos:</span>

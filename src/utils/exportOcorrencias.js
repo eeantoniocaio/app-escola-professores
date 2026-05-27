@@ -5,13 +5,14 @@ import * as pdfFonts from "pdfmake/build/vfs_fonts";
 pdfMake.vfs = pdfFonts?.pdfMake?.vfs || pdfFonts?.vfs || pdfFonts;
 
 export const exportOcorrenciasCSV = (filteredRows) => {
-  const headers = ['Professor(a)', 'Disciplina', 'Turma', 'Data', 'Alunos Envolvidos', 'Descrição', 'Ação do Professor', 'Intervenção da Gestão'];
+  const headers = ['Professor(a)', 'Disciplina', 'Turma', 'Data', 'Aula', 'Alunos Envolvidos', 'Descrição', 'Ação do Professor', 'Intervenção da Gestão'];
   
   const rows = filteredRows.map(row => [
     `"${row.professor}"`,
-    `"${row.disciplina || '-'}"`,
+    `` + `"${row.disciplina || '-'}"`,
     `"${row.turma || '-'}"`,
     `"${row.data ? new Date(row.data + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}"`,
+    `"${row.aula || '-'}"`,
     `"${row.alunos && row.alunos.length > 0 ? row.alunos.join(', ') : '-'}"`,
     `"${row.descricao ? row.descricao.replace(/"/g, '""') : '-'}"`,
     `"${row.acao_professor ? row.acao_professor.replace(/"/g, '""') : '-'}"`,
@@ -62,7 +63,8 @@ export const exportOcorrenciasPDF = (filteredRows, filters) => {
         stack: [
           { text: row.professor, bold: true },
           { text: `${row.disciplina || '-'}`, fontSize: 8, color: '#7f8c8d', margin: [0, 2, 0, 0] },
-          row.turma ? { text: `Turma: ${row.turma}`, fontSize: 8, color: '#7f8c8d' } : {}
+          row.turma ? { text: `Turma: ${row.turma}`, fontSize: 8, color: '#7f8c8d' } : {},
+          row.aula ? { text: `Aula: ${row.aula}`, fontSize: 8, color: '#7f8c8d' } : {}
         ],
         style: 'cell', 
         fillColor: bgColor 

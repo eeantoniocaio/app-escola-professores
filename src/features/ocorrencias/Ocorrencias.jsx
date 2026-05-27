@@ -4,7 +4,7 @@ import { useOcorrencias } from './hooks/useOcorrencias'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 import { useAuth } from '../../app/providers/AuthProvider'
 
-const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', descricao: '', alunos: [], acao_professor: '' }
+const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', aula: '', descricao: '', alunos: [], acao_professor: '' }
 
 export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }) {
   const { addOcorrencia, updateOcorrencia } = useOcorrencias();
@@ -26,6 +26,7 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
           disciplina: ocorrenciaToEdit.disciplina || '',
           data: ocorrenciaToEdit.data || '',
           turma: ocorrenciaToEdit.turma || '',
+          aula: ocorrenciaToEdit.aula || '',
           descricao: ocorrenciaToEdit.descricao || '',
           alunos: ocorrenciaToEdit.alunos || [],
           acao_professor: ocorrenciaToEdit.acao_professor || ''
@@ -69,6 +70,7 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
       if (!form.disciplina.trim()) e.disciplina = 'Campo obrigatório'
       if (!form.data) e.data = 'Campo obrigatório'
       if (!form.turma) e.turma = 'Campo obrigatório'
+      if (!form.aula) e.aula = 'Campo obrigatório'
     } else if (step === 3) {
       if (!form.descricao.trim()) e.descricao = 'Campo obrigatório'
       if (!form.acao_professor.trim()) e.acao_professor = 'Campo obrigatório'
@@ -102,6 +104,7 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
       disciplina: form.disciplina.trim(),
       data: form.data,
       turma: form.turma || null,
+      aula: form.aula || null,
       descricao: form.descricao.trim() || null,
       alunos: form.alunos.length > 0 ? form.alunos : [],
       acao_professor: form.acao_professor.trim() || null,
@@ -239,7 +242,7 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem' }}>
                 <div>
                   <label style={labelStyle}>Data da Ocorrência <span style={{ color: 'var(--color-danger)' }}>*</span></label>
                   <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} style={inputStyle('data')} />
@@ -252,6 +255,21 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
                     {turmas && turmas.map(t => <option key={t.id} value={t.nome}>{t.nome}</option>)}
                   </select>
                   {errors.turma && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.turma}</span>}
+                </div>
+                <div>
+                  <label style={labelStyle}>Aula <span style={{ color: 'var(--color-danger)' }}>*</span></label>
+                  <select value={form.aula} onChange={e => setForm({...form, aula: e.target.value})} style={inputStyle('aula')}>
+                    <option value="">Selecione...</option>
+                    <option value="1ª">1ª</option>
+                    <option value="2ª">2ª</option>
+                    <option value="3ª">3ª</option>
+                    <option value="4ª">4ª</option>
+                    <option value="5ª">5ª</option>
+                    <option value="6ª">6ª</option>
+                    <option value="troca de aulas">troca de aulas</option>
+                    <option value="recreio">recreio</option>
+                  </select>
+                  {errors.aula && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.aula}</span>}
                 </div>
               </div>
             </div>
