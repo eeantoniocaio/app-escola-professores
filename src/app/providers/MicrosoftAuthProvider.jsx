@@ -14,36 +14,42 @@ const msalConfig = {
   }
 };
 
-let pca = null;
-if (msalConfig.auth.clientId) {
-  try {
-    pca = new PublicClientApplication(msalConfig);
-  } catch (error) {
-    console.error('Failed to initialize MSAL:', error);
-  }
-}
-
 const MicrosoftAuthContext = createContext(null);
 
 export function MicrosoftAuthProvider({ children }) {
-  const [msalInstance, setMsalInstance] = useState(pca);
+  const [msalInstance, setMsalInstance] = useState(null);
+  const [initialized, setInitialized] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
   const [msAccount, setMsAccount] = useState(null);
 
   useEffect(() => {
-    if (!msalInstance && import.meta.env.VITE_MICROSOFT_CLIENT_ID) {
+    const clientId = import.meta.env.VITE_MICROSOFT_CLIENT_ID;
+    if (clientId) {
       try {
-        const newPca = new PublicClientApplication(msalConfig);
-        setMsalInstance(newPca);
+        const pca = new PublicClientApplication(msalConfig);
+        pca.initialize()
+          .then(() => {
+            setMsalInstance(pca);
+            setInitialized(true);
+            
+            // Verificar se já existe uma conta ativa logada
+            const accounts = pca.getAllAccounts();
+            if (accounts.length > 0) {
+              setMsAccount(accounts[0]);
+            }
+          })
+          .catch(err => {
+            console.error('Erro ao inicializar o MSAL:', err);
+          });
       } catch (err) {
-        console.error('Lazy MSAL init failed:', err);
+        console.error('Falha ao instanciar o PublicClientApplication:', err);
       }
     }
-  }, [msalInstance]);
+  }, []);
 
   const loginMicrosoft = async () => {
-    if (!msalInstance) {
-      alert('Por favor, configure o VITE_MICROSOFT_CLIENT_ID no arquivo .env para ativar a integração com o OneDrive.');
+    if (!msalInstance || !initialized) {
+      alert('A integração com o OneDrive não está inicializada ou configurada. Verifique o VITE_MICROSOFT_CLIENT_ID no arquivo .env.');
       return null;
     }
 
@@ -62,7 +68,7 @@ export function MicrosoftAuthProvider({ children }) {
   };
 
   const getMicrosoftToken = async () => {
-    if (!msalInstance) return null;
+    if (!msalInstance || !initialized) return null;
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length === 0) return null;
 
@@ -82,7 +88,7 @@ export function MicrosoftAuthProvider({ children }) {
   };
 
   const logoutMicrosoft = async () => {
-    if (!msalInstance) return;
+    if (!msalInstance || !initialized) return;
     try {
       await msalInstance.logoutPopup();
       setMsAccount(null);
@@ -98,12 +104,13 @@ export function MicrosoftAuthProvider({ children }) {
     logoutMicrosoft,
     accessToken,
     msAccount,
-    isConfigured: !!msalInstance
+    isConfigured: !!import.meta.env.VITE_MICROSOFT_CLIENT_ID,
+    initialized
   };
 
   return (
     <MicrosoftAuthContext.Provider value={value}>
-      {msalInstance ? (
+      {msalInstance && initialized ? (
         <MsalProvider instance={msalInstance}>
           {children}
         </MsalProvider>
