@@ -1,15 +1,14 @@
 import React from 'react';
 import { X, RefreshCw, AlertTriangle, Camera, User, BadgeAlert } from 'lucide-react';
 import useCarometro from '../../hooks/useCarometro';
-import { normalizeStudentName } from '../../services/photoService';
+import { findPhotoInMap } from '../../services/photoService';
 
 export default function CarometroModal({ aluno, isOpen, onClose }) {
   const { photosMap, loading, error, handleRefresh, needsAuth, loginMicrosoft } = useCarometro(aluno?.turma);
 
   if (!isOpen || !aluno) return null;
 
-  const normalizedName = normalizeStudentName(aluno.nome);
-  const photoUrl = photosMap[normalizedName];
+  const photoUrl = findPhotoInMap(aluno.nome, photosMap);
 
   // Iniciais do Aluno
   const getInitials = (name) => {

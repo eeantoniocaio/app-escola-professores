@@ -33,7 +33,8 @@ export default function useCarometro(activeClassName) {
       let driveId = localStorage.getItem('carometro_root_drive_id') || 'me';
 
       if (!carometroFolderId || forceRefresh) {
-        const rootFolder = await findCarometroFolder(accessToken);
+        const preferredDriveId = localStorage.getItem('selected_frequencia_drive_id') || 'me';
+        const rootFolder = await findCarometroFolder(accessToken, preferredDriveId);
         if (rootFolder) {
           carometroFolderId = rootFolder.id;
           driveId = rootFolder.driveId;
@@ -76,8 +77,12 @@ export default function useCarometro(activeClassName) {
       }
 
       // Buscar do Graph API
+      const baseUrl = driveId === 'me' 
+        ? 'https://graph.microsoft.com/v1.0/me/drive' 
+        : `https://graph.microsoft.com/v1.0/drives/${driveId}`;
+
       const response = await fetch(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${classFolderId}/children?$select=name,id,@microsoft.graph.downloadUrl`,
+        `${baseUrl}/items/${classFolderId}/children?$select=name,id,@microsoft.graph.downloadUrl`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }

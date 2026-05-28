@@ -9,7 +9,7 @@ import usePrefetchFrequencia from '../../hooks/usePrefetchFrequencia';
 import useCarometro from '../../hooks/useCarometro';
 import CarometroGrid from './CarometroGrid';
 import CarometroModal from './CarometroModal';
-import { normalizeStudentName } from '../../services/photoService';
+import { findPhotoInMap } from '../../services/photoService';
 
 const GRADE_COLORS = {
   '6': '#1CB0F6', // Macaw
@@ -223,7 +223,7 @@ export default function Turmas() {
         onMouseOver={e => { e.currentTarget.style.background = '#EDE9FE'; e.currentTarget.style.borderColor = '#7C3AED'; e.currentTarget.style.color = '#7C3AED'; }}
         onMouseOut={e => { e.currentTarget.style.background = '#F5F3FF'; e.currentTarget.style.borderColor = '#8B5CF6'; e.currentTarget.style.color = '#8B5CF6'; }}
       >
-        {photosMap[normalizeStudentName(aluno.nome)] ? <Camera size={16} /> : <Users size={16} />}
+        {findPhotoInMap(aluno.nome, photosMap) ? <Camera size={16} /> : <Users size={16} />}
       </button>
     </div>
   );
@@ -455,65 +455,68 @@ export default function Turmas() {
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {classStudents.map((aluno, index) => (
-                      <div 
-                        key={aluno.id}
-                        style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between', 
-                          padding: '0.75rem 1.25rem', 
-                          background: '#ffffff', 
-                          borderRadius: 'var(--radius-md)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          boxShadow: 'var(--shadow-sm)',
-                          transition: 'var(--transition-smooth)'
-                        }}
-                        onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-                        onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <span style={{ fontWeight: 700, color: getTurmaColor(activeClass.nome), fontSize: '0.85rem', minWidth: '24px' }}>
-                            {String(index + 1).padStart(2, '0')}
-                          </span>
-                          
-                          {/* Mini Avatar do Aluno do OneDrive (ou ícone padrão) */}
-                          <div 
-                            onClick={() => {
-                              setSelectedStudentForCarometro(aluno);
-                              setIsCarometroModalOpen(true);
-                            }}
-                            title="Ver crachá/foto"
-                            style={{ 
-                              width: '30px', 
-                              height: '30px', 
-                              borderRadius: '50%', 
-                              overflow: 'hidden', 
-                              background: 'var(--bg-secondary)',
-                              border: '1px solid var(--border-light)',
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              flexShrink: 0
-                            }}
-                          >
-                            {photosMap[normalizeStudentName(aluno.nome)] ? (
-                              <img 
-                                src={photosMap[normalizeStudentName(aluno.nome)]} 
-                                alt="" 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                              />
-                            ) : (
-                              <User size={14} color="var(--text-light)" />
-                            )}
-                          </div>
+                    {classStudents.map((aluno, index) => {
+                      const photoUrl = findPhotoInMap(aluno.nome, photosMap);
+                      return (
+                        <div 
+                          key={aluno.id}
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between', 
+                            padding: '0.75rem 1.25rem', 
+                            background: '#ffffff', 
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            boxShadow: 'var(--shadow-sm)',
+                            transition: 'var(--transition-smooth)'
+                          }}
+                          onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+                          onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontWeight: 700, color: getTurmaColor(activeClass.nome), fontSize: '0.85rem', minWidth: '24px' }}>
+                              {String(index + 1).padStart(2, '0')}
+                            </span>
+                            
+                            {/* Mini Avatar do Aluno do OneDrive (ou ícone padrão) */}
+                            <div 
+                              onClick={() => {
+                                setSelectedStudentForCarometro(aluno);
+                                setIsCarometroModalOpen(true);
+                              }}
+                              title="Ver crachá/foto"
+                              style={{ 
+                                width: '30px', 
+                                height: '30px', 
+                                borderRadius: '50%', 
+                                overflow: 'hidden', 
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-light)',
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                flexShrink: 0
+                              }}
+                            >
+                              {photoUrl ? (
+                                <img 
+                                  src={photoUrl} 
+                                  alt="" 
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                />
+                              ) : (
+                                <User size={14} color="var(--text-light)" />
+                              )}
+                            </div>
 
-                          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{aluno.nome}</span>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{aluno.nome}</span>
+                          </div>
+                           {renderStudentActions(aluno)}
                         </div>
-                         {renderStudentActions(aluno)}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )
               ) : (

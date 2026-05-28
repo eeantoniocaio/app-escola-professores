@@ -1,6 +1,6 @@
 import React from 'react';
 import { Camera, RefreshCw, AlertTriangle, User } from 'lucide-react';
-import { normalizeStudentName } from '../../services/photoService';
+import { findPhotoInMap } from '../../services/photoService';
 
 export default function CarometroGrid({ students, photosMap, loading, error, onRefresh, needsAuth, onLogin }) {
   
@@ -176,8 +176,7 @@ export default function CarometroGrid({ students, photosMap, loading, error, onR
           gap: '1.25rem' 
         }}>
           {students.map((aluno, index) => {
-            const normalizedName = normalizeStudentName(aluno.nome);
-            const photoUrl = photosMap[normalizedName];
+            const photoUrl = findPhotoInMap(aluno.nome, photosMap);
 
             return (
               <div 
