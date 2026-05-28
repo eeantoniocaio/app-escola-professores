@@ -4,6 +4,25 @@ import { Users, Search, GraduationCap, Link as LinkIcon, School, ChevronRight, X
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 
+const GRADE_COLORS = {
+  '6': '#1CB0F6', // Macaw
+  '7': '#FF4B4B', // Cardinal
+  '8': '#FFC800', // Bee
+  '9': '#FF9600', // Fox
+  '1': '#CE82FF', // Beetle
+  '2': '#2B70C9', // Humpback
+  '3': '#58CC02'  // Feather Green
+};
+
+const getTurmaColor = (nome) => {
+  const match = nome.match(/^(\d+)/);
+  if (match) {
+    const num = match[1];
+    return GRADE_COLORS[num] || 'var(--color-primary)';
+  }
+  return 'var(--color-primary)';
+};
+
 export default function Turmas() {
   const navigate = useNavigate();
   const { turmas, alunos, loadingData } = useGlobalData();
@@ -108,7 +127,7 @@ export default function Turmas() {
     }
   };
 
-  const renderStudentActions = () => (
+  const renderStudentActions = (customColor) => (
     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
       <button 
         onClick={() => showToast('Em desenvolvimento.', 'info')}
@@ -126,7 +145,7 @@ export default function Turmas() {
           cursor: 'pointer',
           transition: 'var(--transition-smooth)'
         }}
-        onMouseOver={e => { e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+        onMouseOver={e => { e.currentTarget.style.color = customColor || 'var(--color-primary)'; e.currentTarget.style.borderColor = customColor || 'var(--color-primary)'; }}
         onMouseOut={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-light)'; }}
       >
         <Calendar size={16} />
@@ -147,7 +166,7 @@ export default function Turmas() {
           cursor: 'pointer',
           transition: 'var(--transition-smooth)'
         }}
-        onMouseOver={e => { e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+        onMouseOver={e => { e.currentTarget.style.color = customColor || 'var(--color-primary)'; e.currentTarget.style.borderColor = customColor || 'var(--color-primary)'; }}
         onMouseOut={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-light)'; }}
       >
         <Clipboard size={16} />
@@ -168,7 +187,7 @@ export default function Turmas() {
           cursor: 'pointer',
           transition: 'var(--transition-smooth)'
         }}
-        onMouseOver={e => { e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+        onMouseOver={e => { e.currentTarget.style.color = customColor || 'var(--color-primary)'; e.currentTarget.style.borderColor = customColor || 'var(--color-primary)'; }}
         onMouseOut={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-light)'; }}
       >
         <Users size={16} />
@@ -302,8 +321,8 @@ export default function Turmas() {
           {/* Listagem de Alunos */}
           {activeClass ? (
             <div style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-light)',
+              background: getTurmaColor(activeClass.nome),
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: 'var(--radius-lg)',
               padding: '2rem',
               boxShadow: 'var(--shadow-sm)',
@@ -314,24 +333,35 @@ export default function Turmas() {
                 justifyContent: 'space-between', 
                 alignItems: 'center', 
                 marginBottom: '1.5rem', 
-                borderBottom: '1px solid var(--border-light)', 
+                borderBottom: '1px solid rgba(255, 255, 255, 0.2)', 
                 paddingBottom: '1rem', 
                 flexWrap: 'wrap', 
                 gap: '1rem' 
               }}>
                 <div>
-                  <h3 style={{ fontSize: '1.35rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <School size={20} color="var(--color-primary)" /> Alunos Matriculados — {activeClass.nome}
+                  <h3 style={{ fontSize: '1.35rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ffffff' }}>
+                    <School size={20} color="#ffffff" /> Alunos Matriculados — {activeClass.nome}
                   </h3>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, marginTop: '0.15rem' }}>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.9rem', margin: 0, marginTop: '0.15rem' }}>
                     {classStudents.length} aluno(s) cadastrado(s)
                   </p>
                 </div>
                 {activeClass.link && (
                   <button 
                     onClick={() => window.open(activeClass.link, '_blank', 'noopener')}
-                    className="btn btn-secondary"
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
+                    className="btn"
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem', 
+                      margin: 0,
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      color: '#ffffff',
+                      boxShadow: 'none'
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'; }}
+                    onMouseOut={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; }}
                   >
                     <LinkIcon size={16} /> Abrir Mapa de Classe
                   </button>
@@ -339,7 +369,7 @@ export default function Turmas() {
               </div>
 
               {classStudents.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
                   Nenhum aluno cadastrado nesta turma.
                 </div>
               ) : (
@@ -352,19 +382,22 @@ export default function Turmas() {
                         alignItems: 'center', 
                         justifyContent: 'space-between', 
                         padding: '0.75rem 1.25rem', 
-                        background: 'var(--bg-secondary)', 
+                        background: '#ffffff', 
                         borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--border-light)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: 'var(--shadow-sm)',
                         transition: 'var(--transition-smooth)'
                       }}
+                      onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+                      onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '0.85rem', minWidth: '24px' }}>
+                        <span style={{ fontWeight: 700, color: getTurmaColor(activeClass.nome), fontSize: '0.85rem', minWidth: '24px' }}>
                           {String(index + 1).padStart(2, '0')}
                         </span>
                         <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{aluno.nome}</span>
                       </div>
-                      {renderStudentActions()}
+                      {renderStudentActions(getTurmaColor(activeClass.nome))}
                     </div>
                   ))}
                 </div>
@@ -496,7 +529,7 @@ export default function Turmas() {
                         <School size={12} /> {aluno.turma}
                       </span>
                     </div>
-                    {renderStudentActions()}
+                    {renderStudentActions(getTurmaColor(aluno.turma))}
                   </div>
                 ))}
               </div>
