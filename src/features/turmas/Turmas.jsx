@@ -1,11 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, GraduationCap, Link as LinkIcon, School, ChevronRight, X, Calendar, Clipboard, ArrowLeft } from 'lucide-react';
+import { Users, Search, GraduationCap, Link as LinkIcon, School, ChevronRight, X, Calendar, Clipboard, ArrowLeft, Camera, User } from 'lucide-react';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import Frequencia from './Frequencia';
 import { useMicrosoftAuth } from '../../app/providers/MicrosoftAuthProvider';
 import usePrefetchFrequencia from '../../hooks/usePrefetchFrequencia';
+import useCarometro from '../../hooks/useCarometro';
+import CarometroGrid from './CarometroGrid';
+import CarometroModal from './CarometroModal';
+import { normalizeStudentName } from '../../services/photoService';
 
 const GRADE_COLORS = {
   '6': '#1CB0F6', // Macaw
@@ -38,6 +42,10 @@ export default function Turmas() {
 
   const [isFrequenciaOpen, setIsFrequenciaOpen] = useState(false);
   const [selectedStudentForFreq, setSelectedStudentForFreq] = useState(null);
+
+  const [classViewMode, setClassViewMode] = useState('list'); // 'list' | 'carometro'
+  const [isCarometroModalOpen, setIsCarometroModalOpen] = useState(false);
+  const [selectedStudentForCarometro, setSelectedStudentForCarometro] = useState(null);
 
   // Lógica de Parsing das Turmas: extrair Série e Sigla da Turma (Ex: "6º A" -> Série: "6º", Sigla: "A")
   const parsedTurmas = useMemo(() => {
@@ -107,6 +115,14 @@ export default function Turmas() {
 
   // Pré-carregamento dos dados de frequência do OneDrive em segundo plano
   usePrefetchFrequencia(activeClass?.nome);
+
+  // Carregar/mapear fotos da turma em segundo plano para o carômetro
+  const { 
+    photosMap, 
+    loading: loadingPhotos, 
+    error: errorPhotos, 
+    handleRefresh: refreshPhotos 
+  } = useCarometro(activeClass?.nome);
 
   // Alunos pertencentes à turma selecionada
   const classStudents = useMemo(() => {
@@ -184,7 +200,10 @@ export default function Turmas() {
         <Clipboard size={16} />
       </button>
       <button 
-        onClick={() => showToast('Em desenvolvimento.', 'info')}
+        onClick={() => {
+          setSelectedStudentForCarometro(aluno);
+          setIsCarometroModalOpen(true);
+        }}
         title="Carômetro"
         style={{
           display: 'flex',
@@ -202,7 +221,7 @@ export default function Turmas() {
         onMouseOver={e => { e.currentTarget.style.background = '#EDE9FE'; e.currentTarget.style.borderColor = '#7C3AED'; e.currentTarget.style.color = '#7C3AED'; }}
         onMouseOut={e => { e.currentTarget.style.background = '#F5F3FF'; e.currentTarget.style.borderColor = '#8B5CF6'; e.currentTarget.style.color = '#8B5CF6'; }}
       >
-        <Users size={16} />
+        {photosMap[normalizeStudentName(aluno.nome)] ? <Camera size={16} /> : <Users size={16} />}
       </button>
     </div>
   );
@@ -358,60 +377,152 @@ export default function Turmas() {
                     {classStudents.length} aluno(s) cadastrado(s)
                   </p>
                 </div>
-                {activeClass.link && (
-                  <button 
-                    onClick={() => window.open(activeClass.link, '_blank', 'noopener')}
-                    className="btn"
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem', 
-                      margin: 0,
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      color: '#ffffff',
-                      boxShadow: 'none'
-                    }}
-                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'; }}
-                    onMouseOut={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; }}
-                  >
-                    <LinkIcon size={16} /> Abrir Mapa de Classe
-                  </button>
-                )}
-              </div>
-
-              {classStudents.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
-                  Nenhum aluno cadastrado nesta turma.
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {classStudents.map((aluno, index) => (
-                    <div 
-                      key={aluno.id}
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {activeClass.link && (
+                    <button 
+                      onClick={() => window.open(activeClass.link, '_blank', 'noopener')}
+                      className="btn"
                       style={{ 
                         display: 'flex', 
                         alignItems: 'center', 
-                        justifyContent: 'space-between', 
-                        padding: '0.75rem 1.25rem', 
-                        background: '#ffffff', 
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'var(--transition-smooth)'
+                        gap: '0.5rem', 
+                        margin: 0,
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        color: '#ffffff',
+                        boxShadow: 'none'
                       }}
-                      onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-                      onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                      onMouseOver={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'; }}
+                      onMouseOut={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{ fontWeight: 700, color: getTurmaColor(activeClass.nome), fontSize: '0.85rem', minWidth: '24px' }}>
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
-                        <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{aluno.nome}</span>
+                      <LinkIcon size={16} /> Abrir Mapa de Classe
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Segmented Control de Abas Internas da Turma */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '0.35rem', 
+                background: 'rgba(0, 0, 0, 0.12)', 
+                padding: '0.25rem', 
+                borderRadius: 'var(--radius-md)', 
+                width: 'fit-content', 
+                marginBottom: '1.5rem',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
+                <button 
+                  onClick={() => setClassViewMode('list')}
+                  style={{
+                    padding: '0.45rem 1rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    background: classViewMode === 'list' ? '#ffffff' : 'transparent',
+                    color: classViewMode === 'list' ? getTurmaColor(activeClass.nome) : '#ffffff',
+                    transition: 'var(--transition-smooth)'
+                  }}
+                >
+                  Lista de Alunos
+                </button>
+                <button 
+                  onClick={() => setClassViewMode('carometro')}
+                  style={{
+                    padding: '0.45rem 1rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    background: classViewMode === 'carometro' ? '#ffffff' : 'transparent',
+                    color: classViewMode === 'carometro' ? getTurmaColor(activeClass.nome) : '#ffffff',
+                    transition: 'var(--transition-smooth)'
+                  }}
+                >
+                  Carômetro (Fotos)
+                </button>
+              </div>
+
+              {classViewMode === 'list' ? (
+                classStudents.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+                    Nenhum aluno cadastrado nesta turma.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {classStudents.map((aluno, index) => (
+                      <div 
+                        key={aluno.id}
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between', 
+                          padding: '0.75rem 1.25rem', 
+                          background: '#ffffff', 
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          boxShadow: 'var(--shadow-sm)',
+                          transition: 'var(--transition-smooth)'
+                        }}
+                        onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+                        onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ fontWeight: 700, color: getTurmaColor(activeClass.nome), fontSize: '0.85rem', minWidth: '24px' }}>
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          
+                          {/* Mini Avatar do Aluno do OneDrive (ou ícone padrão) */}
+                          <div 
+                            onClick={() => {
+                              setSelectedStudentForCarometro(aluno);
+                              setIsCarometroModalOpen(true);
+                            }}
+                            title="Ver crachá/foto"
+                            style={{ 
+                              width: '30px', 
+                              height: '30px', 
+                              borderRadius: '50%', 
+                              overflow: 'hidden', 
+                              background: 'var(--bg-secondary)',
+                              border: '1px solid var(--border-light)',
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              flexShrink: 0
+                            }}
+                          >
+                            {photosMap[normalizeStudentName(aluno.nome)] ? (
+                              <img 
+                                src={photosMap[normalizeStudentName(aluno.nome)]} 
+                                alt="" 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              />
+                            ) : (
+                              <User size={14} color="var(--text-light)" />
+                            )}
+                          </div>
+
+                          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{aluno.nome}</span>
+                        </div>
+                         {renderStudentActions(aluno)}
                       </div>
-                       {renderStudentActions(aluno)}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )
+              ) : (
+                <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <CarometroGrid 
+                    students={classStudents}
+                    photosMap={photosMap}
+                    loading={loadingPhotos}
+                    error={errorPhotos}
+                    onRefresh={refreshPhotos}
+                  />
                 </div>
               )}
             </div>
@@ -559,6 +670,18 @@ export default function Turmas() {
             setIsFrequenciaOpen(false); 
             setSelectedStudentForFreq(null); 
           }} 
+        />
+      )}
+
+      {/* Modal do Carômetro (Crachá Individual) */}
+      {isCarometroModalOpen && selectedStudentForCarometro && (
+        <CarometroModal
+          aluno={selectedStudentForCarometro}
+          isOpen={isCarometroModalOpen}
+          onClose={() => {
+            setIsCarometroModalOpen(false);
+            setSelectedStudentForCarometro(null);
+          }}
         />
       )}
     </div>
