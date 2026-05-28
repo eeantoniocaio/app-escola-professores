@@ -59,10 +59,14 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const isMaster = session?.user?.email === 'andre.avancini@servidor.educacao.sp.gov.br' && 
+    (userName?.toLowerCase() === 'andré' || userName?.toLowerCase() === 'andre');
+
   const value = {
     session,
     userRole,
     userName,
+    isMaster,
     linkProfileName,
     authLoading,
     setSession

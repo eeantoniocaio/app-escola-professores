@@ -19,7 +19,7 @@ const Relatorios = React.lazy(() => import('../features/relatorios/Relatorios/Re
 const BoasPraticas = React.lazy(() => import('../features/boaspraticas/BoasPraticas'));
 
 function AppRoutes() {
-  const { session, authLoading } = useAuth();
+  const { session, authLoading, isMaster } = useAuth();
   
   if (authLoading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Verificando autenticação...</div>;
 
@@ -44,7 +44,7 @@ function AppRoutes() {
             <Route path="registros" element={<Registros />} />
             <Route path="ocorrencias" element={<HistoricoOcorrencias />} />
             <Route path="reposicoes" element={<EnvioQuestoes />} />
-            <Route path="configuracoes" element={<Configuracoes />} />
+            <Route path="configuracoes" element={isMaster ? <Configuracoes /> : <Navigate to="/" replace />} />
             <Route path="turmas" element={<Turmas />} />
             <Route path="mapa-classe" element={<MapaClasse />} />
             <Route path="relatorios" element={<Relatorios />} />

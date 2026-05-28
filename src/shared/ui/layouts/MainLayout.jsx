@@ -7,7 +7,7 @@ import logoUrl from '../../../assets/logo.png';
 import { Home as HomeIcon, Calendar, BookOpen, BarChart2, ShieldAlert, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap } from 'lucide-react';
 
 export default function MainLayout() {
-  const { session, userRole, userName, linkProfileName } = useAuth();
+  const { session, userRole, userName, linkProfileName, isMaster } = useAuth();
   const { professores, gestores, loadingData } = useGlobalData();
   const location = useLocation();
   const navigate = useNavigate();
@@ -81,7 +81,7 @@ export default function MainLayout() {
           
           <div className="nav-divider" style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
           
-          {userRole === 'gestao' && (
+          {isMaster && (
             <Link to="/configuracoes" className={`nav-link ${isActive('/configuracoes')}`} onClick={() => setIsMobileMenuOpen(false)} title="Configurações" style={{ padding: '0.4rem' }}>
               <Settings size={20} />
             </Link>
