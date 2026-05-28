@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { MsalProvider, useMsal } from '@azure/msal-react';
+import { useAuth } from './AuthProvider';
 
 const msalConfig = {
   auth: {
@@ -20,6 +21,7 @@ const MicrosoftAuthContext = createContext(null);
 // Componente interno para escutar as mudanças de estado do MSAL React e obter tokens após o redirect
 function MicrosoftAuthInner({ children, setMsAccount, setAccessToken }) {
   const { instance, accounts } = useMsal();
+  const { session } = useAuth();
 
   useEffect(() => {
     if (accounts.length > 0) {
@@ -39,8 +41,27 @@ function MicrosoftAuthInner({ children, setMsAccount, setAccessToken }) {
         .catch(err => {
           console.warn('Erro ao adquirir token silencioso no loginRedirect:', err);
         });
+    } else if (session?.user?.email) {
+      // Se não houver contas em cache do MSAL, mas o usuário estiver logado via Supabase,
+      // tentar login silencioso via SSO usando o email do professor como loginHint.
+      // Isso conecta automaticamente em segundo plano se o navegador tiver uma sessão ativa da Microsoft.
+      const silentRequest = {
+        scopes: ['User.Read', 'Files.Read', 'Files.Read.All'],
+        loginHint: session.user.email
+      };
+
+      console.log(`[MicrosoftAuth] Tentando conexão automática em segundo plano para: ${session.user.email}`);
+      instance.ssoSilent(silentRequest)
+        .then(response => {
+          console.log('[MicrosoftAuth] Conectado silenciosamente via SSO com sucesso!');
+          setMsAccount(response.account);
+          setAccessToken(response.accessToken);
+        })
+        .catch(err => {
+          console.log('[MicrosoftAuth] Conexão automática em segundo plano indisponível (requer interação ou cookies de terceiros bloqueados).', err.message);
+        });
     }
-  }, [accounts, instance, setMsAccount, setAccessToken]);
+  }, [accounts, instance, session, setMsAccount, setAccessToken]);
 
   return children;
 }
