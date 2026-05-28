@@ -3,6 +3,8 @@ import { X, Calendar, Clipboard, RefreshCw, LogOut, CheckCircle2, AlertTriangle,
 import { useMicrosoftAuth } from '../../app/providers/MicrosoftAuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 
+const DEFAULT_SPREADSHEET_URL = "https://1drv.ms/x/c/302ec50fbf74a18d/IQCCbssSwqdKSpwHH1junCEDAevG2GvY97aCI3Kh4V4eGmY?e=IpMZWm";
+
 export default function Frequencia({ aluno, isOpen, onClose }) {
   const { loginMicrosoft, getMicrosoftToken, logoutMicrosoft, accessToken, msAccount, isConfigured } = useMicrosoftAuth();
   const { showToast } = useToast();
@@ -10,11 +12,13 @@ export default function Frequencia({ aluno, isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState([]);
   const [selectedFileId, setSelectedFileId] = useState(() => localStorage.getItem('selected_frequencia_file_id') || '');
+  const [driveId, setDriveId] = useState(() => localStorage.getItem('selected_frequencia_drive_id') || '');
   const [selectedFileName, setSelectedFileName] = useState(() => localStorage.getItem('selected_frequencia_file_name') || '');
   const [worksheets, setWorksheets] = useState([]);
   const [selectedSheetName, setSelectedSheetName] = useState('');
   const [attendanceData, setAttendanceData] = useState(null);
   const [isSearchingFiles, setIsSearchingFiles] = useState(false);
+  const [useDefaultFile, setUseDefaultFile] = useState(() => !localStorage.getItem('selected_frequencia_file_id'));
 
   // Se o modal estiver fechado, não renderiza nada
   if (!isOpen) return null;
@@ -31,13 +35,62 @@ export default function Frequencia({ aluno, isOpen, onClose }) {
     if (accessToken) {
       if (selectedFileId) {
         fetchWorksheets(selectedFileId);
+      } else if (useDefaultFile) {
+        resolveDefaultSpreadsheet();
       } else {
         fetchExcelFiles();
       }
     }
-  }, [accessToken, selectedFileId]);
+  }, [accessToken, selectedFileId, useDefaultFile]);
 
   // ── Microsoft Graph API Calls ──────────────────────────────────────────────
+
+  // 0. Resolver a planilha padrão a partir do link de compartilhamento
+  const resolveDefaultSpreadsheet = async () => {
+    setLoading(true);
+    try {
+      // Codificar a URL de compartilhamento em Base64 seguro para o Graph API
+      const base64Value = btoa(DEFAULT_SPREADSHEET_URL);
+      const sharingToken = "u!" + base64Value
+        .replace(/=/g, '')
+        .replace(/\//g, '-')
+        .replace(/\+/g, '_');
+      
+      const response = await fetch(
+        `https://graph.microsoft.com/v1.0/shares/${sharingToken}/driveItem`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }
+      );
+      const data = await response.json();
+      
+      if (data && data.id) {
+        const fileId = data.id;
+        const resolvedDriveId = data.parentReference?.driveId || 'me';
+        const fileName = data.name || 'Planilha de Frequência';
+
+        setSelectedFileId(fileId);
+        setDriveId(resolvedDriveId);
+        setSelectedFileName(fileName);
+
+        localStorage.setItem('selected_frequencia_file_id', fileId);
+        localStorage.setItem('selected_frequencia_drive_id', resolvedDriveId);
+        localStorage.setItem('selected_frequencia_file_name', fileName);
+
+        fetchWorksheets(fileId, resolvedDriveId);
+      } else {
+        console.warn('Não foi possível resolver a planilha padrão, carregando a lista geral...', data);
+        setUseDefaultFile(false);
+        fetchExcelFiles();
+      }
+    } catch (err) {
+      console.error('Erro ao resolver planilha padrão:', err);
+      setUseDefaultFile(false);
+      fetchExcelFiles();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 1. Buscar arquivos do Excel no OneDrive
   const fetchExcelFiles = async () => {
@@ -64,11 +117,12 @@ export default function Frequencia({ aluno, isOpen, onClose }) {
   };
 
   // 2. Buscar abas (Worksheets) da planilha selecionada
-  const fetchWorksheets = async (fileId) => {
+  const fetchWorksheets = async (fileId, targetDriveId = driveId) => {
     setLoading(true);
+    const resolvedDrive = targetDriveId || 'me';
     try {
       const response = await fetch(
-        `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/workbook/worksheets`,
+        `https://graph.microsoft.com/v1.0/drives/${resolvedDrive}/items/${fileId}/workbook/worksheets`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
@@ -86,11 +140,11 @@ export default function Frequencia({ aluno, isOpen, onClose }) {
 
         if (matchingSheet) {
           setSelectedSheetName(matchingSheet.name);
-          fetchWorksheetData(fileId, matchingSheet.name);
+          fetchWorksheetData(fileId, matchingSheet.name, resolvedDrive);
         } else if (data.value.length > 0) {
           // Se não achar pareo exato, escolhe a primeira aba e deixa o usuario mudar
           setSelectedSheetName(data.value[0].name);
-          fetchWorksheetData(fileId, data.value[0].name);
+          fetchWorksheetData(fileId, data.value[0].name, resolvedDrive);
         }
       }
     } catch (err) {
@@ -102,12 +156,13 @@ export default function Frequencia({ aluno, isOpen, onClose }) {
   };
 
   // 3. Buscar dados da aba selecionada (Used Range)
-  const fetchWorksheetData = async (fileId, sheetName) => {
+  const fetchWorksheetData = async (fileId, sheetName, targetDriveId = driveId) => {
     setLoading(true);
     setAttendanceData(null);
+    const resolvedDrive = targetDriveId || 'me';
     try {
       const response = await fetch(
-        `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}/usedRange`,
+        `https://graph.microsoft.com/v1.0/drives/${resolvedDrive}/items/${fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}/usedRange`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
@@ -219,19 +274,26 @@ export default function Frequencia({ aluno, isOpen, onClose }) {
 
   const handleSelectFile = (file) => {
     setSelectedFileId(file.id);
+    const resolvedDriveId = file.parentReference?.driveId || 'me';
+    setDriveId(resolvedDriveId);
     setSelectedFileName(file.name);
+    setUseDefaultFile(false);
     localStorage.setItem('selected_frequencia_file_id', file.id);
+    localStorage.setItem('selected_frequencia_drive_id', resolvedDriveId);
     localStorage.setItem('selected_frequencia_file_name', file.name);
     showToast('Planilha selecionada com sucesso!');
   };
 
   const handleResetFile = () => {
     setSelectedFileId('');
+    setDriveId('');
     setSelectedFileName('');
     setWorksheets([]);
     setSelectedSheetName('');
     setAttendanceData(null);
+    setUseDefaultFile(false);
     localStorage.removeItem('selected_frequencia_file_id');
+    localStorage.removeItem('selected_frequencia_drive_id');
     localStorage.removeItem('selected_frequencia_file_name');
     fetchExcelFiles();
   };
