@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
 import { GlobalDataProvider } from './providers/GlobalDataProvider';
 import { ToastProvider } from './providers/ToastProvider';
+import { MicrosoftAuthProvider } from './providers/MicrosoftAuthProvider';
 import MainLayout from '../shared/ui/layouts/MainLayout';
 import InstallPWA from '../shared/ui/InstallPWA';
 import Login from '../features/auth/Login';
@@ -61,10 +62,12 @@ export default function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-          <InstallPWA />
-        </BrowserRouter>
+        <MicrosoftAuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+            <InstallPWA />
+          </BrowserRouter>
+        </MicrosoftAuthProvider>
       </AuthProvider>
     </ToastProvider>
   );

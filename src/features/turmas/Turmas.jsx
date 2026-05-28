@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Search, GraduationCap, Link as LinkIcon, School, ChevronRight, X, Calendar, Clipboard, ArrowLeft } from 'lucide-react';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import { useToast } from '../../app/providers/ToastProvider';
+import Frequencia from './Frequencia';
 
 const GRADE_COLORS = {
   '6': '#1CB0F6', // Macaw
@@ -32,6 +33,9 @@ export default function Turmas() {
   const [selectedSerie, setSelectedSerie] = useState('');
   const [selectedTurmaSigla, setSelectedTurmaSigla] = useState('');
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
+
+  const [isFrequenciaOpen, setIsFrequenciaOpen] = useState(false);
+  const [selectedStudentForFreq, setSelectedStudentForFreq] = useState(null);
 
   // Lógica de Parsing das Turmas: extrair Série e Sigla da Turma (Ex: "6º A" -> Série: "6º", Sigla: "A")
   const parsedTurmas = useMemo(() => {
@@ -127,10 +131,13 @@ export default function Turmas() {
     }
   };
 
-  const renderStudentActions = () => (
+  const renderStudentActions = (aluno) => (
     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
       <button 
-        onClick={() => showToast('Em desenvolvimento.', 'info')}
+        onClick={() => {
+          setSelectedStudentForFreq(aluno);
+          setIsFrequenciaOpen(true);
+        }}
         title="Frequência"
         style={{
           display: 'flex',
@@ -397,7 +404,7 @@ export default function Turmas() {
                         </span>
                         <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{aluno.nome}</span>
                       </div>
-                       {renderStudentActions()}
+                       {renderStudentActions(aluno)}
                     </div>
                   ))}
                 </div>
@@ -529,13 +536,25 @@ export default function Turmas() {
                         <School size={12} /> {aluno.turma}
                       </span>
                     </div>
-                     {renderStudentActions()}
+                     {renderStudentActions(aluno)}
                   </div>
                 ))}
               </div>
             )}
           </div>
         </div>
+      )}
+
+      {/* Modal de Frequência */}
+      {isFrequenciaOpen && selectedStudentForFreq && (
+        <Frequencia 
+          aluno={selectedStudentForFreq} 
+          isOpen={isFrequenciaOpen} 
+          onClose={() => { 
+            setIsFrequenciaOpen(false); 
+            setSelectedStudentForFreq(null); 
+          }} 
+        />
       )}
     </div>
   );

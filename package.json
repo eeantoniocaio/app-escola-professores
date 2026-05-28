@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azure/msal-browser": "^5.11.0",
+    "@azure/msal-react": "^5.4.2",
     "@supabase/supabase-js": "^2.106.0",
     "docx": "^9.7.0",
     "html2canvas": "^1.4.1",
