@@ -127,7 +127,7 @@ export default function Turmas() {
     }
   };
 
-  const renderStudentActions = (customColor) => (
+  const renderStudentActions = () => (
     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
       <button 
         onClick={() => showToast('Em desenvolvimento.', 'info')}
@@ -139,14 +139,14 @@ export default function Turmas() {
           width: '32px',
           height: '32px',
           borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border-light)',
-          background: 'var(--bg-card)',
-          color: 'var(--text-muted)',
+          border: '1px solid #10B981',
+          background: '#ECFDF5',
+          color: '#10B981',
           cursor: 'pointer',
           transition: 'var(--transition-smooth)'
         }}
-        onMouseOver={e => { e.currentTarget.style.color = customColor || 'var(--color-primary)'; e.currentTarget.style.borderColor = customColor || 'var(--color-primary)'; }}
-        onMouseOut={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+        onMouseOver={e => { e.currentTarget.style.background = '#D1FAE5'; e.currentTarget.style.borderColor = '#059669'; e.currentTarget.style.color = '#059669'; }}
+        onMouseOut={e => { e.currentTarget.style.background = '#ECFDF5'; e.currentTarget.style.borderColor = '#10B981'; e.currentTarget.style.color = '#10B981'; }}
       >
         <Calendar size={16} />
       </button>
@@ -160,14 +160,14 @@ export default function Turmas() {
           width: '32px',
           height: '32px',
           borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border-light)',
-          background: 'var(--bg-card)',
-          color: 'var(--text-muted)',
+          border: '1px solid #3B82F6',
+          background: '#EFF6FF',
+          color: '#3B82F6',
           cursor: 'pointer',
           transition: 'var(--transition-smooth)'
         }}
-        onMouseOver={e => { e.currentTarget.style.color = customColor || 'var(--color-primary)'; e.currentTarget.style.borderColor = customColor || 'var(--color-primary)'; }}
-        onMouseOut={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+        onMouseOver={e => { e.currentTarget.style.background = '#DBEAFE'; e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.color = '#2563EB'; }}
+        onMouseOut={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.color = '#3B82F6'; }}
       >
         <Clipboard size={16} />
       </button>
@@ -181,14 +181,14 @@ export default function Turmas() {
           width: '32px',
           height: '32px',
           borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border-light)',
-          background: 'var(--bg-card)',
-          color: 'var(--text-muted)',
+          border: '1px solid #8B5CF6',
+          background: '#F5F3FF',
+          color: '#8B5CF6',
           cursor: 'pointer',
           transition: 'var(--transition-smooth)'
         }}
-        onMouseOver={e => { e.currentTarget.style.color = customColor || 'var(--color-primary)'; e.currentTarget.style.borderColor = customColor || 'var(--color-primary)'; }}
-        onMouseOut={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+        onMouseOver={e => { e.currentTarget.style.background = '#EDE9FE'; e.currentTarget.style.borderColor = '#7C3AED'; e.currentTarget.style.color = '#7C3AED'; }}
+        onMouseOut={e => { e.currentTarget.style.background = '#F5F3FF'; e.currentTarget.style.borderColor = '#8B5CF6'; e.currentTarget.style.color = '#8B5CF6'; }}
       >
         <Users size={16} />
       </button>
@@ -397,7 +397,7 @@ export default function Turmas() {
                         </span>
                         <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{aluno.nome}</span>
                       </div>
-                      {renderStudentActions(getTurmaColor(activeClass.nome))}
+                       {renderStudentActions()}
                     </div>
                   ))}
                 </div>
@@ -529,7 +529,7 @@ export default function Turmas() {
                         <School size={12} /> {aluno.turma}
                       </span>
                     </div>
-                    {renderStudentActions(getTurmaColor(aluno.turma))}
+                     {renderStudentActions()}
                   </div>
                 ))}
               </div>
