@@ -81,15 +81,33 @@ export default function useCarometro(activeClassName) {
         ? 'https://graph.microsoft.com/v1.0/me/drive' 
         : `https://graph.microsoft.com/v1.0/drives/${driveId}`;
 
+      const fetchUrl = `${baseUrl}/items/${classFolderId}/children`;
+      console.log(`[useCarometro] Buscando fotos da turma "${activeClassName}" em:`, fetchUrl);
+
       const response = await fetch(
-        `${baseUrl}/items/${classFolderId}/children?$select=name,id,@microsoft.graph.downloadUrl`,
+        fetchUrl,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
       );
       const data = await response.json();
+      console.log('[useCarometro] Resposta da API:', data);
+
       if (data && data.value) {
+        console.log(`[useCarometro] Encontrados ${data.value.length} arquivos na pasta.`);
+        if (data.value.length > 0) {
+          console.log('[useCarometro] Exemplo do primeiro arquivo retornado:', {
+            name: data.value[0].name,
+            id: data.value[0].id,
+            hasDownloadUrl: !!data.value[0]['@microsoft.graph.downloadUrl'],
+            downloadUrlPreview: data.value[0]['@microsoft.graph.downloadUrl'] ? data.value[0]['@microsoft.graph.downloadUrl'].substring(0, 60) + '...' : 'null',
+            keys: Object.keys(data.value[0])
+          });
+        }
+        
         const mapped = buildPhotosMap(data.value);
+        console.log('[useCarometro] Mapa de fotos gerado:', mapped);
+        
         setPhotosMap(mapped);
         sessionStorage.setItem(photosCacheKey, JSON.stringify(mapped));
       } else {
