@@ -41,6 +41,33 @@ export default function useFrequenciaAluno(aluno, isOpen) {
     }
   }, [accessToken, selectedFileId, useDefaultFile, isOpen, aluno]);
 
+  // Helper para normalizar nome de turma para comparação
+  const normalizeTurmaForMatching = (name) => {
+    if (!name) return '';
+    return name.toLowerCase()
+      .replace(/º/g, '')
+      .replace(/ª/g, '')
+      .replace(/\s+/g, '')
+      .trim();
+  };
+
+  // Helper para selecionar aba e buscar os dados correspondentes
+  const selectAndFetchSheetData = (fileId, worksheetsList, resolvedDrive) => {
+    const targetTurma = normalizeTurmaForMatching(aluno.turma);
+    const matchingSheet = worksheetsList.find(sheet => {
+      const sheetName = normalizeTurmaForMatching(sheet.name);
+      return sheetName.includes(targetTurma) || targetTurma.includes(sheetName);
+    });
+
+    if (matchingSheet) {
+      setSelectedSheetName(matchingSheet.name);
+      fetchWorksheetData(fileId, matchingSheet.name, resolvedDrive);
+    } else if (worksheetsList.length > 0) {
+      setSelectedSheetName(worksheetsList[0].name);
+      fetchWorksheetData(fileId, worksheetsList[0].name, resolvedDrive);
+    }
+  };
+
   // 0. Resolver a planilha padrão a partir do link de compartilhamento
   const resolveDefaultSpreadsheet = async () => {
     setLoading(true);
@@ -117,9 +144,25 @@ export default function useFrequenciaAluno(aluno, isOpen) {
     setLoading(true);
     setError(null);
     const resolvedDrive = targetDriveId || 'me';
+
+    // Otimização: Tentar carregar a lista de abas do cache do sessionStorage
+    const cacheKey = `ms_worksheets_${fileId}`;
+    const cachedWorksheets = sessionStorage.getItem(cacheKey);
+    if (cachedWorksheets) {
+      try {
+        const parsedSheets = JSON.parse(cachedWorksheets);
+        setWorksheets(parsedSheets);
+        selectAndFetchSheetData(fileId, parsedSheets, resolvedDrive);
+        setLoading(false);
+        return;
+      } catch (e) {
+        console.warn('Falha ao ler cache de abas do sessionStorage, consultando API...', e);
+      }
+    }
+
     try {
       const response = await fetch(
-        `https://graph.microsoft.com/v1.0/drives/${resolvedDrive}/items/${fileId}/workbook/worksheets`,
+        `https://graph.microsoft.com/v1.0/drives/${resolvedDrive}/items/${fileId}/workbook/worksheets?$select=name,id`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
@@ -127,30 +170,9 @@ export default function useFrequenciaAluno(aluno, isOpen) {
       const data = await response.json();
       if (data && data.value) {
         setWorksheets(data.value);
-        
-        // Auto-seleção de aba baseada na turma do aluno
-        const normalizeTurmaForMatching = (name) => {
-          if (!name) return '';
-          return name.toLowerCase()
-            .replace(/º/g, '')
-            .replace(/ª/g, '')
-            .replace(/\s+/g, '')
-            .trim();
-        };
-
-        const targetTurma = normalizeTurmaForMatching(aluno.turma);
-        const matchingSheet = data.value.find(sheet => {
-          const sheetName = normalizeTurmaForMatching(sheet.name);
-          return sheetName.includes(targetTurma) || targetTurma.includes(sheetName);
-        });
-
-        if (matchingSheet) {
-          setSelectedSheetName(matchingSheet.name);
-          fetchWorksheetData(fileId, matchingSheet.name, resolvedDrive);
-        } else if (data.value.length > 0) {
-          setSelectedSheetName(data.value[0].name);
-          fetchWorksheetData(fileId, data.value[0].name, resolvedDrive);
-        }
+        // Salvar abas no cache
+        sessionStorage.setItem(cacheKey, JSON.stringify(data.value));
+        selectAndFetchSheetData(fileId, data.value, resolvedDrive);
       }
     } catch (err) {
       console.error('Erro ao carregar abas da planilha:', err);
@@ -166,15 +188,38 @@ export default function useFrequenciaAluno(aluno, isOpen) {
     setError(null);
     setAttendanceData(null);
     const resolvedDrive = targetDriveId || 'me';
+
+    // Otimização: Tentar carregar os dados desta aba do cache do sessionStorage (TTL de sessão do navegador)
+    const cacheKey = `ms_sheet_${fileId}_${sheetName}`;
+    const cachedSheetData = sessionStorage.getItem(cacheKey);
+    if (cachedSheetData) {
+      try {
+        const parsedValues = JSON.parse(cachedSheetData);
+        const parsedResult = getAlunoFrequencia(parsedValues, aluno.nome, sheetName);
+        if (parsedResult.error) {
+          setError(parsedResult.error);
+        } else {
+          setAttendanceData(parsedResult);
+        }
+        setLoading(false);
+        return;
+      } catch (e) {
+        console.warn('Falha ao ler cache de células da aba, consultando API...', e);
+      }
+    }
+
     try {
       const response = await fetch(
-        `https://graph.microsoft.com/v1.0/drives/${resolvedDrive}/items/${fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}/usedRange`,
+        `https://graph.microsoft.com/v1.0/drives/${resolvedDrive}/items/${fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}/usedRange(valuesOnly=true)?$select=values`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
       );
       const data = await response.json();
       if (data && data.values) {
+        // Salvar valores no cache
+        sessionStorage.setItem(cacheKey, JSON.stringify(data.values));
+        
         const parsed = getAlunoFrequencia(data.values, aluno.nome, sheetName);
         if (parsed.error) {
           setError(parsed.error);
@@ -224,6 +269,25 @@ export default function useFrequenciaAluno(aluno, isOpen) {
     fetchWorksheetData(selectedFileId, sheetName);
   };
 
+  // Função para invalidar os caches locais e recarregar os dados da planilha em tempo real
+  const handleRefresh = () => {
+    if (selectedFileId) {
+      setLoading(true);
+      setError(null);
+      
+      // Limpar cache de abas
+      sessionStorage.removeItem(`ms_worksheets_${selectedFileId}`);
+      
+      // Limpar cache de todas as abas carregadas
+      worksheets.forEach(sheet => {
+        sessionStorage.removeItem(`ms_sheet_${selectedFileId}_${sheet.name}`);
+      });
+      
+      showToast('Limpando cache e recarregando do OneDrive...', 'info');
+      fetchWorksheets(selectedFileId);
+    }
+  };
+
   return {
     loading,
     error,
@@ -239,6 +303,7 @@ export default function useFrequenciaAluno(aluno, isOpen) {
     fetchExcelFiles,
     handleSelectFile,
     handleResetFile,
-    handleSheetChange
+    handleSheetChange,
+    handleRefresh
   };
 }

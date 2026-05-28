@@ -20,7 +20,8 @@ export default function Frequencia({ aluno, isOpen, onClose }) {
     fetchExcelFiles,
     handleSelectFile,
     handleResetFile,
-    handleSheetChange
+    handleSheetChange,
+    handleRefresh
   } = useFrequenciaAluno(aluno, isOpen);
 
   // Se o modal estiver fechado, não renderiza nada
@@ -136,15 +137,36 @@ export default function Frequencia({ aluno, isOpen, onClose }) {
                 /* Se planilha foi selecionada: Mostrar controles de aba & os dados */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   
-                  {/* Informações do Arquivo & Botão Alterar */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                      <FileText size={16} color="var(--color-primary)" />
-                      <span>{selectedFileName}</span>
+                  {/* Informações do Arquivo & Controles */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+                      <FileText size={16} color="var(--color-primary)" style={{ flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFileName}</span>
                     </div>
-                    <button className="btn" onClick={handleResetFile} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', margin: 0, background: 'var(--bg-card)' }}>
-                      Mudar Planilha
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <button 
+                        className="btn" 
+                        onClick={handleRefresh} 
+                        disabled={loading}
+                        title="Recarregar dados do OneDrive"
+                        style={{ 
+                          padding: '0.35rem 0.75rem', 
+                          fontSize: '0.75rem', 
+                          margin: 0, 
+                          background: 'var(--bg-card)', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '0.3rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <RefreshCw size={12} className={loading ? 'spin-animation' : ''} />
+                        <span>Atualizar</span>
+                      </button>
+                      <button className="btn" onClick={handleResetFile} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', margin: 0, background: 'var(--bg-card)' }}>
+                        Mudar Planilha
+                      </button>
+                    </div>
                   </div>
 
 

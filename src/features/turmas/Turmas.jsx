@@ -4,6 +4,8 @@ import { Users, Search, GraduationCap, Link as LinkIcon, School, ChevronRight, X
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import Frequencia from './Frequencia';
+import { useMicrosoftAuth } from '../../app/providers/MicrosoftAuthProvider';
+import usePrefetchFrequencia from '../../hooks/usePrefetchFrequencia';
 
 const GRADE_COLORS = {
   '6': '#1CB0F6', // Macaw
@@ -102,6 +104,9 @@ export default function Turmas() {
   const activeClass = useMemo(() => {
     return parsedTurmas.find(t => t.serie === selectedSerie && t.turmaSigla === selectedTurmaSigla);
   }, [parsedTurmas, selectedSerie, selectedTurmaSigla]);
+
+  // Pré-carregamento dos dados de frequência do OneDrive em segundo plano
+  usePrefetchFrequencia(activeClass?.nome);
 
   // Alunos pertencentes à turma selecionada
   const classStudents = useMemo(() => {
