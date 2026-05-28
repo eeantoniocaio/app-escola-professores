@@ -8,7 +8,7 @@ import {
 } from '../services/photoService';
 
 export default function useCarometro(activeClassName) {
-  const { accessToken } = useMicrosoftAuth();
+  const { accessToken, loginMicrosoft } = useMicrosoftAuth();
   const { showToast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -16,7 +16,13 @@ export default function useCarometro(activeClassName) {
   const [photosMap, setPhotosMap] = useState({});
 
   const loadPhotos = useCallback(async (forceRefresh = false) => {
-    if (!accessToken || !activeClassName) return;
+    if (!accessToken) {
+      setPhotosMap({});
+      setLoading(false);
+      return;
+    }
+
+    if (!activeClassName) return;
 
     setLoading(true);
     setError(null);
@@ -106,6 +112,8 @@ export default function useCarometro(activeClassName) {
     loading,
     error,
     photosMap,
-    handleRefresh
+    handleRefresh,
+    needsAuth: !accessToken,
+    loginMicrosoft
   };
 }

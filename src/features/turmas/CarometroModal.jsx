@@ -4,7 +4,7 @@ import useCarometro from '../../hooks/useCarometro';
 import { normalizeStudentName } from '../../services/photoService';
 
 export default function CarometroModal({ aluno, isOpen, onClose }) {
-  const { photosMap, loading, error, handleRefresh } = useCarometro(aluno?.turma);
+  const { photosMap, loading, error, handleRefresh, needsAuth, loginMicrosoft } = useCarometro(aluno?.turma);
 
   if (!isOpen || !aluno) return null;
 
@@ -39,7 +39,24 @@ export default function CarometroModal({ aluno, isOpen, onClose }) {
         {/* Corpo do Modal */}
         <div className="modal-body" style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-card) 100%)' }}>
           
-          {loading ? (
+          {needsAuth ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem', padding: '2rem 1rem', textAlign: 'center' }}>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft Logo" style={{ height: '32px' }} />
+              <div>
+                <h4 style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)' }}>Conectar ao OneDrive</h4>
+                <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                  É necessário conectar sua conta Microsoft para carregar a foto do aluno.
+                </p>
+              </div>
+              <button 
+                onClick={loginMicrosoft}
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
+              >
+                Conectar Conta Microsoft
+              </button>
+            </div>
+          ) : loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '3rem 0' }}>
               <RefreshCw size={36} className="spin-animation" color="var(--color-primary)" />
               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Consultando arquivo de fotos no OneDrive...</span>
@@ -159,16 +176,18 @@ export default function CarometroModal({ aluno, isOpen, onClose }) {
         </div>
 
         {/* Rodapé */}
-        <div className="modal-footer" style={{ padding: '0.75rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-light)', background: 'var(--bg-secondary)' }}>
-          <button 
-            className="btn" 
-            onClick={handleRefresh} 
-            disabled={loading}
-            style={{ margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'var(--bg-card)' }}
-          >
-            <RefreshCw size={12} className={loading ? 'spin-animation' : ''} />
-            <span>Recarregar</span>
-          </button>
+        <div className="modal-footer" style={{ padding: '0.75rem 1.5rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderTop: '1px solid var(--border-light)', background: 'var(--bg-secondary)' }}>
+          {!needsAuth && (
+            <button 
+              className="btn" 
+              onClick={handleRefresh} 
+              disabled={loading}
+              style={{ margin: '0 auto 0 0', padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'var(--bg-card)' }}
+            >
+              <RefreshCw size={12} className={loading ? 'spin-animation' : ''} />
+              <span>Recarregar</span>
+            </button>
+          )}
           <button className="btn btn-secondary" onClick={onClose} style={{ margin: 0, padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
             Fechar
           </button>

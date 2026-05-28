@@ -44,8 +44,13 @@ export async function findCarometroFolder(accessToken) {
       );
       const data = await response.json();
       if (data && data.value) {
-        const found = data.value.find(item => item.folder && normalizeName(item.name) === 'carometro');
+        // Encontra qualquer item que seja pasta e tenha nome normalizado carometro
+        const found = data.value.find(item => {
+          const isFolder = item.folder || (item.file === undefined && item.image === undefined && item.package === undefined);
+          return isFolder && normalizeName(item.name) === 'carometro';
+        });
         if (found) {
+          console.log('[photoService] Encontrado Carômetro via search API:', found.name);
           return { id: found.id, driveId: found.parentReference?.driveId || 'me' };
         }
       }
@@ -54,7 +59,7 @@ export async function findCarometroFolder(accessToken) {
     console.warn('Erro ao pesquisar pasta Carômetro via search:', err);
   }
 
-  // 2. Fallback: Listar diretório raiz
+  // 2. Fallback: Listar diretório raiz e buscar no primeiro nível de subpastas
   try {
     const response = await fetch(
       `https://graph.microsoft.com/v1.0/me/drive/root/children?$select=name,id,folder,parentReference`,
@@ -62,13 +67,64 @@ export async function findCarometroFolder(accessToken) {
     );
     const data = await response.json();
     if (data && data.value) {
-      const found = data.value.find(item => item.folder && normalizeName(item.name) === 'carometro');
-      if (found) {
-        return { id: found.id, driveId: found.parentReference?.driveId || 'me' };
+      // 2a. Buscar diretamente no raiz
+      const foundInRoot = data.value.find(item => {
+        const isFolder = item.folder || (item.file === undefined && item.image === undefined && item.package === undefined);
+        return isFolder && normalizeName(item.name) === 'carometro';
+      });
+      if (foundInRoot) {
+        console.log('[photoService] Encontrado Carômetro no raiz:', foundInRoot.name);
+        return { id: foundInRoot.id, driveId: foundInRoot.parentReference?.driveId || 'me' };
+      }
+
+      // 2b. Buscar dentro de pastas no raiz (como "2026", "Documentos")
+      const rootFolders = data.value.filter(item => {
+        const isFolder = item.folder || (item.file === undefined && item.image === undefined && item.package === undefined);
+        return isFolder;
+      });
+
+      // Ordenar para verificar primeiro pastas que parecem anos (ex: 2026) ou "documents"
+      rootFolders.sort((a, b) => {
+        const aIsYear = /^\d{4}$/.test(a.name);
+        const bIsYear = /^\d{4}$/.test(b.name);
+        if (aIsYear && !bIsYear) return -1;
+        if (!aIsYear && bIsYear) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      console.log('[photoService] Varrendo subpastas do raiz:', rootFolders.map(f => f.name));
+
+      // Limita a busca a no máximo 10 pastas do raiz para evitar overhead excessivo
+      const foldersToSearch = rootFolders.slice(0, 10);
+      const searchPromises = foldersToSearch.map(async (folder) => {
+        try {
+          const subRes = await fetch(
+            `https://graph.microsoft.com/v1.0/me/drive/items/${folder.id}/children?$select=name,id,folder,parentReference`,
+            { headers }
+          );
+          const subData = await subRes.json();
+          if (subData && subData.value) {
+            const found = subData.value.find(item => {
+              const isFolder = item.folder || (item.file === undefined && item.image === undefined && item.package === undefined);
+              return isFolder && normalizeName(item.name) === 'carometro';
+            });
+            if (found) return found;
+          }
+        } catch (subErr) {
+          console.warn(`Erro ao listar filhos da pasta ${folder.name}:`, subErr);
+        }
+        return null;
+      });
+
+      const results = await Promise.all(searchPromises);
+      const foundInSubfolder = results.find(item => item !== null);
+      if (foundInSubfolder) {
+        console.log('[photoService] Encontrado Carômetro dentro da pasta:', foundInSubfolder.name);
+        return { id: foundInSubfolder.id, driveId: foundInSubfolder.parentReference?.driveId || 'me' };
       }
     }
   } catch (err) {
-    console.error('Erro ao listar raiz do OneDrive:', err);
+    console.error('Erro no fallback de busca da pasta do Carômetro:', err);
   }
 
   return null;

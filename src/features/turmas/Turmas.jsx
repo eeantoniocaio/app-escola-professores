@@ -121,7 +121,9 @@ export default function Turmas() {
     photosMap, 
     loading: loadingPhotos, 
     error: errorPhotos, 
-    handleRefresh: refreshPhotos 
+    handleRefresh: refreshPhotos,
+    needsAuth: needsAuthPhotos,
+    loginMicrosoft: loginMicrosoftPhotos
   } = useCarometro(activeClass?.nome);
 
   // Alunos pertencentes à turma selecionada
@@ -522,6 +524,8 @@ export default function Turmas() {
                     loading={loadingPhotos}
                     error={errorPhotos}
                     onRefresh={refreshPhotos}
+                    needsAuth={needsAuthPhotos}
+                    onLogin={loginMicrosoftPhotos}
                   />
                 </div>
               )}

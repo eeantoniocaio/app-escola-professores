@@ -2,7 +2,7 @@ import React from 'react';
 import { Camera, RefreshCw, AlertTriangle, User } from 'lucide-react';
 import { normalizeStudentName } from '../../services/photoService';
 
-export default function CarometroGrid({ students, photosMap, loading, error, onRefresh }) {
+export default function CarometroGrid({ students, photosMap, loading, error, onRefresh, needsAuth, onLogin }) {
   
   // Extrai as iniciais do nome do aluno
   const getInitials = (name) => {
@@ -30,6 +30,39 @@ export default function CarometroGrid({ students, photosMap, loading, error, onR
     const index = Math.abs(hash) % colors.length;
     return colors[index];
   };
+
+  // Renderiza aviso caso necessite de autenticação
+  if (needsAuth) {
+    return (
+      <div style={{ 
+        textAlign: 'center', 
+        padding: '3rem 1.5rem', 
+        background: 'var(--bg-card)', 
+        borderRadius: 'var(--radius-lg)', 
+        border: '1px dashed var(--border-light)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '1.25rem',
+        marginTop: '1rem'
+      }}>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft Logo" style={{ height: '36px' }} />
+        <div>
+          <h4 style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)' }}>Conectar ao OneDrive</h4>
+          <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '400px', lineHeight: 1.4 }}>
+            Conecte sua conta Microsoft para carregar e exibir as fotos dos alunos a partir da pasta <strong>Carômetro</strong> no seu OneDrive.
+          </p>
+        </div>
+        <button 
+          onClick={onLogin}
+          className="btn btn-primary"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, padding: '0.65rem 1.25rem' }}
+        >
+          Conectar Conta Microsoft
+        </button>
+      </div>
+    );
+  }
 
   // Renderiza Skeleton Loaders elegantes durante a busca
   if (loading && Object.keys(photosMap).length === 0) {
