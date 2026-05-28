@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PublicClientApplication } from '@azure/msal-browser';
-import { MsalProvider } from '@azure/msal-react';
+import { MsalProvider, useMsal } from '@azure/msal-react';
 
 const msalConfig = {
   auth: {
     clientId: import.meta.env.VITE_MICROSOFT_CLIENT_ID || '',
     authority: 'https://login.microsoftonline.com/common',
     redirectUri: import.meta.env.VITE_MICROSOFT_REDIRECT_URI || 'http://localhost:3006/',
+    navigateToLoginRequestUrl: true // Redirecionar de volta para a página que iniciou o login
   },
   cache: {
     cacheLocation: 'localStorage',
@@ -15,6 +16,34 @@ const msalConfig = {
 };
 
 const MicrosoftAuthContext = createContext(null);
+
+// Componente interno para escutar as mudanças de estado do MSAL React e obter tokens após o redirect
+function MicrosoftAuthInner({ children, setMsAccount, setAccessToken }) {
+  const { instance, accounts } = useMsal();
+
+  useEffect(() => {
+    if (accounts.length > 0) {
+      const activeAccount = accounts[0];
+      setMsAccount(activeAccount);
+      
+      // Tentar obter o token de acesso silenciosamente
+      const tokenRequest = {
+        scopes: ['User.Read', 'Files.Read', 'Files.Read.All'],
+        account: activeAccount
+      };
+      
+      instance.acquireTokenSilent(tokenRequest)
+        .then(response => {
+          setAccessToken(response.accessToken);
+        })
+        .catch(err => {
+          console.warn('Erro ao adquirir token silencioso no loginRedirect:', err);
+        });
+    }
+  }, [accounts, instance, setMsAccount, setAccessToken]);
+
+  return children;
+}
 
 export function MicrosoftAuthProvider({ children }) {
   const [msalInstance, setMsalInstance] = useState(null);
@@ -32,7 +61,7 @@ export function MicrosoftAuthProvider({ children }) {
             setMsalInstance(pca);
             setInitialized(true);
             
-            // Verificar se já existe uma conta ativa logada
+            // Verificar se já existe uma conta ativa
             const accounts = pca.getAllAccounts();
             if (accounts.length > 0) {
               setMsAccount(accounts[0]);
@@ -57,10 +86,9 @@ export function MicrosoftAuthProvider({ children }) {
       const loginRequest = {
         scopes: ['User.Read', 'Files.Read', 'Files.Read.All']
       };
-      const response = await msalInstance.loginPopup(loginRequest);
-      setMsAccount(response.account);
-      setAccessToken(response.accessToken);
-      return response.accessToken;
+      // Usar redirect em vez de popup para suportar contas escolares/governamentais federadas (ex: SEDuc SP)
+      await msalInstance.loginRedirect(loginRequest);
+      return null;
     } catch (error) {
       console.error('Microsoft login failed:', error);
       return null;
@@ -82,7 +110,7 @@ export function MicrosoftAuthProvider({ children }) {
       setAccessToken(response.accessToken);
       return response.accessToken;
     } catch (error) {
-      console.warn('Acquire token silent failed, trying popup...', error);
+      console.warn('Acquire token silent failed, trying redirect...', error);
       return loginMicrosoft();
     }
   };
@@ -90,7 +118,8 @@ export function MicrosoftAuthProvider({ children }) {
   const logoutMicrosoft = async () => {
     if (!msalInstance || !initialized) return;
     try {
-      await msalInstance.logoutPopup();
+      // Usar redirecionamento para logout para manter a consistência
+      await msalInstance.logoutRedirect();
       setMsAccount(null);
       setAccessToken(null);
     } catch (error) {
@@ -112,7 +141,9 @@ export function MicrosoftAuthProvider({ children }) {
     <MicrosoftAuthContext.Provider value={value}>
       {msalInstance && initialized ? (
         <MsalProvider instance={msalInstance}>
-          {children}
+          <MicrosoftAuthInner setMsAccount={setMsAccount} setAccessToken={setAccessToken}>
+            {children}
+          </MicrosoftAuthInner>
         </MsalProvider>
       ) : children}
     </MicrosoftAuthContext.Provider>

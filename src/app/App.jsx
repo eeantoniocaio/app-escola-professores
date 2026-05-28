@@ -59,9 +59,12 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const isMsalPopup = typeof window !== 'undefined' && window.opener && window.opener !== window && window.name && (window.name.includes("msal.") || window.name.includes("msal-"));
+  const isMsalWindow = typeof window !== 'undefined' && 
+    ((window.opener && window.opener !== window) || (window.parent && window.parent !== window)) && 
+    window.name && 
+    (window.name.includes("msal.") || window.name.includes("msal-"));
 
-  if (isMsalPopup) {
+  if (isMsalWindow) {
     return (
       <MicrosoftAuthProvider>
         <div style={{ 
