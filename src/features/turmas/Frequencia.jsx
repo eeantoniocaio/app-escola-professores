@@ -147,22 +147,7 @@ export default function Frequencia({ aluno, isOpen, onClose }) {
                     </button>
                   </div>
 
-                  {/* Dropdown de Abas (Worksheets) */}
-                  {worksheets.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>Aba (Série/Classe)</label>
-                      <select 
-                        value={selectedSheetName} 
-                        onChange={e => handleSheetChange(e.target.value)}
-                        className="select-filter"
-                        style={{ width: '100%', padding: '0.65rem 1rem', margin: 0 }}
-                      >
-                        {worksheets.map(sheet => (
-                          <option key={sheet.name} value={sheet.name}>{sheet.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+
 
                   {/* Exibição dos Dados de Frequência do Aluno */}
                   {loading ? (
