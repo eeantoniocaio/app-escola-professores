@@ -129,10 +129,19 @@ export default function useFrequenciaAluno(aluno, isOpen) {
         setWorksheets(data.value);
         
         // Auto-seleção de aba baseada na turma do aluno
-        const turmaName = aluno.turma.toLowerCase().replace(/\s+/g, '');
+        const normalizeTurmaForMatching = (name) => {
+          if (!name) return '';
+          return name.toLowerCase()
+            .replace(/º/g, '')
+            .replace(/ª/g, '')
+            .replace(/\s+/g, '')
+            .trim();
+        };
+
+        const targetTurma = normalizeTurmaForMatching(aluno.turma);
         const matchingSheet = data.value.find(sheet => {
-          const sheetName = sheet.name.toLowerCase().replace(/\s+/g, '');
-          return sheetName.includes(turmaName) || turmaName.includes(sheetName);
+          const sheetName = normalizeTurmaForMatching(sheet.name);
+          return sheetName.includes(targetTurma) || targetTurma.includes(sheetName);
         });
 
         if (matchingSheet) {
