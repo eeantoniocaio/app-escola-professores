@@ -14,6 +14,7 @@ const HistoricoOcorrencias = React.lazy(() => import('../features/ocorrencias/Hi
 const EnvioQuestoes = React.lazy(() => import('../features/reposicoes/EnvioQuestoes'));
 const Configuracoes = React.lazy(() => import('../features/settings/Configuracoes'));
 const Turmas = React.lazy(() => import('../features/turmas/Turmas'));
+const MapaClasse = React.lazy(() => import('../features/turmas/MapaClasse'));
 const Relatorios = React.lazy(() => import('../features/relatorios/Relatorios/Relatorios'));
 const BoasPraticas = React.lazy(() => import('../features/boaspraticas/BoasPraticas'));
 
@@ -45,6 +46,7 @@ function AppRoutes() {
             <Route path="reposicoes" element={<EnvioQuestoes />} />
             <Route path="configuracoes" element={<Configuracoes />} />
             <Route path="turmas" element={<Turmas />} />
+            <Route path="mapa-classe" element={<MapaClasse />} />
             <Route path="relatorios" element={<Relatorios />} />
             <Route path="boas-praticas" element={<BoasPraticas />} />
           </Route>
