@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { supabase } from '../../services/supabase';
 import logoUrl from '../../../assets/logo.png';
-import { Home as HomeIcon, Calendar, BookOpen, BarChart2, ShieldAlert, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap } from 'lucide-react';
+import { Home as HomeIcon, Calendar, BookOpen, BarChart2, ShieldAlert, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X } from 'lucide-react';
 
 export default function MainLayout() {
   const { session, userRole, userName, linkProfileName, isMaster } = useAuth();
@@ -14,6 +14,8 @@ export default function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedNameForLink, setSelectedNameForLink] = useState('');
   const [linking, setLinking] = useState(false);
+  const [openOccurrencesCount, setOpenOccurrencesCount] = useState(0);
+  const [activePopup, setActivePopup] = useState(null);
 
   const isActive = (path) => location.pathname === path ? 'active' : '';
 
@@ -32,6 +34,77 @@ export default function MainLayout() {
       alert('Erro ao vincular conta. Tente novamente.');
     }
   };
+
+  useEffect(() => {
+    if (userRole !== 'gestao') return;
+
+    const fetchOpenCount = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('ocorrencias')
+          .select('id')
+          .or('status.eq.Em aberto,status.is.null');
+        if (data) {
+          setOpenOccurrencesCount(data.length);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar ocorrências em aberto:', err);
+      }
+    };
+
+    fetchOpenCount();
+
+    const channel = supabase.channel('realtime-ocorrencias-layout')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'ocorrencias' },
+        (payload) => {
+          setOpenOccurrencesCount(prev => prev + 1);
+
+          const studentNames = payload.new.alunos && payload.new.alunos.length > 0 
+            ? payload.new.alunos.join(', ') 
+            : 'aluno(a)';
+
+          setActivePopup({
+            id: payload.new.id,
+            title: 'Nova Ocorrência Registrada',
+            body: `Professor(a) ${payload.new.professor} registrou uma ocorrência para ${studentNames}.`,
+            turma: payload.new.turma || ''
+          });
+
+          const audio = new Audio('/notification.ogg');
+          audio.play().catch(err => console.log('Audio block by browser:', err));
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'ocorrencias' },
+        () => {
+          fetchOpenCount();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'ocorrencias' },
+        () => {
+          fetchOpenCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userRole]);
+
+  useEffect(() => {
+    if (activePopup) {
+      const timer = setTimeout(() => {
+        setActivePopup(null);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [activePopup]);
 
   return (
     <div className="app-container">
@@ -79,6 +152,36 @@ export default function MainLayout() {
             <PlusCircle size={18} /> Ocorrências
           </Link>
           
+          {userRole === 'gestao' && (
+            <button 
+              className="nav-link" 
+              onClick={() => { setIsMobileMenuOpen(false); navigate('/ocorrencias'); }}
+              title="Notificações de Ocorrências" 
+              style={{ padding: '0.4rem', position: 'relative', border: 'none', background: 'transparent', cursor: 'pointer' }}
+            >
+              <Bell size={20} />
+              {openOccurrencesCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  background: 'var(--color-danger)',
+                  color: 'white',
+                  borderRadius: '50%',
+                  padding: '2px 5px',
+                  fontSize: '0.62rem',
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  minWidth: '15px',
+                  textAlign: 'center',
+                  boxShadow: '0 0 0 2px var(--bg-card)'
+                }}>
+                  {openOccurrencesCount}
+                </span>
+              )}
+            </button>
+          )}
+          
           <div className="nav-divider" style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
           
           {isMaster && (
@@ -92,6 +195,70 @@ export default function MainLayout() {
           </button>
         </div>
       </header>
+
+      {/* Pop-up de Ocorrência em Tempo Real */}
+      {activePopup && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 9999,
+          background: 'var(--bg-card)',
+          borderRadius: 'var(--radius-md)',
+          borderLeft: '6px solid var(--color-danger)',
+          boxShadow: 'var(--shadow-lg)',
+          width: '320px',
+          padding: '1.25rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem',
+          animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          borderTop: '1px solid var(--border-light)',
+          borderRight: '1px solid var(--border-light)',
+          borderBottom: '1px solid var(--border-light)',
+          textAlign: 'left'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-danger)', fontWeight: 700, fontSize: '0.9rem' }}>
+              <AlertTriangle size={16} />
+              <span>{activePopup.title}</span>
+            </div>
+            <button 
+              onClick={() => setActivePopup(null)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0, display: 'flex' }}
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', margin: 0, lineHeight: 1.4 }}>
+            {activePopup.body}
+            {activePopup.turma && <strong style={{ display: 'block', marginTop: '0.25rem' }}>Turma: {activePopup.turma}</strong>}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
+            <button 
+              onClick={() => {
+                setActivePopup(null);
+                navigate('/ocorrencias');
+              }}
+              style={{
+                background: 'var(--color-danger)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.4rem 0.8rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={e => e.currentTarget.style.filter = 'brightness(0.9)'}
+              onMouseOut={e => e.currentTarget.style.filter = 'none'}
+            >
+              Visualizar
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="main-content">
         {!userName ? (

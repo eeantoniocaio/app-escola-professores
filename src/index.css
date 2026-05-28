@@ -1332,3 +1332,14 @@ textarea.form-control {
     font-size: 0.65rem;
   }
 }
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
