@@ -3,7 +3,8 @@ import { useGoogleAuth } from '../app/providers/GoogleAuthProvider';
 import { useToast } from '../app/providers/ToastProvider';
 import { getAlunoFrequencia } from '../services/excelService';
 
-const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit";
+const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/16C191mYqlkYLx1bQ1KVD1iOobNlTmGSg/edit?usp=sharing";
+const MASTER_SPREADSHEET_ID = "16C191mYqlkYLx1bQ1KVD1iOobNlTmGSg";
 
 const getSpreadsheetIdFromUrl = (url) => {
   if (!url) return '';
@@ -18,13 +19,32 @@ export default function useFrequenciaAluno(aluno, isOpen) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [files, setFiles] = useState([]);
-  const [selectedFileId, setSelectedFileId] = useState(() => localStorage.getItem('selected_frequencia_file_id') || '');
-  const [selectedFileName, setSelectedFileName] = useState(() => localStorage.getItem('selected_frequencia_file_name') || '');
+  
+  const [selectedFileId, setSelectedFileId] = useState(() => {
+    const stored = localStorage.getItem('selected_frequencia_file_id');
+    // Se houver lixo ou placeholder antigo de teste de outra planilha, reseta para a da escola
+    if (stored && stored !== MASTER_SPREADSHEET_ID) {
+      localStorage.removeItem('selected_frequencia_file_id');
+      localStorage.removeItem('selected_frequencia_file_name');
+      return '';
+    }
+    return stored || '';
+  });
+  
+  const [selectedFileName, setSelectedFileName] = useState(() => {
+    const storedId = localStorage.getItem('selected_frequencia_file_id');
+    if (storedId && storedId !== MASTER_SPREADSHEET_ID) return '';
+    return localStorage.getItem('selected_frequencia_file_name') || '';
+  });
+
   const [worksheets, setWorksheets] = useState([]);
   const [selectedSheetName, setSelectedSheetName] = useState('');
   const [attendanceData, setAttendanceData] = useState(null);
   const [isSearchingFiles, setIsSearchingFiles] = useState(false);
-  const [useDefaultFile, setUseDefaultFile] = useState(() => !localStorage.getItem('selected_frequencia_file_id'));
+  const [useDefaultFile, setUseDefaultFile] = useState(() => {
+    const stored = localStorage.getItem('selected_frequencia_file_id');
+    return !stored || stored === MASTER_SPREADSHEET_ID;
+  });
 
 
   // Efeito principal: se tiver token de acesso, buscar dados
