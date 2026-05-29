@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap } from 'lucide-react';
+import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
 
 export default function Home() {
@@ -45,6 +45,11 @@ export default function Home() {
         <button className="dashboard-action-card" onClick={() => navigate('/mapa-classe')}>
           <Users />
           <span>Mapa de Classe</span>
+        </button>
+
+        <button className="dashboard-action-card" onClick={() => navigate('/documentos')}>
+          <FolderOpen />
+          <span>Documentos</span>
         </button>
 
         {userRole !== 'secretaria' && (
