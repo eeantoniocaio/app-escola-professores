@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
-import { useMicrosoftAuth } from '../app/providers/MicrosoftAuthProvider';
+import { useGoogleAuth } from '../app/providers/GoogleAuthProvider';
 import { useToast } from '../app/providers/ToastProvider';
 import { getAlunoFrequencia } from '../services/excelService';
 
-const DEFAULT_SPREADSHEET_URL = "https://1drv.ms/x/c/302ec50fbf74a18d/IQCCbssSwqdKSpwHH1junCEDAevG2GvY97aCI3Kh4V4eGmY?e=IpMZWm";
+const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit";
+
+const getSpreadsheetIdFromUrl = (url) => {
+  if (!url) return '';
+  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return match ? match[1] : url;
+};
 
 export default function useFrequenciaAluno(aluno, isOpen) {
-  const { getMicrosoftToken, accessToken, msAccount } = useMicrosoftAuth();
+  const { getGoogleToken, accessToken, googleAccount } = useGoogleAuth();
   const { showToast } = useToast();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [files, setFiles] = useState([]);
   const [selectedFileId, setSelectedFileId] = useState(() => localStorage.getItem('selected_frequencia_file_id') || '');
-  const [driveId, setDriveId] = useState(() => localStorage.getItem('selected_frequencia_drive_id') || '');
   const [selectedFileName, setSelectedFileName] = useState(() => localStorage.getItem('selected_frequencia_file_name') || '');
   const [worksheets, setWorksheets] = useState([]);
   const [selectedSheetName, setSelectedSheetName] = useState('');
@@ -21,12 +26,12 @@ export default function useFrequenciaAluno(aluno, isOpen) {
   const [isSearchingFiles, setIsSearchingFiles] = useState(false);
   const [useDefaultFile, setUseDefaultFile] = useState(() => !localStorage.getItem('selected_frequencia_file_id'));
 
-  // Obter token silencioso ao abrir o modal
+  // Obter token ao abrir o modal
   useEffect(() => {
-    if (isOpen && msAccount && !accessToken) {
-      getMicrosoftToken();
+    if (isOpen && !accessToken) {
+      getGoogleToken();
     }
-  }, [isOpen, msAccount, accessToken]);
+  }, [isOpen, accessToken]);
 
   // Efeito principal: se tiver token de acesso, buscar dados
   useEffect(() => {
@@ -52,7 +57,7 @@ export default function useFrequenciaAluno(aluno, isOpen) {
   };
 
   // Helper para selecionar aba e buscar os dados correspondentes
-  const selectAndFetchSheetData = (fileId, worksheetsList, resolvedDrive) => {
+  const selectAndFetchSheetData = (fileId, worksheetsList) => {
     const targetTurma = normalizeTurmaForMatching(aluno.turma);
     const matchingSheet = worksheetsList.find(sheet => {
       const sheetName = normalizeTurmaForMatching(sheet.name);
@@ -61,48 +66,53 @@ export default function useFrequenciaAluno(aluno, isOpen) {
 
     if (matchingSheet) {
       setSelectedSheetName(matchingSheet.name);
-      fetchWorksheetData(fileId, matchingSheet.name, resolvedDrive);
+      fetchWorksheetData(fileId, matchingSheet.name);
     } else if (worksheetsList.length > 0) {
       setSelectedSheetName(worksheetsList[0].name);
-      fetchWorksheetData(fileId, worksheetsList[0].name, resolvedDrive);
+      fetchWorksheetData(fileId, worksheetsList[0].name);
     }
   };
 
-  // 0. Resolver a planilha padrão a partir do link de compartilhamento
+  // 0. Resolver a planilha padrão a partir do link do Google Sheets
   const resolveDefaultSpreadsheet = async () => {
     setLoading(true);
     setError(null);
     try {
-      const base64Value = btoa(DEFAULT_SPREADSHEET_URL);
-      const sharingToken = "u!" + base64Value
-        .replace(/=/g, '')
-        .replace(/\//g, '-')
-        .replace(/\+/g, '_');
+      const fileId = getSpreadsheetIdFromUrl(DEFAULT_SPREADSHEET_URL);
       
       const response = await fetch(
-        `https://graph.microsoft.com/v1.0/shares/${sharingToken}/driveItem`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${fileId}?fields=properties.title,sheets.properties(title,sheetId)`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
       );
+      
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar planilha padrão: ${response.statusText}`);
+      }
+
       const data = await response.json();
       
-      if (data && data.id) {
-        const fileId = data.id;
-        const resolvedDriveId = data.parentReference?.driveId || 'me';
-        const fileName = data.name || 'Planilha de Frequência';
+      if (data && data.properties) {
+        const fileName = data.properties.title || 'Planilha de Frequência';
 
         setSelectedFileId(fileId);
-        setDriveId(resolvedDriveId);
         setSelectedFileName(fileName);
 
         localStorage.setItem('selected_frequencia_file_id', fileId);
-        localStorage.setItem('selected_frequencia_drive_id', resolvedDriveId);
         localStorage.setItem('selected_frequencia_file_name', fileName);
 
-        fetchWorksheets(fileId, resolvedDriveId);
+        const mappedSheets = data.sheets?.map(sheet => ({
+          id: sheet.properties.sheetId,
+          name: sheet.properties.title
+        })) || [];
+
+        setWorksheets(mappedSheets);
+        sessionStorage.setItem(`google_worksheets_${fileId}`, JSON.stringify(mappedSheets));
+
+        selectAndFetchSheetData(fileId, mappedSheets);
       } else {
-        console.warn('Erro ao resolver planilha padrão, listando arquivos...', data);
+        console.warn('Erro ao resolver planilha padrão, listando arquivos...');
         setUseDefaultFile(false);
         fetchExcelFiles();
       }
@@ -115,44 +125,43 @@ export default function useFrequenciaAluno(aluno, isOpen) {
     }
   };
 
-  // 1. Listar arquivos do OneDrive
+  // 1. Listar arquivos do Google Drive
   const fetchExcelFiles = async () => {
     setIsSearchingFiles(true);
     setError(null);
     try {
       const response = await fetch(
-        `https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')`,
+        `https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet' and trashed=false&fields=files(id,name)&orderBy=name`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
       );
+      if (!response.ok) throw new Error('Falha ao listar planilhas do Google Drive.');
       const data = await response.json();
-      if (data && data.value) {
-        const excelFiles = data.value.filter(file => file.file);
-        setFiles(excelFiles);
+      if (data && data.files) {
+        setFiles(data.files);
       }
     } catch (err) {
-      console.error('Erro ao buscar arquivos no OneDrive:', err);
-      setError('Erro ao carregar arquivos do OneDrive.');
+      console.error('Erro ao buscar arquivos no Google Drive:', err);
+      setError('Erro ao carregar arquivos do Google Drive.');
     } finally {
       setIsSearchingFiles(false);
     }
   };
 
   // 2. Buscar abas (Worksheets)
-  const fetchWorksheets = async (fileId, targetDriveId = driveId) => {
+  const fetchWorksheets = async (fileId) => {
     setLoading(true);
     setError(null);
-    const resolvedDrive = targetDriveId || 'me';
 
     // Otimização: Tentar carregar a lista de abas do cache do sessionStorage
-    const cacheKey = `ms_worksheets_${fileId}`;
+    const cacheKey = `google_worksheets_${fileId}`;
     const cachedWorksheets = sessionStorage.getItem(cacheKey);
     if (cachedWorksheets) {
       try {
         const parsedSheets = JSON.parse(cachedWorksheets);
         setWorksheets(parsedSheets);
-        selectAndFetchSheetData(fileId, parsedSheets, resolvedDrive);
+        selectAndFetchSheetData(fileId, parsedSheets);
         setLoading(false);
         return;
       } catch (e) {
@@ -162,17 +171,22 @@ export default function useFrequenciaAluno(aluno, isOpen) {
 
     try {
       const response = await fetch(
-        `https://graph.microsoft.com/v1.0/drives/${resolvedDrive}/items/${fileId}/workbook/worksheets?$select=name,id`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${fileId}?fields=sheets.properties(title,sheetId)`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
       );
+      if (!response.ok) throw new Error('Falha ao obter metadados da planilha.');
       const data = await response.json();
-      if (data && data.value) {
-        setWorksheets(data.value);
+      if (data && data.sheets) {
+        const mappedSheets = data.sheets.map(sheet => ({
+          id: sheet.properties.sheetId,
+          name: sheet.properties.title
+        }));
+        setWorksheets(mappedSheets);
         // Salvar abas no cache
-        sessionStorage.setItem(cacheKey, JSON.stringify(data.value));
-        selectAndFetchSheetData(fileId, data.value, resolvedDrive);
+        sessionStorage.setItem(cacheKey, JSON.stringify(mappedSheets));
+        selectAndFetchSheetData(fileId, mappedSheets);
       }
     } catch (err) {
       console.error('Erro ao carregar abas da planilha:', err);
@@ -182,15 +196,14 @@ export default function useFrequenciaAluno(aluno, isOpen) {
     }
   };
 
-  // 3. Buscar dados da aba selecionada (Used Range)
-  const fetchWorksheetData = async (fileId, sheetName, targetDriveId = driveId) => {
+  // 3. Buscar dados da aba selecionada
+  const fetchWorksheetData = async (fileId, sheetName) => {
     setLoading(true);
     setError(null);
     setAttendanceData(null);
-    const resolvedDrive = targetDriveId || 'me';
 
-    // Otimização: Tentar carregar os dados desta aba do cache do sessionStorage (TTL de sessão do navegador)
-    const cacheKey = `ms_sheet_${fileId}_${sheetName}`;
+    // Otimização: Tentar carregar os dados desta aba do cache do sessionStorage
+    const cacheKey = `google_sheet_${fileId}_${sheetName}`;
     const cachedSheetData = sessionStorage.getItem(cacheKey);
     if (cachedSheetData) {
       try {
@@ -210,11 +223,12 @@ export default function useFrequenciaAluno(aluno, isOpen) {
 
     try {
       const response = await fetch(
-        `https://graph.microsoft.com/v1.0/drives/${resolvedDrive}/items/${fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}/usedRange(valuesOnly=true)?$select=values`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${fileId}/values/${encodeURIComponent(sheetName)}?valueRenderOption=FORMATTED_VALUE`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
       );
+      if (!response.ok) throw new Error('Falha ao buscar dados da aba.');
       const data = await response.json();
       if (data && data.values) {
         // Salvar valores no cache
@@ -239,19 +253,15 @@ export default function useFrequenciaAluno(aluno, isOpen) {
 
   const handleSelectFile = (file) => {
     setSelectedFileId(file.id);
-    const resolvedDriveId = file.parentReference?.driveId || 'me';
-    setDriveId(resolvedDriveId);
     setSelectedFileName(file.name);
     setUseDefaultFile(false);
     localStorage.setItem('selected_frequencia_file_id', file.id);
-    localStorage.setItem('selected_frequencia_drive_id', resolvedDriveId);
     localStorage.setItem('selected_frequencia_file_name', file.name);
     showToast('Planilha selecionada com sucesso!');
   };
 
   const handleResetFile = () => {
     setSelectedFileId('');
-    setDriveId('');
     setSelectedFileName('');
     setWorksheets([]);
     setSelectedSheetName('');
@@ -259,7 +269,6 @@ export default function useFrequenciaAluno(aluno, isOpen) {
     setError(null);
     setUseDefaultFile(false);
     localStorage.removeItem('selected_frequencia_file_id');
-    localStorage.removeItem('selected_frequencia_drive_id');
     localStorage.removeItem('selected_frequencia_file_name');
     fetchExcelFiles();
   };
@@ -276,14 +285,14 @@ export default function useFrequenciaAluno(aluno, isOpen) {
       setError(null);
       
       // Limpar cache de abas
-      sessionStorage.removeItem(`ms_worksheets_${selectedFileId}`);
+      sessionStorage.removeItem(`google_worksheets_${selectedFileId}`);
       
       // Limpar cache de todas as abas carregadas
       worksheets.forEach(sheet => {
-        sessionStorage.removeItem(`ms_sheet_${selectedFileId}_${sheet.name}`);
+        sessionStorage.removeItem(`google_sheet_${selectedFileId}_${sheet.name}`);
       });
       
-      showToast('Limpando cache e recarregando do OneDrive...', 'info');
+      showToast('Limpando cache e recarregando do Google Sheets...', 'info');
       fetchWorksheets(selectedFileId);
     }
   };
@@ -293,7 +302,6 @@ export default function useFrequenciaAluno(aluno, isOpen) {
     error,
     files,
     selectedFileId,
-    driveId,
     selectedFileName,
     worksheets,
     selectedSheetName,

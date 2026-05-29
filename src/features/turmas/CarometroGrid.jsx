@@ -46,19 +46,40 @@ export default function CarometroGrid({ students, photosMap, loading, error, onR
         gap: '1.25rem',
         marginTop: '1rem'
       }}>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft Logo" style={{ height: '36px' }} />
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" style={{ height: '36px' }} />
+          <span style={{ fontSize: '1.3rem', fontWeight: 700, fontFamily: 'Outfit, sans-serif', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>Drive</span>
+        </div>
         <div>
-          <h4 style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)' }}>Conectar ao OneDrive</h4>
+          <h4 style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)' }}>Conectar ao Google Drive</h4>
           <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '400px', lineHeight: 1.4 }}>
-            Conecte sua conta Microsoft para carregar e exibir as fotos dos alunos a partir da pasta <strong>Carômetro</strong> no seu OneDrive.
+            Conecte sua conta Google para carregar e exibir as fotos dos alunos a partir da pasta <strong>Carômetro</strong> no seu Google Drive.
           </p>
         </div>
         <button 
           onClick={onLogin}
-          className="btn btn-primary"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, padding: '0.65rem 1.25rem' }}
+          className="btn"
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem', 
+            margin: 0, 
+            padding: '0.65rem 1.25rem',
+            backgroundColor: '#ffffff',
+            border: '1px solid #dadce0',
+            color: '#3c4043',
+            borderRadius: '24px',
+            fontWeight: 700,
+            fontSize: '0.85rem',
+            boxShadow: '0 1px 2px rgba(60,64,67, 0.3), 0 2px 4px 1px rgba(60,64,67, 0.15)',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s, box-shadow 0.2s, transform 0.2s'
+          }}
+          onMouseOver={e => { e.currentTarget.style.backgroundColor = '#f8f9fa'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+          onMouseOut={e => { e.currentTarget.style.backgroundColor = '#ffffff'; e.currentTarget.style.transform = 'translateY(0)'; }}
         >
-          Conectar Conta Microsoft
+          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="" style={{ height: '16px' }} />
+          Conectar Conta Google
         </button>
       </div>
     );
@@ -119,7 +140,7 @@ export default function CarometroGrid({ students, photosMap, loading, error, onR
         <div>
           <h4 style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)' }}>Pasta de Fotos Indisponível</h4>
           <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '400px', lineHeight: 1.4 }}>
-            {error} Certifique-se de que a pasta raiz no seu OneDrive se chama exatamente <strong>Carômetro</strong> e possui uma subpasta correspondente para esta turma.
+            {error} Certifique-se de que a pasta raiz no seu Google Drive se chama exatamente <strong>Carômetro</strong> (ou <strong>Carometro</strong>) e possui uma subpasta correspondente para esta turma.
           </p>
         </div>
         <button 
@@ -247,7 +268,6 @@ export default function CarometroGrid({ students, photosMap, loading, error, onR
                       onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
                       onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
                       onError={(e) => {
-                        // Fallback em caso de erro ao renderizar imagem do link temporário
                         e.target.style.display = 'none';
                         e.target.parentElement.style.background = getAvatarColor(aluno.nome);
                         const initials = document.createElement('span');

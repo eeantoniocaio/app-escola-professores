@@ -20,7 +20,7 @@ export function normalizeName(str) {
 export function normalizeStudentName(name) {
   if (!name) return '';
   
-  // Remove extensões de imagem comuns (inclusive múltiplas extensões consecutivas)
+  // Remove extensões de imagem comuns
   let nameWithoutExt = name;
   while (/\.(jpg|jpeg|png|webp|gif)$/i.test(nameWithoutExt)) {
     nameWithoutExt = nameWithoutExt.replace(/\.[^/.]+$/, "");
@@ -39,7 +39,7 @@ export function normalizeStudentName(name) {
 }
 
 /**
- * Compara o nome de uma pasta no OneDrive com o nome da turma para ver se são correspondentes.
+ * Compara o nome de uma pasta com o nome da turma para ver se são correspondentes.
  * Trata variações como "6º Ano A", "6º A", "6A", "6-A", etc.
  */
 export function classNamesMatch(folderName, className) {
@@ -84,219 +84,102 @@ export function classNamesMatch(folderName, className) {
 }
 
 /**
- * Retorna a URL base correta do Graph API para um driveId específico
+ * Procura pela pasta "Carômetro" (ou "Carometro") no Google Drive
  */
-function getBaseUrl(driveId) {
-  return driveId === 'me' 
-    ? 'https://graph.microsoft.com/v1.0/me/drive' 
-    : `https://graph.microsoft.com/v1.0/drives/${driveId}`;
+export async function findCarometroFolder(accessToken) {
+  const query = `mimeType = 'application/vnd.google-apps.folder' and (name = 'Carômetro' or name = 'Carometro') and trashed = false`;
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)&pageSize=1`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    }
+  );
+  if (!response.ok) throw new Error('Falha ao pesquisar pasta "Carômetro" no Google Drive');
+  const data = await response.json();
+  if (data.files && data.files.length > 0) {
+    return { id: data.files[0].id, name: data.files[0].name };
+  }
+  return null;
 }
 
 /**
- * Procura pela pasta "Carômetro" em um Drive específico
+ * Encontra a subpasta da turma dentro da pasta Carômetro no Google Drive
  */
-async function findCarometroInDrive(accessToken, driveId) {
-  const headers = { Authorization: `Bearer ${accessToken}` };
-  const baseUrl = getBaseUrl(driveId);
+export async function findClassSubfolder(accessToken, carometroFolderId, className) {
+  const query = `mimeType = 'application/vnd.google-apps.folder' and '${carometroFolderId}' in parents and trashed = false`;
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)&pageSize=100`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    }
+  );
+  if (!response.ok) throw new Error('Falha ao listar subpastas da pasta Carômetro');
+  const data = await response.json();
+  const subfolders = data.files || [];
   
-  // 1. Tentar busca direta pela API Search
-  try {
-    const searchTerms = ['Carometro', 'Carômetro'];
-    for (const term of searchTerms) {
-      const response = await fetch(
-        `${baseUrl}/root/search(q='${encodeURIComponent(term)}')?$select=name,id,folder,parentReference`,
-        { headers }
-      );
-      const data = await response.json();
-      if (data && data.value) {
-        const found = data.value.find(item => {
-          const isFolder = item.folder || (item.file === undefined && item.image === undefined && item.package === undefined);
-          return isFolder && normalizeName(item.name) === 'carometro';
-        });
-        if (found) {
-          console.log(`[photoService] Encontrado Carômetro via search API no drive ${driveId}:`, found.name);
-          return { id: found.id, driveId: found.parentReference?.driveId || driveId };
-        }
-      }
-    }
-  } catch (err) {
-    console.warn(`Erro ao pesquisar pasta Carômetro via search no drive ${driveId}:`, err);
-  }
-
-  // 2. Fallback: Listar diretório raiz e buscar no primeiro nível de subpastas
-  try {
-    const response = await fetch(
-      `${baseUrl}/root/children?$select=name,id,folder,parentReference`,
-      { headers }
-    );
-    const data = await response.json();
-    if (data && data.value) {
-      // 2a. Buscar diretamente no raiz
-      const foundInRoot = data.value.find(item => {
-        const isFolder = item.folder || (item.file === undefined && item.image === undefined && item.package === undefined);
-        return isFolder && normalizeName(item.name) === 'carometro';
-      });
-      if (foundInRoot) {
-        console.log(`[photoService] Encontrado Carômetro no raiz do drive ${driveId}:`, foundInRoot.name);
-        return { id: foundInRoot.id, driveId: foundInRoot.parentReference?.driveId || driveId };
-      }
-
-      // 2b. Buscar dentro de pastas no raiz (como "2026", "Documentos")
-      const rootFolders = data.value.filter(item => {
-        const isFolder = item.folder || (item.file === undefined && item.image === undefined && item.package === undefined);
-        return isFolder;
-      });
-
-      rootFolders.sort((a, b) => {
-        const aIsYear = /^\d{4}$/.test(a.name);
-        const bIsYear = /^\d{4}$/.test(b.name);
-        if (aIsYear && !bIsYear) return -1;
-        if (!aIsYear && bIsYear) return 1;
-        return a.name.localeCompare(b.name);
-      });
-
-      console.log(`[photoService] Varrendo subpastas do raiz no drive ${driveId}:`, rootFolders.map(f => f.name));
-
-      const foldersToSearch = rootFolders.slice(0, 10);
-      const searchPromises = foldersToSearch.map(async (folder) => {
-        try {
-          const subRes = await fetch(
-            `${baseUrl}/items/${folder.id}/children?$select=name,id,folder,parentReference`,
-            { headers }
-          );
-          const subData = await subRes.json();
-          if (subData && subData.value) {
-            const found = subData.value.find(item => {
-              const isFolder = item.folder || (item.file === undefined && item.image === undefined && item.package === undefined);
-              return isFolder && normalizeName(item.name) === 'carometro';
-            });
-            if (found) return found;
-          }
-        } catch (subErr) {
-          console.warn(`Erro ao listar filhos da pasta ${folder.name} no drive ${driveId}:`, subErr);
-        }
-        return null;
-      });
-
-      const results = await Promise.all(searchPromises);
-      const foundInSubfolder = results.find(item => item !== null);
-      if (foundInSubfolder) {
-        console.log(`[photoService] Encontrado Carômetro dentro da pasta no drive ${driveId}:`, foundInSubfolder.name);
-        return { id: foundInSubfolder.id, driveId: foundInSubfolder.parentReference?.driveId || driveId };
-      }
-    }
-  } catch (err) {
-    console.error(`Erro no fallback de busca da pasta do Carômetro no drive ${driveId}:`, err);
-  }
-
-  return null;
+  // Filtragem flexível de nome de turma
+  const found = subfolders.find(folder => classNamesMatch(folder.name, className));
+  return found ? found.id : null;
 }
 
 /**
- * Procura pela pasta "Carômetro" nos itens compartilhados com o usuário (Shared with me)
+ * Lista todos os arquivos dentro de uma pasta no Google Drive
  */
-async function findCarometroInShared(accessToken) {
-  const headers = { Authorization: `Bearer ${accessToken}` };
-  try {
-    console.log('[photoService] Procurando pasta "Carômetro" nos itens compartilhados (sharedWithMe)...');
-    const response = await fetch(
-      'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe?$select=name,id,folder,remoteItem',
-      { headers }
-    );
-    const data = await response.json();
-    if (data && data.value) {
-      const found = data.value.find(item => {
-        const target = item.remoteItem || item;
-        const isFolder = target.folder || (target.file === undefined && target.image === undefined && target.package === undefined);
-        return isFolder && normalizeName(target.name) === 'carometro';
-      });
-      if (found) {
-        const remote = found.remoteItem || found;
-        console.log('[photoService] Encontrado Carômetro nos compartilhados:', remote.name, 'no drive', remote.parentReference?.driveId);
-        return { id: remote.id, driveId: remote.parentReference?.driveId };
-      }
+export async function fetchFilesInFolder(accessToken, folderId) {
+  const query = `'${folderId}' in parents and trashed = false`;
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType)&pageSize=1000`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` }
     }
-  } catch (err) {
-    console.warn('Erro ao buscar Carômetro nos itens compartilhados:', err);
-  }
-  return null;
+  );
+  if (!response.ok) throw new Error('Falha ao listar arquivos no Google Drive');
+  const data = await response.json();
+  return data.files || [];
 }
 
-/**
- * Varre o OneDrive para encontrar a pasta raiz do Carômetro, procurando em múltiplos drives.
- */
-export async function findCarometroFolder(accessToken, preferredDriveId = null) {
-  // 1. Tentar primeiro nos itens compartilhados com o usuário
-  const sharedResult = await findCarometroInShared(accessToken);
-  if (sharedResult) {
-    return sharedResult;
-  }
-
-  // 2. Fallback: procurar nos drives específicos
-  const drivesToTry = [];
-  
-  if (preferredDriveId && preferredDriveId !== 'me') {
-    drivesToTry.push(preferredDriveId);
-  }
-  // Drive padrão da planilha do professor se não for a preferida
-  if (preferredDriveId !== '302ec50fbf74a18d') {
-    drivesToTry.push('302ec50fbf74a18d');
-  }
-  drivesToTry.push('me');
-
-  const uniqueDrives = Array.from(new Set(drivesToTry));
-  console.log('[photoService] Procurando pasta "Carômetro" nos drives:', uniqueDrives);
-
-  for (const driveId of uniqueDrives) {
-    const result = await findCarometroInDrive(accessToken, driveId);
-    if (result) {
-      return result;
-    }
-  }
-
-  return null;
-}
+// Cache global em memória para os Blob URLs das fotos dos alunos
+const blobUrlCache = {};
 
 /**
- * Encontra a subpasta da turma dentro da pasta Carômetro
+ * Baixa um arquivo de imagem do Google Drive e gera uma URL de Blob local temporária
  */
-export async function findClassSubfolder(accessToken, carometroFolderId, driveId, className) {
-  const headers = { Authorization: `Bearer ${accessToken}` };
-  const baseUrl = getBaseUrl(driveId);
+export async function downloadFileAsBlobUrl(accessToken, fileId) {
+  if (blobUrlCache[fileId]) {
+    return blobUrlCache[fileId];
+  }
 
   try {
     const response = await fetch(
-      `${baseUrl}/items/${carometroFolderId}/children?$select=name,id,folder`,
-      { headers }
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }
     );
-    const data = await response.json();
-    if (data && data.value) {
-      const found = data.value.find(item => {
-        if (!item.folder) return false;
-        return classNamesMatch(item.name, className);
-      });
-      if (found) return found.id;
-    }
+    if (!response.ok) throw new Error(`Falha ao carregar imagem: ${response.statusText}`);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    blobUrlCache[fileId] = blobUrl;
+    return blobUrl;
   } catch (err) {
-    console.error(`Erro ao buscar subpasta da turma ${className}:`, err);
+    console.error(`[photoService] Erro ao obter blob para o arquivo ${fileId}:`, err);
+    return null;
   }
-  return null;
 }
 
 /**
- * Constrói o mapa de fotos vinculando os nomes normalizados às URLs temporárias do OneDrive
+ * Constrói o mapa de fotos vinculando os nomes normalizados das imagens aos seus IDs do Google Drive
  */
 export function buildPhotosMap(files) {
   const map = {};
   if (!files) return map;
 
   files.forEach(file => {
-    const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
-    const downloadUrl = file['@microsoft.graph.downloadUrl'];
-
-    if (isImage && downloadUrl) {
+    const isImage = file.mimeType?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+    if (isImage) {
       const normName = normalizeStudentName(file.name);
-      map[normName] = downloadUrl;
+      // Armazena o ID do arquivo no Google Drive
+      map[normName] = file.id;
     }
   });
 
@@ -305,8 +188,7 @@ export function buildPhotosMap(files) {
 
 /**
  * Busca uma foto correspondente a um nome de aluno dentro do mapa de fotos.
- * Realiza comparação tolerante, cobrindo truncamentos de sobrenomes, roll numbers (números de chamada)
- * e pequenas discrepâncias ortográficas.
+ * Realiza comparação tolerante de nomes (igual ao original).
  */
 export function findPhotoInMap(studentName, photosMap) {
   if (!studentName || !photosMap) return null;
@@ -340,11 +222,10 @@ export function findPhotoInMap(studentName, photosMap) {
     const firstNameMatches = keyFiltered[0] === studentFiltered[0];
     if (!firstNameMatches) continue;
     
-    // REGRA DE OURO: Se o nome do arquivo contém sobrenomes que NÃO existem no nome do aluno,
-    // então a foto NÃO pertence a esse aluno (evita confundir Ana Beatriz Bueno com Ana Beatriz de Lima).
+    // Evita sobrenomes conflitantes
     const keyUnmatched = keyFiltered.filter(t => !studentFiltered.includes(t) && t.length > 1);
     if (keyUnmatched.length > 0) {
-      continue; // Pula este arquivo, pois tem sobrenomes conflitantes
+      continue;
     }
     
     // Contagem de tokens correspondentes
@@ -360,7 +241,7 @@ export function findPhotoInMap(studentName, photosMap) {
         bestMatchScore = matchCount;
         bestMatchKey = key;
       } else if (matchCount === bestMatchScore && bestMatchKey !== null) {
-        // Desempate: escolher o nome com comprimento/termo mais próximo
+        // Desempate
         const prevKeyTokens = bestMatchKey.split(' ').filter(Boolean).filter(t => !PREPOSITIONS.has(t));
         const diffCurrent = Math.abs(keyFiltered.length - studentFiltered.length);
         const diffPrev = Math.abs(prevKeyTokens.length - studentFiltered.length);
@@ -375,13 +256,11 @@ export function findPhotoInMap(studentName, photosMap) {
     const keyTokens = bestMatchKey.split(' ').filter(Boolean);
     const keyFiltered = keyTokens.filter(t => !PREPOSITIONS.has(t));
     
-    // Se ambos tiverem pelo menos 2 termos significativos, exigimos pelo menos 2 termos em comum
     if (studentFiltered.length >= 2 && keyFiltered.length >= 2) {
       if (bestMatchScore >= 2) {
         return photosMap[bestMatchKey];
       }
     } else {
-      // Se um deles só tiver um termo (ex: arquivo "Laura.jpg" e aluno "Laura Monteiro")
       if (bestMatchScore >= 1) {
         return photosMap[bestMatchKey];
       }

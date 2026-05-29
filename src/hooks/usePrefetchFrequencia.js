@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useMicrosoftAuth } from '../app/providers/MicrosoftAuthProvider';
+import { useGoogleAuth } from '../app/providers/GoogleAuthProvider';
 
-const DEFAULT_SPREADSHEET_URL = "https://1drv.ms/x/c/302ec50fbf74a18d/IQCCbssSwqdKSpwHH1junCEDAevG2GvY97aCI3Kh4V4eGmY?e=IpMZWm";
+const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit";
+
+const getSpreadsheetIdFromUrl = (url) => {
+  if (!url) return '';
+  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return match ? match[1] : url;
+};
 
 const normalizeTurmaForMatching = (name) => {
   if (!name) return '';
@@ -13,7 +19,7 @@ const normalizeTurmaForMatching = (name) => {
 };
 
 export default function usePrefetchFrequencia(activeClassName) {
-  const { accessToken } = useMicrosoftAuth();
+  const { accessToken } = useGoogleAuth();
   const [prefetching, setPrefetching] = useState(false);
 
   useEffect(() => {
@@ -27,33 +33,29 @@ export default function usePrefetchFrequencia(activeClassName) {
       try {
         // 1. Obter ou resolver o file ID
         let fileId = localStorage.getItem('selected_frequencia_file_id');
-        let driveId = localStorage.getItem('selected_frequencia_drive_id') || 'me';
 
         if (!fileId) {
           // Resolver planilha padrão
-          const base64Value = btoa(DEFAULT_SPREADSHEET_URL);
-          const sharingToken = "u!" + base64Value
-            .replace(/=/g, '')
-            .replace(/\//g, '-')
-            .replace(/\+/g, '_');
-          
+          const resolvedId = getSpreadsheetIdFromUrl(DEFAULT_SPREADSHEET_URL);
           const response = await fetch(
-            `https://graph.microsoft.com/v1.0/shares/${sharingToken}/driveItem`,
+            `https://sheets.googleapis.com/v4/spreadsheets/${resolvedId}?fields=properties.title,sheets.properties(title,sheetId)`,
             {
               headers: { Authorization: `Bearer ${accessToken}` },
               signal: controller.signal
             }
           );
-          const data = await response.json();
-          if (data && data.id) {
-            fileId = data.id;
-            driveId = data.parentReference?.driveId || 'me';
-            
-            // Salvar no localStorage para evitar resoluções futuras
-            localStorage.setItem('selected_frequencia_file_id', fileId);
-            localStorage.setItem('selected_frequencia_drive_id', driveId);
-            if (data.name) {
-              localStorage.setItem('selected_frequencia_file_name', data.name);
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.properties) {
+              fileId = resolvedId;
+              localStorage.setItem('selected_frequencia_file_id', fileId);
+              localStorage.setItem('selected_frequencia_file_name', data.properties.title || 'Planilha de Frequência');
+              
+              const mappedSheets = data.sheets?.map(sheet => ({
+                id: sheet.properties.sheetId,
+                name: sheet.properties.title
+              })) || [];
+              sessionStorage.setItem(`google_worksheets_${fileId}`, JSON.stringify(mappedSheets));
             }
           }
         }
@@ -61,7 +63,7 @@ export default function usePrefetchFrequencia(activeClassName) {
         if (!fileId || !isMounted) return;
 
         // 2. Buscar abas (se não estiver em cache)
-        const worksheetsCacheKey = `ms_worksheets_${fileId}`;
+        const worksheetsCacheKey = `google_worksheets_${fileId}`;
         let worksheets = null;
         const cachedWorksheets = sessionStorage.getItem(worksheetsCacheKey);
 
@@ -75,16 +77,21 @@ export default function usePrefetchFrequencia(activeClassName) {
 
         if (!worksheets) {
           const response = await fetch(
-            `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/workbook/worksheets?$select=name,id`,
+            `https://sheets.googleapis.com/v4/spreadsheets/${fileId}?fields=sheets.properties(title,sheetId)`,
             {
               headers: { Authorization: `Bearer ${accessToken}` },
               signal: controller.signal
             }
           );
-          const data = await response.json();
-          if (data && data.value) {
-            worksheets = data.value;
-            sessionStorage.setItem(worksheetsCacheKey, JSON.stringify(worksheets));
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.sheets) {
+              worksheets = data.sheets.map(sheet => ({
+                id: sheet.properties.sheetId,
+                name: sheet.properties.title
+              }));
+              sessionStorage.setItem(worksheetsCacheKey, JSON.stringify(worksheets));
+            }
           }
         }
 
@@ -100,23 +107,25 @@ export default function usePrefetchFrequencia(activeClassName) {
         if (!matchingSheet || !isMounted) return;
 
         const sheetName = matchingSheet.name;
-        const sheetCacheKey = `ms_sheet_${fileId}_${sheetName}`;
+        const sheetCacheKey = `google_sheet_${fileId}_${sheetName}`;
         const cachedSheetData = sessionStorage.getItem(sheetCacheKey);
 
         // 4. Buscar dados da aba (se não estiver em cache)
         if (!cachedSheetData) {
-          console.log(`[Prefetch] Carregando dados da aba "${sheetName}" em segundo plano...`);
+          console.log(`[Prefetch] Carregando dados da aba "${sheetName}" do Google Sheets em segundo plano...`);
           const response = await fetch(
-            `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}/usedRange(valuesOnly=true)?$select=values`,
+            `https://sheets.googleapis.com/v4/spreadsheets/${fileId}/values/${encodeURIComponent(sheetName)}?valueRenderOption=FORMATTED_VALUE`,
             {
               headers: { Authorization: `Bearer ${accessToken}` },
               signal: controller.signal
             }
           );
-          const data = await response.json();
-          if (data && data.values && isMounted) {
-            sessionStorage.setItem(sheetCacheKey, JSON.stringify(data.values));
-            console.log(`[Prefetch] Aba "${sheetName}" carregada com sucesso e salva em cache.`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.values && isMounted) {
+              sessionStorage.setItem(sheetCacheKey, JSON.stringify(data.values));
+              console.log(`[Prefetch] Aba "${sheetName}" carregada com sucesso e salva em cache.`);
+            }
           }
         } else {
           console.log(`[Prefetch] Aba "${sheetName}" já está no cache.`);

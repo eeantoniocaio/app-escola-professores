@@ -4,7 +4,7 @@ import useCarometro from '../../hooks/useCarometro';
 import { findPhotoInMap } from '../../services/photoService';
 
 export default function CarometroModal({ aluno, isOpen, onClose }) {
-  const { photosMap, loading, error, handleRefresh, needsAuth, loginMicrosoft } = useCarometro(aluno?.turma);
+  const { photosMap, loading, error, handleRefresh, needsAuth, loginMicrosoft: loginGoogle } = useCarometro(aluno?.turma);
 
   if (!isOpen || !aluno) return null;
 
@@ -40,25 +40,46 @@ export default function CarometroModal({ aluno, isOpen, onClose }) {
           
           {needsAuth ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem', padding: '2rem 1rem', textAlign: 'center' }}>
-              <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft Logo" style={{ height: '32px' }} />
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" style={{ height: '32px' }} />
+                <span style={{ fontSize: '1.2rem', fontWeight: 700, fontFamily: 'Outfit, sans-serif', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>Drive</span>
+              </div>
               <div>
-                <h4 style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)' }}>Conectar ao OneDrive</h4>
+                <h4 style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)' }}>Conectar ao Google Drive</h4>
                 <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                  É necessário conectar sua conta Microsoft para carregar a foto do aluno.
+                  É necessário conectar sua conta Google para carregar a foto do aluno.
                 </p>
               </div>
               <button 
-                onClick={loginMicrosoft}
-                className="btn btn-primary"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
+                onClick={loginGoogle}
+                className="btn"
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  margin: 0,
+                  padding: '0.6rem 1.2rem',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #dadce0',
+                  color: '#3c4043',
+                  borderRadius: '24px',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  boxShadow: '0 1px 2px rgba(60,64,67, 0.3), 0 2px 4px 1px rgba(60,64,67, 0.15)',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s, box-shadow 0.2s, transform 0.2s'
+                }}
+                onMouseOver={e => { e.currentTarget.style.backgroundColor = '#f8f9fa'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                onMouseOut={e => { e.currentTarget.style.backgroundColor = '#ffffff'; e.currentTarget.style.transform = 'translateY(0)'; }}
               >
-                Conectar Conta Microsoft
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="" style={{ height: '14px' }} />
+                Conectar Conta Google
               </button>
             </div>
           ) : loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '3rem 0' }}>
               <RefreshCw size={36} className="spin-animation" color="var(--color-primary)" />
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Consultando arquivo de fotos no OneDrive...</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Consultando arquivo de fotos no Google Drive...</span>
             </div>
           ) : (
             <div style={{ 
@@ -165,7 +186,7 @@ export default function CarometroModal({ aluno, isOpen, onClose }) {
                   lineHeight: '1.3'
                 }}>
                   <BadgeAlert size={16} style={{ flexShrink: 0 }} />
-                  <span>Foto não encontrada. Crie a pasta <strong>Carômetro/{aluno.turma}</strong> no OneDrive com a foto do aluno.</span>
+                  <span>Foto não encontrada. Crie a pasta <strong>Carômetro/{aluno.turma}</strong> no Google Drive com a foto do aluno.</span>
                 </div>
               )}
 

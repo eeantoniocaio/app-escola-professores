@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
 import { GlobalDataProvider } from './providers/GlobalDataProvider';
 import { ToastProvider } from './providers/ToastProvider';
-import { MicrosoftAuthProvider } from './providers/MicrosoftAuthProvider';
+import { GoogleAuthProvider } from './providers/GoogleAuthProvider';
 import MainLayout from '../shared/ui/layouts/MainLayout';
 import InstallPWA from '../shared/ui/InstallPWA';
 import Login from '../features/auth/Login';
@@ -61,57 +61,15 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const isMsalWindow = typeof window !== 'undefined' && 
-    ((window.opener && window.opener !== window) || (window.parent && window.parent !== window)) && 
-    window.name && 
-    (window.name.includes("msal.") || window.name.includes("msal-"));
-
-  if (isMsalWindow) {
-    return (
-      <MicrosoftAuthProvider>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '100vh', 
-          fontFamily: 'sans-serif', 
-          color: '#4B5563', 
-          backgroundColor: '#F9FAFB',
-          textAlign: 'center',
-          padding: '2rem'
-        }}>
-          <div>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              border: '4px solid #E5E7EB',
-              borderTopColor: '#3B82F6',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 1rem'
-            }}></div>
-            <style>{`
-              @keyframes spin {
-                to { transform: rotate(360deg); }
-              }
-            `}</style>
-            <h3 style={{ margin: '0 0 0.5rem', fontWeight: 600 }}>Conectando com a Microsoft...</h3>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: '#6B7280' }}>Esta janela fechará automaticamente.</p>
-          </div>
-        </div>
-      </MicrosoftAuthProvider>
-    );
-  }
-
   return (
     <ToastProvider>
       <AuthProvider>
-        <MicrosoftAuthProvider>
+        <GoogleAuthProvider>
           <BrowserRouter>
             <AppRoutes />
             <InstallPWA />
           </BrowserRouter>
-        </MicrosoftAuthProvider>
+        </GoogleAuthProvider>
       </AuthProvider>
     </ToastProvider>
   );

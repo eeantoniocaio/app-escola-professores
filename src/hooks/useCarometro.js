@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useMicrosoftAuth } from '../app/providers/MicrosoftAuthProvider';
+import { useGoogleAuth } from '../app/providers/GoogleAuthProvider';
 import { useToast } from '../app/providers/ToastProvider';
 import { 
   findCarometroFolder, 
   findClassSubfolder, 
+  fetchFilesInFolder,
+  downloadFileAsBlobUrl,
   buildPhotosMap 
 } from '../services/photoService';
 
 export default function useCarometro(activeClassName) {
-  const { accessToken, loginMicrosoft } = useMicrosoftAuth();
+  const { accessToken, loginGoogle } = useGoogleAuth();
   const { showToast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -30,18 +32,14 @@ export default function useCarometro(activeClassName) {
     try {
       // 1. Resolver pasta raiz do "Carômetro" (tenta ler do cache do localStorage primeiro)
       let carometroFolderId = localStorage.getItem('carometro_root_folder_id');
-      let driveId = localStorage.getItem('carometro_root_drive_id') || 'me';
 
       if (!carometroFolderId || forceRefresh) {
-        const preferredDriveId = localStorage.getItem('selected_frequencia_drive_id') || 'me';
-        const rootFolder = await findCarometroFolder(accessToken, preferredDriveId);
+        const rootFolder = await findCarometroFolder(accessToken);
         if (rootFolder) {
           carometroFolderId = rootFolder.id;
-          driveId = rootFolder.driveId;
           localStorage.setItem('carometro_root_folder_id', carometroFolderId);
-          localStorage.setItem('carometro_root_drive_id', driveId);
         } else {
-          setError('Pasta "Carômetro" não encontrada no seu OneDrive.');
+          setError('Pasta "Carômetro" não encontrada no seu Google Drive.');
           setLoading(false);
           return;
         }
@@ -52,7 +50,7 @@ export default function useCarometro(activeClassName) {
       let classFolderId = sessionStorage.getItem(subfolderCacheKey);
 
       if (!classFolderId || forceRefresh) {
-        classFolderId = await findClassSubfolder(accessToken, carometroFolderId, driveId, activeClassName);
+        classFolderId = await findClassSubfolder(accessToken, carometroFolderId, activeClassName);
         if (classFolderId) {
           sessionStorage.setItem(subfolderCacheKey, classFolderId);
         } else {
@@ -62,57 +60,43 @@ export default function useCarometro(activeClassName) {
         }
       }
 
-      // 3. Buscar arquivos da subpasta (se tiver em cache, carrega instantaneamente)
-      const photosCacheKey = `carometro_photos_${classFolderId}`;
+      // 3. Buscar metadados de arquivos na subpasta (se tiver em cache, carrega instantaneamente)
+      const photosCacheKey = `carometro_files_${classFolderId}`;
       const cachedPhotos = sessionStorage.getItem(photosCacheKey);
+      let rawMap = {};
 
       if (cachedPhotos && !forceRefresh) {
         try {
-          setPhotosMap(JSON.parse(cachedPhotos));
-          setLoading(false);
-          return;
+          rawMap = JSON.parse(cachedPhotos);
         } catch (e) {
           console.warn('Erro ao ler cache de fotos do sessionStorage, consultando API...', e);
         }
       }
 
-      // Buscar do Graph API
-      const baseUrl = driveId === 'me' 
-        ? 'https://graph.microsoft.com/v1.0/me/drive' 
-        : `https://graph.microsoft.com/v1.0/drives/${driveId}`;
-
-      const fetchUrl = `${baseUrl}/items/${classFolderId}/children`;
-      console.log(`[useCarometro] Buscando fotos da turma "${activeClassName}" em:`, fetchUrl);
-
-      const response = await fetch(
-        fetchUrl,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }
-      );
-      const data = await response.json();
-      console.log('[useCarometro] Resposta da API:', data);
-
-      if (data && data.value) {
-        console.log(`[useCarometro] Encontrados ${data.value.length} arquivos na pasta.`);
-        if (data.value.length > 0) {
-          console.log('[useCarometro] Exemplo do primeiro arquivo retornado:', {
-            name: data.value[0].name,
-            id: data.value[0].id,
-            hasDownloadUrl: !!data.value[0]['@microsoft.graph.downloadUrl'],
-            downloadUrlPreview: data.value[0]['@microsoft.graph.downloadUrl'] ? data.value[0]['@microsoft.graph.downloadUrl'].substring(0, 60) + '...' : 'null',
-            keys: Object.keys(data.value[0])
-          });
-        }
-        
-        const mapped = buildPhotosMap(data.value);
-        console.log('[useCarometro] Mapa de fotos gerado:', mapped);
-        
-        setPhotosMap(mapped);
-        sessionStorage.setItem(photosCacheKey, JSON.stringify(mapped));
-      } else {
-        setError('Não foi possível obter os arquivos da pasta da turma.');
+      if (Object.keys(rawMap).length === 0 || forceRefresh) {
+        console.log(`[useCarometro] Buscando fotos da turma "${activeClassName}" no GDrive...`);
+        const files = await fetchFilesInFolder(accessToken, classFolderId);
+        rawMap = buildPhotosMap(files);
+        sessionStorage.setItem(photosCacheKey, JSON.stringify(rawMap));
       }
+
+      // 4. Baixar arquivos de imagem em paralelo e converter para Blob URLs locais
+      const keys = Object.keys(rawMap);
+      const downloadPromises = keys.map(async (key) => {
+        const fileId = rawMap[key];
+        const blobUrl = await downloadFileAsBlobUrl(accessToken, fileId);
+        return { key, blobUrl };
+      });
+
+      const results = await Promise.all(downloadPromises);
+      const finalMap = {};
+      results.forEach(({ key, blobUrl }) => {
+        if (blobUrl) {
+          finalMap[key] = blobUrl;
+        }
+      });
+
+      setPhotosMap(finalMap);
     } catch (err) {
       console.error('Erro ao processar carômetro:', err);
       setError('Erro ao carregar fotos do Carômetro.');
@@ -127,7 +111,7 @@ export default function useCarometro(activeClassName) {
   }, [loadPhotos]);
 
   const handleRefresh = () => {
-    showToast('Limpando cache de fotos e recarregando...', 'info');
+    showToast('Limpando cache de fotos e recarregando do Google Drive...', 'info');
     loadPhotos(true);
   };
 
@@ -137,6 +121,6 @@ export default function useCarometro(activeClassName) {
     photosMap,
     handleRefresh,
     needsAuth: !accessToken,
-    loginMicrosoft
+    loginMicrosoft: loginGoogle // mantém a assinatura para simplificar compatibilidade no Turmas.jsx
   };
 }
