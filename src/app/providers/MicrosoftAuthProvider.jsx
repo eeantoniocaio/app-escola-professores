@@ -30,7 +30,7 @@ function MicrosoftAuthInner({ children, setMsAccount, setAccessToken }) {
       
       // Tentar obter o token de acesso silenciosamente
       const tokenRequest = {
-        scopes: ['User.Read', 'Files.Read', 'Files.Read.All'],
+        scopes: ['User.Read', 'Files.Read'],
         account: activeAccount
       };
       
@@ -46,7 +46,7 @@ function MicrosoftAuthInner({ children, setMsAccount, setAccessToken }) {
       // tentar login silencioso via SSO usando o email do professor como loginHint.
       // Isso conecta automaticamente em segundo plano se o navegador tiver uma sessão ativa da Microsoft.
       const silentRequest = {
-        scopes: ['User.Read', 'Files.Read', 'Files.Read.All'],
+        scopes: ['User.Read', 'Files.Read'],
         loginHint: session.user.email
       };
 
@@ -105,7 +105,7 @@ export function MicrosoftAuthProvider({ children }) {
 
     try {
       const loginRequest = {
-        scopes: ['User.Read', 'Files.Read', 'Files.Read.All']
+        scopes: ['User.Read', 'Files.Read']
       };
       // Usar redirect em vez de popup para suportar contas escolares/governamentais federadas (ex: SEDuc SP)
       await msalInstance.loginRedirect(loginRequest);
@@ -123,7 +123,7 @@ export function MicrosoftAuthProvider({ children }) {
 
     try {
       const tokenRequest = {
-        scopes: ['User.Read', 'Files.Read', 'Files.Read.All'],
+        scopes: ['User.Read', 'Files.Read'],
         account: accounts[0]
       };
       const response = await msalInstance.acquireTokenSilent(tokenRequest);
