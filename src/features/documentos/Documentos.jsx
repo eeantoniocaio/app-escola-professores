@@ -1,72 +1,40 @@
 import React from 'react';
-import { FolderOpen, ExternalLink, FileText, Download, ShieldCheck } from 'lucide-react';
+import { FolderOpen, ExternalLink, ShieldCheck } from 'lucide-react';
 
 export default function Documentos() {
   const sharepointUrl = "https://seducsp-my.sharepoint.com/:f:/g/personal/e017590w10_professor_educacao_sp_gov_br/IgDEQvVMOCUnT7W-mgep5eG1Ab96PZOcdjFdiWRXUjT1GYA?e=BR8Kvj";
 
   return (
-    <div style={{ animation: 'fadeIn 0.5s ease-out', maxWidth: '800px', margin: '0 auto', padding: '1rem' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '2rem', margin: 0, marginBottom: '0.5rem' }}>Documentos</h2>
-        <p style={{ color: 'var(--text-muted)', margin: 0 }}>
-          Modelos, diretrizes e formulários compartilhados pela Secretaria e Coordenação.
-        </p>
+    <div style={{ animation: 'fadeIn 0.5s ease-out', maxWidth: '1200px', margin: '0 auto', padding: '1rem' }}>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h2 style={{ fontSize: '2rem', margin: 0, marginBottom: '0.5rem' }}>Documentos Compartilhados</h2>
+          <p style={{ color: 'var(--text-muted)', margin: 0 }}>
+            Pasta de arquivos da Secretaria e Coordenação da E.E. Antônio Caio.
+          </p>
+        </div>
       </div>
 
-      <div style={{
-        background: 'white',
-        border: '1px solid var(--border-light)',
-        borderRadius: '16px',
-        padding: '2.5rem',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.03)',
-        textAlign: 'center',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '1.5rem',
-        marginTop: '1rem'
+      {/* Faixa de Informação e Fallback */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        backgroundColor: '#f0f9ff', 
+        border: '1px solid #bae6fd', 
+        padding: '1rem 1.5rem', 
+        borderRadius: '12px',
+        gap: '1rem',
+        flexWrap: 'wrap',
+        marginBottom: '1.5rem',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
       }}>
-        <div style={{
-          width: '70px',
-          height: '70px',
-          borderRadius: '50%',
-          background: 'rgba(14, 165, 233, 0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--primary-color)',
-          marginBottom: '0.5rem'
-        }}>
-          <FolderOpen size={36} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1', minWidth: '280px' }}>
+          <ShieldCheck size={24} style={{ color: '#0284c7', flexShrink: 0 }} />
+          <p style={{ margin: 0, fontSize: '0.9rem', color: '#0369a1', lineHeight: 1.45 }}>
+            <strong>Dica de Acesso:</strong> Se a visualização abaixo não carregar devido a bloqueios de segurança da conta institucional ou do navegador, clique no botão ao lado para abrir a pasta diretamente.
+          </p>
         </div>
-
-        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, color: '#1e293b' }}>
-          Pasta de Arquivos - E.E. Antônio Caio
-        </h3>
-        
-        <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6, maxWidth: '500px', margin: 0 }}>
-          Acesse a pasta compartilhada no OneDrive/SharePoint institucional da SEDUC-SP para visualizar ou fazer download de documentos oficiais, comunicados e formulários escolares.
-        </p>
-
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: '1rem', 
-          width: '100%', 
-          maxWidth: '450px',
-          margin: '0.5rem 0',
-          textAlign: 'left'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748b', backgroundColor: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-            <FileText size={16} style={{ color: '#0ea5e9' }} />
-            <span>Formatos: PDF, Word, Excel</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748b', backgroundColor: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-            <ShieldCheck size={16} style={{ color: '#10b981' }} />
-            <span>Domínio: @educacao.sp.gov.br</span>
-          </div>
-        </div>
-
         <a 
           href={sharepointUrl}
           target="_blank"
@@ -74,34 +42,49 @@ export default function Documentos() {
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.75rem',
+            gap: '0.5rem',
             background: 'linear-gradient(135deg, #0ea5e9, #3b82f6)',
             color: 'white',
             textDecoration: 'none',
-            borderRadius: '12px',
-            padding: '1rem 2rem',
+            borderRadius: '8px',
+            padding: '0.65rem 1.25rem',
             fontWeight: 700,
-            fontSize: '1rem',
-            cursor: 'pointer',
-            boxShadow: '0 4px 15px rgba(14, 165, 233, 0.3)',
+            fontSize: '0.9rem',
+            boxShadow: '0 4px 10px rgba(14, 165, 233, 0.25)',
             transition: 'transform 0.2s, box-shadow 0.2s',
-            marginTop: '0.5rem',
-            width: '100%',
-            maxWidth: '350px'
+            cursor: 'pointer'
           }}
           onMouseOver={e => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(14, 165, 233, 0.4)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 6px 12px rgba(14, 165, 233, 0.3)';
           }}
           onMouseOut={e => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 15px rgba(14, 165, 233, 0.3)';
+            e.currentTarget.style.boxShadow = '0 4px 10px rgba(14, 165, 233, 0.25)';
           }}
         >
-          <span>Abrir Pasta de Documentos</span>
-          <ExternalLink size={18} />
+          <span>Abrir em Nova Aba</span>
+          <ExternalLink size={16} />
         </a>
+      </div>
+
+      {/* Container do Iframe do SharePoint */}
+      <div style={{
+        width: '100%',
+        height: '750px',
+        background: 'white',
+        border: '1px solid var(--border-light)',
+        borderRadius: '16px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+        overflow: 'hidden',
+        position: 'relative'
+      }}>
+        <iframe 
+          src={sharepointUrl} 
+          style={{ width: '100%', height: '100%', border: 'none' }}
+          title="Pasta de Documentos SharePoint"
+          allow="autoplay; encrypted-media"
+        />
       </div>
     </div>
   );
