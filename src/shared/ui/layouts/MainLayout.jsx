@@ -109,7 +109,7 @@ export default function MainLayout() {
   return (
     <div className="app-container">
       <header className="header">
-        <div className="header-brand" onClick={() => navigate(userRole === 'secretaria' ? '/turmas' : '/')} style={{ cursor: 'pointer' }}>
+        <div className="header-brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <img src={logoUrl} alt="Logo" style={{ height: '44px', objectFit: 'contain' }} />
           <div className="brand-title">
             <h1>Portal de Evidências</h1>
@@ -122,11 +122,9 @@ export default function MainLayout() {
         </button>
 
         <div className={`header-actions ${isMobileMenuOpen ? 'mobile-open' : ''}`} style={{ gap: '0.25rem' }}>
-          {userRole !== 'secretaria' && (
-            <Link to="/" className={`nav-link ${isActive('/')}`} onClick={() => setIsMobileMenuOpen(false)}>
-              <HomeIcon size={18} /> Início
-            </Link>
-          )}
+          <Link to="/" className={`nav-link ${isActive('/')}`} onClick={() => setIsMobileMenuOpen(false)}>
+            <HomeIcon size={18} /> Início
+          </Link>
           
           {userRole === 'gestao' && (
             <>

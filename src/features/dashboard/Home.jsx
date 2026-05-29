@@ -47,20 +47,24 @@ export default function Home() {
           <span>Mapa de Classe</span>
         </button>
 
-        <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias')}>
-          <ShieldAlert />
-          <span>Ocorrências</span>
-        </button>
+        {userRole !== 'secretaria' && (
+          <>
+            <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias')}>
+              <ShieldAlert />
+              <span>Ocorrências</span>
+            </button>
 
-        <button className="dashboard-action-card" onClick={() => navigate('/reposicoes')}>
-          <PenTool />
-          <span style={{ textAlign: 'center', fontSize: '1rem' }}>Questões de reposições</span>
-        </button>
+            <button className="dashboard-action-card" onClick={() => navigate('/reposicoes')}>
+              <PenTool />
+              <span style={{ textAlign: 'center', fontSize: '1rem' }}>Questões de reposições</span>
+            </button>
 
-        <button className="dashboard-action-card" onClick={() => navigate('/boas-praticas')}>
-          <Star />
-          <span>Boas Práticas</span>
-        </button>
+            <button className="dashboard-action-card" onClick={() => navigate('/boas-praticas')}>
+              <Star />
+              <span>Boas Práticas</span>
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
