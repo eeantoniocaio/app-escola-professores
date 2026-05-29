@@ -321,6 +321,10 @@ export function findPhotoInMap(studentName, photosMap) {
   const studentTokens = studentNorm.split(' ').filter(Boolean);
   if (studentTokens.length === 0) return null;
   
+  const PREPOSITIONS = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+  const studentFiltered = studentTokens.filter(t => !PREPOSITIONS.has(t));
+  if (studentFiltered.length === 0) return null;
+  
   const keys = Object.keys(photosMap);
   let bestMatchKey = null;
   let bestMatchScore = 0;
@@ -329,14 +333,24 @@ export function findPhotoInMap(studentName, photosMap) {
     const keyTokens = key.split(' ').filter(Boolean);
     if (keyTokens.length === 0) continue;
     
+    const keyFiltered = keyTokens.filter(t => !PREPOSITIONS.has(t));
+    if (keyFiltered.length === 0) continue;
+    
     // O primeiro nome do aluno e o do arquivo devem bater exatamente
-    const firstNameMatches = keyTokens[0] === studentTokens[0];
+    const firstNameMatches = keyFiltered[0] === studentFiltered[0];
     if (!firstNameMatches) continue;
+    
+    // REGRA DE OURO: Se o nome do arquivo contém sobrenomes que NÃO existem no nome do aluno,
+    // então a foto NÃO pertence a esse aluno (evita confundir Ana Beatriz Bueno com Ana Beatriz de Lima).
+    const keyUnmatched = keyFiltered.filter(t => !studentFiltered.includes(t) && t.length > 1);
+    if (keyUnmatched.length > 0) {
+      continue; // Pula este arquivo, pois tem sobrenomes conflitantes
+    }
     
     // Contagem de tokens correspondentes
     let matchCount = 0;
-    for (const token of keyTokens) {
-      if (studentTokens.includes(token)) {
+    for (const token of keyFiltered) {
+      if (studentFiltered.includes(token)) {
         matchCount++;
       }
     }
@@ -347,9 +361,9 @@ export function findPhotoInMap(studentName, photosMap) {
         bestMatchKey = key;
       } else if (matchCount === bestMatchScore && bestMatchKey !== null) {
         // Desempate: escolher o nome com comprimento/termo mais próximo
-        const prevKeyTokens = bestMatchKey.split(' ').filter(Boolean);
-        const diffCurrent = Math.abs(keyTokens.length - studentTokens.length);
-        const diffPrev = Math.abs(prevKeyTokens.length - studentTokens.length);
+        const prevKeyTokens = bestMatchKey.split(' ').filter(Boolean).filter(t => !PREPOSITIONS.has(t));
+        const diffCurrent = Math.abs(keyFiltered.length - studentFiltered.length);
+        const diffPrev = Math.abs(prevKeyTokens.length - studentFiltered.length);
         if (diffCurrent < diffPrev) {
           bestMatchKey = key;
         }
@@ -359,9 +373,10 @@ export function findPhotoInMap(studentName, photosMap) {
   
   if (bestMatchKey) {
     const keyTokens = bestMatchKey.split(' ').filter(Boolean);
+    const keyFiltered = keyTokens.filter(t => !PREPOSITIONS.has(t));
     
-    // Se ambos tiverem pelo menos 2 termos, exigimos pelo menos 2 termos em comum
-    if (studentTokens.length >= 2 && keyTokens.length >= 2) {
+    // Se ambos tiverem pelo menos 2 termos significativos, exigimos pelo menos 2 termos em comum
+    if (studentFiltered.length >= 2 && keyFiltered.length >= 2) {
       if (bestMatchScore >= 2) {
         return photosMap[bestMatchKey];
       }
