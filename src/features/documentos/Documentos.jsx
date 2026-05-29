@@ -2,7 +2,8 @@ import React from 'react';
 import { FolderOpen, ExternalLink, ShieldCheck } from 'lucide-react';
 
 export default function Documentos() {
-  const sharepointUrl = "https://seducsp-my.sharepoint.com/:f:/g/personal/e017590w10_professor_educacao_sp_gov_br/IgDEQvVMOCUnT7W-mgep5eG1Ab96PZOcdjFdiWRXUjT1GYA?e=BR8Kvj";
+  const driveUrl = "https://drive.google.com/drive/folders/1qjKw8m550_0lSQcPvbJLZMQVhN-VpKyh?usp=sharing";
+  const embedUrl = "https://drive.google.com/embeddedfolderview?id=1qjKw8m550_0lSQcPvbJLZMQVhN-VpKyh#grid";
 
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out', maxWidth: '1200px', margin: '0 auto', padding: '1rem' }}>
@@ -32,11 +33,11 @@ export default function Documentos() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1', minWidth: '280px' }}>
           <ShieldCheck size={24} style={{ color: '#0284c7', flexShrink: 0 }} />
           <p style={{ margin: 0, fontSize: '0.9rem', color: '#0369a1', lineHeight: 1.45 }}>
-            <strong>Dica de Acesso:</strong> Se a visualização abaixo não carregar devido a bloqueios de segurança da conta institucional ou do navegador, clique no botão ao lado para abrir a pasta diretamente.
+            <strong>Dica de Acesso:</strong> Se a visualização abaixo não carregar ou pedir login na sua conta Google (como @prof ou @servidor), você pode clicar no botão ao lado para abrir a pasta diretamente no Google Drive.
           </p>
         </div>
         <a 
-          href={sharepointUrl}
+          href={driveUrl}
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -63,12 +64,12 @@ export default function Documentos() {
             e.currentTarget.style.boxShadow = '0 4px 10px rgba(14, 165, 233, 0.25)';
           }}
         >
-          <span>Abrir em Nova Aba</span>
+          <span>Abrir no Google Drive</span>
           <ExternalLink size={16} />
         </a>
       </div>
 
-      {/* Container do Iframe do SharePoint */}
+      {/* Container do Iframe do Google Drive */}
       <div style={{
         width: '100%',
         height: '750px',
@@ -80,9 +81,9 @@ export default function Documentos() {
         position: 'relative'
       }}>
         <iframe 
-          src={sharepointUrl} 
+          src={embedUrl} 
           style={{ width: '100%', height: '100%', border: 'none' }}
-          title="Pasta de Documentos SharePoint"
+          title="Pasta de Documentos Google Drive"
           allow="autoplay; encrypted-media"
         />
       </div>
