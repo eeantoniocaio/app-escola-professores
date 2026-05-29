@@ -193,9 +193,46 @@ async function findCarometroInDrive(accessToken, driveId) {
 }
 
 /**
+ * Procura pela pasta "Carômetro" nos itens compartilhados com o usuário (Shared with me)
+ */
+async function findCarometroInShared(accessToken) {
+  const headers = { Authorization: `Bearer ${accessToken}` };
+  try {
+    console.log('[photoService] Procurando pasta "Carômetro" nos itens compartilhados (sharedWithMe)...');
+    const response = await fetch(
+      'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe?$select=name,id,folder,remoteItem',
+      { headers }
+    );
+    const data = await response.json();
+    if (data && data.value) {
+      const found = data.value.find(item => {
+        const target = item.remoteItem || item;
+        const isFolder = target.folder || (target.file === undefined && target.image === undefined && target.package === undefined);
+        return isFolder && normalizeName(target.name) === 'carometro';
+      });
+      if (found) {
+        const remote = found.remoteItem || found;
+        console.log('[photoService] Encontrado Carômetro nos compartilhados:', remote.name, 'no drive', remote.parentReference?.driveId);
+        return { id: remote.id, driveId: remote.parentReference?.driveId };
+      }
+    }
+  } catch (err) {
+    console.warn('Erro ao buscar Carômetro nos itens compartilhados:', err);
+  }
+  return null;
+}
+
+/**
  * Varre o OneDrive para encontrar a pasta raiz do Carômetro, procurando em múltiplos drives.
  */
 export async function findCarometroFolder(accessToken, preferredDriveId = null) {
+  // 1. Tentar primeiro nos itens compartilhados com o usuário
+  const sharedResult = await findCarometroInShared(accessToken);
+  if (sharedResult) {
+    return sharedResult;
+  }
+
+  // 2. Fallback: procurar nos drives específicos
   const drivesToTry = [];
   
   if (preferredDriveId && preferredDriveId !== 'me') {
