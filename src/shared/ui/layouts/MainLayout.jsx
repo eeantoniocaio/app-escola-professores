@@ -109,7 +109,7 @@ export default function MainLayout() {
   return (
     <div className="app-container">
       <header className="header">
-        <div className="header-brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+        <div className="header-brand" onClick={() => navigate(userRole === 'secretaria' ? '/turmas' : '/')} style={{ cursor: 'pointer' }}>
           <img src={logoUrl} alt="Logo" style={{ height: '44px', objectFit: 'contain' }} />
           <div className="brand-title">
             <h1>Portal de Evidências</h1>
@@ -122,9 +122,11 @@ export default function MainLayout() {
         </button>
 
         <div className={`header-actions ${isMobileMenuOpen ? 'mobile-open' : ''}`} style={{ gap: '0.25rem' }}>
-          <Link to="/" className={`nav-link ${isActive('/')}`} onClick={() => setIsMobileMenuOpen(false)}>
-            <HomeIcon size={18} /> Início
-          </Link>
+          {userRole !== 'secretaria' && (
+            <Link to="/" className={`nav-link ${isActive('/')}`} onClick={() => setIsMobileMenuOpen(false)}>
+              <HomeIcon size={18} /> Início
+            </Link>
+          )}
           
           {userRole === 'gestao' && (
             <>
@@ -148,9 +150,11 @@ export default function MainLayout() {
             <Users size={18} /> Mapa de Classe
           </Link>
           
-          <Link to="/ocorrencias/nova" className={`nav-link ${isActive('/ocorrencias/nova')}`} onClick={() => setIsMobileMenuOpen(false)}>
-            <PlusCircle size={18} /> Ocorrências
-          </Link>
+          {userRole !== 'secretaria' && (
+            <Link to="/ocorrencias/nova" className={`nav-link ${isActive('/ocorrencias/nova')}`} onClick={() => setIsMobileMenuOpen(false)}>
+              <PlusCircle size={18} /> Ocorrências
+            </Link>
+          )}
           
           {userRole === 'gestao' && (
             <button 

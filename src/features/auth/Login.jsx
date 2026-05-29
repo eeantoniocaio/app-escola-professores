@@ -21,7 +21,8 @@ export default function Login({ setSession }) {
         const allowedDomains = ['@prof.educacao.sp.gov.br', '@servidor.educacao.sp.gov.br'];
         const emailLower = email.trim().toLowerCase();
         
-        const hasAllowedDomain = allowedDomains.some(domain => emailLower.endsWith(domain));
+        const hasAllowedDomain = allowedDomains.some(domain => emailLower.endsWith(domain)) || 
+                                 emailLower === 'e017590a@educacao.sp.gov.br';
         
         if (!hasAllowedDomain) {
           throw new Error('Apenas emails pré-autorizados podem realizar o cadastro.');

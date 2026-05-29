@@ -20,7 +20,7 @@ const Relatorios = React.lazy(() => import('../features/relatorios/Relatorios/Re
 const BoasPraticas = React.lazy(() => import('../features/boaspraticas/BoasPraticas'));
 
 function AppRoutes() {
-  const { session, authLoading, isMaster } = useAuth();
+  const { session, authLoading, isMaster, userRole } = useAuth();
   
   if (authLoading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Verificando autenticação...</div>;
 
@@ -38,20 +38,20 @@ function AppRoutes() {
       <Suspense fallback={<div style={{ textAlign: 'center', padding: '3rem' }}>Carregando interface...</div>}>
         <Routes>
           <Route path="/" element={<MainLayout />}>
-            <Route index element={<Home />} />
-            <Route path="eventos" element={<Eventos />} />
-            <Route path="eventos/novo" element={<Eventos />} />
-            <Route path="eventos/editar/:id" element={<Eventos />} />
-            <Route path="registros" element={<Registros />} />
-            <Route path="ocorrencias" element={<HistoricoOcorrencias />} />
-            <Route path="reposicoes" element={<EnvioQuestoes />} />
-            <Route path="configuracoes" element={isMaster ? <Configuracoes /> : <Navigate to="/" replace />} />
+            <Route index element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Home />} />
+            <Route path="eventos" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Eventos />} />
+            <Route path="eventos/novo" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Eventos />} />
+            <Route path="eventos/editar/:id" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Eventos />} />
+            <Route path="registros" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Registros />} />
+            <Route path="ocorrencias" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <HistoricoOcorrencias />} />
+            <Route path="reposicoes" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <EnvioQuestoes />} />
+            <Route path="configuracoes" element={isMaster ? <Configuracoes /> : <Navigate to={userRole === 'secretaria' ? "/turmas" : "/"} replace />} />
             <Route path="turmas" element={<Turmas />} />
             <Route path="mapa-classe" element={<MapaClasse />} />
-            <Route path="relatorios" element={<Relatorios />} />
-            <Route path="boas-praticas" element={<BoasPraticas />} />
+            <Route path="relatorios" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Relatorios />} />
+            <Route path="boas-praticas" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <BoasPraticas />} />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to={userRole === 'secretaria' ? "/turmas" : "/"} replace />} />
         </Routes>
       </Suspense>
     </GlobalDataProvider>
