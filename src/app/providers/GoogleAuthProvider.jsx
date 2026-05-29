@@ -4,7 +4,10 @@ const GoogleAuthContext = createContext(null);
 
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/drive.readonly',
-  'https://www.googleapis.com/auth/spreadsheets.readonly'
+  'https://www.googleapis.com/auth/spreadsheets.readonly',
+  'https://www.googleapis.com/auth/userinfo.profile',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'openid'
 ].join(' ');
 
 // Função auxiliar para carregar dinamicamente o script do GIS se ele falhar no index.html
@@ -48,13 +51,12 @@ export function GoogleAuthProvider({ children }) {
         setGoogleAccount(accountInfo);
         localStorage.setItem('google_account_info', JSON.stringify(accountInfo));
       } else {
-        // Se o token estiver inválido, limpa
-        if (response.status === 401) {
-          logoutGoogle();
-        }
+        console.warn('[GoogleAuth] Falha ao obter dados de perfil (Status: ' + response.status + '). Usando fallback.');
+        setGoogleAccount({ name: 'Professor' });
       }
     } catch (err) {
       console.error('[GoogleAuth] Erro ao buscar informações do usuário:', err);
+      setGoogleAccount({ name: 'Professor' });
     }
   };
 
