@@ -26,12 +26,6 @@ export default function useFrequenciaAluno(aluno, isOpen) {
   const [isSearchingFiles, setIsSearchingFiles] = useState(false);
   const [useDefaultFile, setUseDefaultFile] = useState(() => !localStorage.getItem('selected_frequencia_file_id'));
 
-  // Obter token ao abrir o modal
-  useEffect(() => {
-    if (isOpen && !accessToken) {
-      getGoogleToken();
-    }
-  }, [isOpen, accessToken]);
 
   // Efeito principal: se tiver token de acesso, buscar dados
   useEffect(() => {
