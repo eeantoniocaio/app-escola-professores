@@ -3,8 +3,8 @@ import { useGoogleAuth } from '../app/providers/GoogleAuthProvider';
 import { useToast } from '../app/providers/ToastProvider';
 import { getAlunoFrequencia } from '../services/excelService';
 
-const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/16C191mYqlkYLx1bQ1KVD1iOobNlTmGSg/edit?usp=sharing";
-const MASTER_SPREADSHEET_ID = "16C191mYqlkYLx1bQ1KVD1iOobNlTmGSg";
+const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1w6bPGoUUfCMoNpFYUKur4BrbvkCVr_5uAHi3ZwRh3NA/edit?usp=sharing";
+const MASTER_SPREADSHEET_ID = "1w6bPGoUUfCMoNpFYUKur4BrbvkCVr_5uAHi3ZwRh3NA";
 
 const getSpreadsheetIdFromUrl = (url) => {
   if (!url) return '';

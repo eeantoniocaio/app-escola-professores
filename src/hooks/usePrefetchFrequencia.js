@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGoogleAuth } from '../app/providers/GoogleAuthProvider';
 
-const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/16C191mYqlkYLx1bQ1KVD1iOobNlTmGSg/edit?usp=sharing";
+const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1w6bPGoUUfCMoNpFYUKur4BrbvkCVr_5uAHi3ZwRh3NA/edit?usp=sharing";
 
 const getSpreadsheetIdFromUrl = (url) => {
   if (!url) return '';
