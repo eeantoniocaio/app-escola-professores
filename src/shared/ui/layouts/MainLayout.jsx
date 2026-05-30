@@ -152,7 +152,7 @@ export default function MainLayout() {
             <FolderOpen size={18} /> Documentos
           </Link>
           
-          {userRole !== 'secretaria' && (
+          {userRole !== 'secretaria' && userRole !== 'tecnico' && (
             <Link to="/ocorrencias/nova" className={`nav-link ${isActive('/ocorrencias/nova')}`} onClick={() => setIsMobileMenuOpen(false)}>
               <PlusCircle size={18} /> Ocorrências
             </Link>

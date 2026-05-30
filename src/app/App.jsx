@@ -40,18 +40,18 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
-            <Route path="eventos" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Eventos />} />
-            <Route path="eventos/novo" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Eventos />} />
-            <Route path="eventos/editar/:id" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Eventos />} />
-            <Route path="registros" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Registros />} />
-            <Route path="ocorrencias" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <HistoricoOcorrencias />} />
-            <Route path="reposicoes" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <EnvioQuestoes />} />
+            <Route path="eventos" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Eventos />} />
+            <Route path="eventos/novo" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Eventos />} />
+            <Route path="eventos/editar/:id" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Eventos />} />
+            <Route path="registros" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Registros />} />
+            <Route path="ocorrencias" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <HistoricoOcorrencias />} />
+            <Route path="reposicoes" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <EnvioQuestoes />} />
             <Route path="configuracoes" element={isMaster ? <Configuracoes /> : <Navigate to="/" replace />} />
             <Route path="turmas" element={<Turmas />} />
             <Route path="mapa-classe" element={<MapaClasse />} />
             <Route path="documentos" element={<Documentos />} />
-            <Route path="relatorios" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <Relatorios />} />
-            <Route path="boas-praticas" element={userRole === 'secretaria' ? <Navigate to="/turmas" replace /> : <BoasPraticas />} />
+            <Route path="relatorios" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Relatorios />} />
+            <Route path="boas-praticas" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <BoasPraticas />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

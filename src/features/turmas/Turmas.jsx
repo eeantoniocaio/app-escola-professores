@@ -4,6 +4,7 @@ import { Users, Search, GraduationCap, Link as LinkIcon, School, ChevronRight, X
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { useGoogleAuth } from '../../app/providers/GoogleAuthProvider';
+import { useAuth } from '../../app/providers/AuthProvider';
 import Frequencia from './Frequencia';
 import usePrefetchFrequencia from '../../hooks/usePrefetchFrequencia';
 import useCarometro from '../../hooks/useCarometro';
@@ -35,6 +36,7 @@ export default function Turmas() {
   const { turmas, alunos, loadingData } = useGlobalData();
   const { showToast } = useToast();
   const { accessToken, loginGoogle, isConfigured } = useGoogleAuth();
+  const { userRole } = useAuth();
 
   const [searchMode, setSearchMode] = useState('class'); // 'class' | 'student'
   const [selectedSerie, setSelectedSerie] = useState('');
@@ -165,54 +167,58 @@ export default function Turmas() {
 
   const renderStudentActions = (aluno) => (
     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-      <button 
-        onClick={() => {
-          setSelectedStudentForFreq(aluno);
-          setIsFrequenciaOpen(true);
-          if (isConfigured && !accessToken) {
-            loginGoogle();
-          }
-        }}
-        title="Frequência"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '32px',
-          height: '32px',
-          borderRadius: 'var(--radius-sm)',
-          border: '1px solid #10B981',
-          background: '#ECFDF5',
-          color: '#10B981',
-          cursor: 'pointer',
-          transition: 'var(--transition-smooth)'
-        }}
-        onMouseOver={e => { e.currentTarget.style.background = '#D1FAE5'; e.currentTarget.style.borderColor = '#059669'; e.currentTarget.style.color = '#059669'; }}
-        onMouseOut={e => { e.currentTarget.style.background = '#ECFDF5'; e.currentTarget.style.borderColor = '#10B981'; e.currentTarget.style.color = '#10B981'; }}
-      >
-        <Calendar size={16} />
-      </button>
-      <button 
-        onClick={() => showToast('Em desenvolvimento.', 'info')}
-        title="Notas"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '32px',
-          height: '32px',
-          borderRadius: 'var(--radius-sm)',
-          border: '1px solid #3B82F6',
-          background: '#EFF6FF',
-          color: '#3B82F6',
-          cursor: 'pointer',
-          transition: 'var(--transition-smooth)'
-        }}
-        onMouseOver={e => { e.currentTarget.style.background = '#DBEAFE'; e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.color = '#2563EB'; }}
-        onMouseOut={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.color = '#3B82F6'; }}
-      >
-        <Clipboard size={16} />
-      </button>
+      {userRole !== 'tecnico' && (
+        <button 
+          onClick={() => {
+            setSelectedStudentForFreq(aluno);
+            setIsFrequenciaOpen(true);
+            if (isConfigured && !accessToken) {
+              loginGoogle();
+            }
+          }}
+          title="Frequência"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid #10B981',
+            background: '#ECFDF5',
+            color: '#10B981',
+            cursor: 'pointer',
+            transition: 'var(--transition-smooth)'
+          }}
+          onMouseOver={e => { e.currentTarget.style.background = '#D1FAE5'; e.currentTarget.style.borderColor = '#059669'; e.currentTarget.style.color = '#059669'; }}
+          onMouseOut={e => { e.currentTarget.style.background = '#ECFDF5'; e.currentTarget.style.borderColor = '#10B981'; e.currentTarget.style.color = '#10B981'; }}
+        >
+          <Calendar size={16} />
+        </button>
+      )}
+      {userRole !== 'tecnico' && (
+        <button 
+          onClick={() => showToast('Em desenvolvimento.', 'info')}
+          title="Notas"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid #3B82F6',
+            background: '#EFF6FF',
+            color: '#3B82F6',
+            cursor: 'pointer',
+            transition: 'var(--transition-smooth)'
+          }}
+          onMouseOver={e => { e.currentTarget.style.background = '#DBEAFE'; e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.color = '#2563EB'; }}
+          onMouseOut={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.color = '#3B82F6'; }}
+        >
+          <Clipboard size={16} />
+        </button>
+      )}
       <button 
         onClick={() => {
           setSelectedStudentForCarometro(aluno);

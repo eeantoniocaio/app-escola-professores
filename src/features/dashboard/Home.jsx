@@ -52,7 +52,7 @@ export default function Home() {
           <span>Documentos</span>
         </button>
 
-        {userRole !== 'secretaria' && (
+        {userRole !== 'secretaria' && userRole !== 'tecnico' && (
           <>
             <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias')}>
               <ShieldAlert />
