@@ -2,15 +2,13 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
-import { useToast } from '../../app/providers/ToastProvider';
 
 export default function Home() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
-  const { showToast } = useToast();
 
   const handleEquipamentosClick = () => {
-    showToast('Ainda em desenvolvimento.', 'info');
+    navigate('/equipamentos');
   };
 
   return (

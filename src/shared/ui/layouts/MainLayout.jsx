@@ -4,7 +4,7 @@ import { useAuth } from '../../../app/providers/AuthProvider';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { supabase } from '../../services/supabase';
 import logoUrl from '../../../assets/logo.png';
-import { Home as HomeIcon, Calendar, BookOpen, BarChart2, ShieldAlert, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen } from 'lucide-react';
+import { Home as HomeIcon, Calendar, BookOpen, BarChart2, ShieldAlert, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench } from 'lucide-react';
 
 export default function MainLayout() {
   const { session, userRole, userName, linkProfileName, isMaster } = useAuth();
@@ -151,6 +151,12 @@ export default function MainLayout() {
           <Link to="/documentos" className={`nav-link ${isActive('/documentos')}`} onClick={() => setIsMobileMenuOpen(false)}>
             <FolderOpen size={18} /> Documentos
           </Link>
+
+          {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria') && (
+            <Link to="/equipamentos" className={`nav-link ${isActive('/equipamentos')}`} onClick={() => setIsMobileMenuOpen(false)}>
+              <Wrench size={18} /> Equipamentos
+            </Link>
+          )}
           
           {userRole !== 'secretaria' && userRole !== 'tecnico' && (
             <Link to="/ocorrencias/nova" className={`nav-link ${isActive('/ocorrencias/nova')}`} onClick={() => setIsMobileMenuOpen(false)}>

@@ -19,6 +19,7 @@ const MapaClasse = React.lazy(() => import('../features/turmas/MapaClasse'));
 const Relatorios = React.lazy(() => import('../features/relatorios/Relatorios/Relatorios'));
 const BoasPraticas = React.lazy(() => import('../features/boaspraticas/BoasPraticas'));
 const Documentos = React.lazy(() => import('../features/documentos/Documentos'));
+const Equipamentos = React.lazy(() => import('../features/equipamentos/Equipamentos'));
 
 function AppRoutes() {
   const { session, authLoading, isMaster, userRole } = useAuth();
@@ -50,6 +51,7 @@ function AppRoutes() {
             <Route path="turmas" element={<Turmas />} />
             <Route path="mapa-classe" element={<MapaClasse />} />
             <Route path="documentos" element={<Documentos />} />
+            <Route path="equipamentos" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'gestao') ? <Equipamentos /> : <Navigate to="/turmas" replace />} />
             <Route path="relatorios" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Relatorios />} />
             <Route path="boas-praticas" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <BoasPraticas />} />
           </Route>
