@@ -7,6 +7,13 @@ import FrequenciaAlunoCard from './FrequenciaAlunoCard';
 export default function Frequencia({ aluno, isOpen, onClose }) {
   const { loginGoogle, logoutGoogle, accessToken, googleAccount, isConfigured } = useGoogleAuth();
 
+  React.useEffect(() => {
+    if (isOpen && isConfigured && !accessToken) {
+      console.log('[Frequencia] Auto-autenticação Google disparada.');
+      loginGoogle();
+    }
+  }, [isOpen, isConfigured, accessToken, loginGoogle]);
+
   const {
     loading,
     error,

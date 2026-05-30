@@ -6,6 +6,13 @@ import { findPhotoInMap } from '../../services/photoService';
 export default function CarometroModal({ aluno, isOpen, onClose }) {
   const { photosMap, loading, error, handleRefresh, needsAuth, loginMicrosoft: loginGoogle } = useCarometro(aluno?.turma);
 
+  React.useEffect(() => {
+    if (isOpen && needsAuth) {
+      console.log('[CarometroModal] Auto-autenticação Google disparada.');
+      loginGoogle();
+    }
+  }, [isOpen, needsAuth, loginGoogle]);
+
   if (!isOpen || !aluno) return null;
 
   const photoUrl = findPhotoInMap(aluno.nome, photosMap);

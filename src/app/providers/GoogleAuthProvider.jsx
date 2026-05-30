@@ -31,6 +31,7 @@ export function GoogleAuthProvider({ children }) {
   const [googleAccount, setGoogleAccount] = useState(null);
   const [initialized, setInitialized] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
+  const [pendingLogin, setPendingLogin] = useState(false);
 
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
   const isConfigured = !!clientId;
@@ -107,11 +108,16 @@ export function GoogleAuthProvider({ children }) {
           },
         });
         setTokenClient(client);
+        if (pendingLogin) {
+          console.log('[GoogleAuth] Executando login agendado.');
+          client.requestAccessToken({ prompt: '' });
+          setPendingLogin(false);
+        }
       } catch (err) {
         console.error('[GoogleAuth] Falha ao inicializar TokenClient:', err);
       }
     }
-  }, [initialized, isConfigured, clientId]);
+  }, [initialized, isConfigured, clientId, pendingLogin]);
 
   const loginGoogle = () => {
     if (!isConfigured) {
@@ -122,7 +128,8 @@ export function GoogleAuthProvider({ children }) {
       // Solicitar token. Se já houver consentimento prévio, será rápido e silencioso
       tokenClient.requestAccessToken({ prompt: '' });
     } else {
-      console.warn('[GoogleAuth] TokenClient não está pronto.');
+      console.log('[GoogleAuth] TokenClient não está pronto. Agendando login para quando inicializar.');
+      setPendingLogin(true);
     }
   };
 

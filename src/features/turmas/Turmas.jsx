@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search, GraduationCap, Link as LinkIcon, School, ChevronRight, X, Calendar, Clipboard, ArrowLeft, Camera, User } from 'lucide-react';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import { useToast } from '../../app/providers/ToastProvider';
+import { useGoogleAuth } from '../../app/providers/GoogleAuthProvider';
 import Frequencia from './Frequencia';
 import usePrefetchFrequencia from '../../hooks/usePrefetchFrequencia';
 import useCarometro from '../../hooks/useCarometro';
@@ -33,6 +34,7 @@ export default function Turmas() {
   const navigate = useNavigate();
   const { turmas, alunos, loadingData } = useGlobalData();
   const { showToast } = useToast();
+  const { accessToken, loginGoogle, isConfigured } = useGoogleAuth();
 
   const [searchMode, setSearchMode] = useState('class'); // 'class' | 'student'
   const [selectedSerie, setSelectedSerie] = useState('');
@@ -125,6 +127,14 @@ export default function Turmas() {
     loginMicrosoft: loginMicrosoftPhotos
   } = useCarometro(activeClass?.nome);
 
+  // Auto-autenticação Google ao selecionar uma turma
+  useEffect(() => {
+    if (activeClass && isConfigured && !accessToken) {
+      console.log('[Turmas] Turma selecionada e Google não conectado. Iniciando loginGoogle...');
+      loginGoogle();
+    }
+  }, [activeClass, isConfigured, accessToken, loginGoogle]);
+
   // Alunos pertencentes à turma selecionada
   const classStudents = useMemo(() => {
     if (!activeClass) return [];
@@ -159,6 +169,9 @@ export default function Turmas() {
         onClick={() => {
           setSelectedStudentForFreq(aluno);
           setIsFrequenciaOpen(true);
+          if (isConfigured && !accessToken) {
+            loginGoogle();
+          }
         }}
         title="Frequência"
         style={{
@@ -204,6 +217,9 @@ export default function Turmas() {
         onClick={() => {
           setSelectedStudentForCarometro(aluno);
           setIsCarometroModalOpen(true);
+          if (isConfigured && !accessToken) {
+            loginGoogle();
+          }
         }}
         title="Carômetro"
         style={{
@@ -430,7 +446,12 @@ export default function Turmas() {
                   Lista de Alunos
                 </button>
                 <button 
-                  onClick={() => setClassViewMode('carometro')}
+                  onClick={() => {
+                    setClassViewMode('carometro');
+                    if (isConfigured && !accessToken) {
+                      loginGoogle();
+                    }
+                  }}
                   style={{
                     padding: '0.45rem 1rem',
                     borderRadius: 'var(--radius-sm)',
@@ -483,6 +504,9 @@ export default function Turmas() {
                               onClick={() => {
                                 setSelectedStudentForCarometro(aluno);
                                 setIsCarometroModalOpen(true);
+                                if (isConfigured && !accessToken) {
+                                  loginGoogle();
+                                }
                               }}
                               title="Ver crachá/foto"
                               style={{ 
