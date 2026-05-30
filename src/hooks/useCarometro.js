@@ -31,7 +31,13 @@ export default function useCarometro(activeClassName) {
 
     try {
       // 1. Resolver pasta raiz do "Carômetro" (tenta ler do cache do localStorage primeiro)
+      const MASTER_FOLDER_ID = "1unY0OLoN-IbDvMvTbiUUDZh4qMTIJwFd";
       let carometroFolderId = localStorage.getItem('carometro_root_folder_id');
+
+      if (carometroFolderId && carometroFolderId !== MASTER_FOLDER_ID) {
+        localStorage.removeItem('carometro_root_folder_id');
+        carometroFolderId = null;
+      }
 
       if (!carometroFolderId || forceRefresh) {
         const rootFolder = await findCarometroFolder(accessToken);

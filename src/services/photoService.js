@@ -83,23 +83,13 @@ export function classNamesMatch(folderName, className) {
   return false;
 }
 
+const DEFAULT_CAROMETRO_FOLDER_ID = "1unY0OLoN-IbDvMvTbiUUDZh4qMTIJwFd";
+
 /**
- * Procura pela pasta "Carômetro" (ou "Carometro") no Google Drive
+ * Retorna o ID oficial da pasta "Carômetro" configurado
  */
 export async function findCarometroFolder(accessToken) {
-  const query = `mimeType = 'application/vnd.google-apps.folder' and (name = 'Carômetro' or name = 'Carometro') and trashed = false`;
-  const response = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)&pageSize=1`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    }
-  );
-  if (!response.ok) throw new Error('Falha ao pesquisar pasta "Carômetro" no Google Drive');
-  const data = await response.json();
-  if (data.files && data.files.length > 0) {
-    return { id: data.files[0].id, name: data.files[0].name };
-  }
-  return null;
+  return { id: DEFAULT_CAROMETRO_FOLDER_ID, name: "CARÔMETRO" };
 }
 
 /**
