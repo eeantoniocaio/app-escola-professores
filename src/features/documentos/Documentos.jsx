@@ -57,7 +57,7 @@ export default function Documentos() {
     }
   }, [isConfigured, accessToken, loginGoogle]);
 
-  // 1. Encontrar a pasta raiz "Documentos" no Google Drive
+  // 1. Definir a pasta raiz com o ID fornecido pelo usuário
   useEffect(() => {
     if (!accessToken) {
       setRootFolder(null);
@@ -66,37 +66,11 @@ export default function Documentos() {
       return;
     }
 
-    const findRootFolder = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const query = encodeURIComponent("name = 'Documentos' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
-        const response = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)&pageSize=1`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          }
-        );
-        if (!response.ok) throw new Error('Falha ao consultar pastas no Google Drive.');
-        const data = await response.json();
-        
-        if (data.files && data.files.length > 0) {
-          const folder = { id: data.files[0].id, name: data.files[0].name };
-          setRootFolder(folder);
-          setActiveFolder(folder);
-          setNavStack([]); // Reseta pilha
-        } else {
-          setError('Pasta "Documentos" não encontrada no seu Google Drive. Crie uma pasta chamada "Documentos" na raiz do seu Drive.');
-        }
-      } catch (err) {
-        console.error('Erro ao buscar pasta "Documentos":', err);
-        setError('Erro ao localizar a pasta de documentos no Drive.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    findRootFolder();
+    const MASTER_FOLDER_ID = '1qjKw8m550_0lSQcPvbJLZMQVhN-VpKyh';
+    const folder = { id: MASTER_FOLDER_ID, name: 'Principal' };
+    setRootFolder(folder);
+    setActiveFolder(folder);
+    setNavStack([]); // Reseta a pilha de navegação ao atualizar/reconectar
   }, [accessToken, refreshTrigger]);
 
   // 2. Buscar arquivos e subpastas dentro da pasta ativa
