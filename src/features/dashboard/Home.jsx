@@ -56,7 +56,7 @@ export default function Home() {
           <span>Documentos</span>
         </button>
 
-        {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria') && (
+        {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor') && (
           <button className="dashboard-action-card" onClick={handleEquipamentosClick}>
             <Wrench />
             <span>Equipamentos</span>

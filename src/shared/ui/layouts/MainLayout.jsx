@@ -139,7 +139,7 @@ export default function MainLayout() {
             <FolderOpen size={18} /> Documentos
           </Link>
 
-          {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria') && (
+          {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor') && (
             <Link to="/equipamentos" className={`nav-link ${isActive('/equipamentos')}`} onClick={() => setIsMobileMenuOpen(false)}>
               <Wrench size={18} /> Equipamentos
             </Link>

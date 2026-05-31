@@ -51,7 +51,7 @@ function AppRoutes() {
             <Route path="turmas" element={<Turmas />} />
             <Route path="mapa-classe" element={<MapaClasse />} />
             <Route path="documentos" element={<Documentos />} />
-            <Route path="equipamentos" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'gestao') ? <Equipamentos /> : <Navigate to="/turmas" replace />} />
+            <Route path="equipamentos" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'gestao' || userRole === 'professor') ? <Equipamentos /> : <Navigate to="/turmas" replace />} />
             <Route path="relatorios" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Relatorios />} />
             <Route path="boas-praticas" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <BoasPraticas />} />
           </Route>

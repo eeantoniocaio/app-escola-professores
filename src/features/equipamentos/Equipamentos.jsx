@@ -14,6 +14,8 @@ export default function Equipamentos() {
   const { userRole, userName } = useAuth();
   const { showToast } = useToast();
 
+  const canEdit = userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria';
+
   const [activeTab, setActiveTab] = useState('salas'); // 'salas' | 'dispositivos'
   const [loading, setLoading] = useState(true);
 
@@ -161,6 +163,7 @@ export default function Equipamentos() {
 
   const handleSaveRoom = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!roomName.trim()) {
       showToast('O nome da sala é obrigatório', 'error');
       return;
@@ -192,6 +195,7 @@ export default function Equipamentos() {
 
   const handleDeleteRoom = async (e, salaId) => {
     e.stopPropagation();
+    if (!canEdit) return;
     if (!window.confirm('Tem certeza que deseja excluir esta sala? Os dispositivos nela alocados ficarão sem sala vinculada.')) return;
 
     try {
@@ -234,6 +238,7 @@ export default function Equipamentos() {
 
   const handleSaveDevice = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!deviceTipo.trim()) {
       showToast('O tipo do dispositivo é obrigatório', 'error');
       return;
@@ -269,6 +274,7 @@ export default function Equipamentos() {
   };
 
   const handleDeleteDevice = async (deviceId) => {
+    if (!canEdit) return;
     if (!window.confirm('Deseja realmente remover este equipamento?')) return;
 
     try {
@@ -353,11 +359,13 @@ export default function Equipamentos() {
             <Search className="search-icon" size={18} />
           </div>
 
-          <div className="action-buttons-group">
-            <button className="btn btn-primary" onClick={openCreateRoomModal}>
-              <Plus size={16} /> Nova Sala
-            </button>
-          </div>
+          {canEdit && (
+            <div className="action-buttons-group">
+              <button className="btn btn-primary" onClick={openCreateRoomModal}>
+                <Plus size={16} /> Nova Sala
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -385,14 +393,16 @@ export default function Equipamentos() {
                   <div>
                     <div className="sala-card-header">
                       <h3 className="sala-card-title">{sala.nome}</h3>
-                      <div className="card-actions-icons">
-                        <button className="btn-icon" onClick={(e) => openEditRoomModal(e, sala)} title="Editar Sala">
-                          <Edit2 size={14} />
-                        </button>
-                        <button className="btn-icon delete" onClick={(e) => handleDeleteRoom(e, sala.id)} title="Excluir Sala">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                      {canEdit && (
+                        <div className="card-actions-icons">
+                          <button className="btn-icon" onClick={(e) => openEditRoomModal(e, sala)} title="Editar Sala">
+                            <Edit2 size={14} />
+                          </button>
+                          <button className="btn-icon delete" onClick={(e) => handleDeleteRoom(e, sala.id)} title="Excluir Sala">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="sala-card-info">
                       <div className="sala-card-info-item">
@@ -424,11 +434,13 @@ export default function Equipamentos() {
               <Search className="search-icon" size={18} />
             </div>
 
-            <div className="action-buttons-group">
-              <button className="btn btn-primary" onClick={openCreateDeviceModal}>
-                <Plus size={16} /> Novo Dispositivo
-              </button>
-            </div>
+            {canEdit && (
+              <div className="action-buttons-group">
+                <button className="btn btn-primary" onClick={openCreateDeviceModal}>
+                  <Plus size={16} /> Novo Dispositivo
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="controls-panel" style={{ margin: 0, padding: '1rem' }}>
@@ -475,7 +487,7 @@ export default function Equipamentos() {
                     <th>Nº Série</th>
                     <th>Local / Sala</th>
                     <th>Condição</th>
-                    <th style={{ textAlign: 'center' }}>Ações</th>
+                    {canEdit && <th style={{ textAlign: 'center' }}>Ações</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -486,16 +498,18 @@ export default function Equipamentos() {
                       <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{device.numero_serie || <span style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>Não definido</span>}</td>
                       <td>{roomNameMap[device.sala_id] || <span style={{ color: 'var(--color-danger)', fontStyle: 'italic', fontWeight: 500 }}>Sem Sala</span>}</td>
                       <td>{renderCondicaoBadge(device.condicao)}</td>
-                      <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
-                          <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
-                            <Edit2 size={14} />
-                          </button>
-                          <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
+                      {canEdit && (
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
+                            <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
+                              <Edit2 size={14} />
+                            </button>
+                            <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -553,25 +567,29 @@ export default function Equipamentos() {
                 <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
                   <Wrench size={32} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
                   <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Nenhum dispositivo cadastrado nesta sala.</p>
-                  <button 
-                    className="btn btn-primary" 
-                    onClick={openCreateDeviceModal}
-                    style={{ marginTop: '1rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                  >
-                    <Plus size={14} /> Vincular Equipamento
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
+                  {canEdit && (
                     <button 
                       className="btn btn-primary" 
                       onClick={openCreateDeviceModal}
-                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                      style={{ marginTop: '1rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                     >
                       <Plus size={14} /> Vincular Equipamento
                     </button>
-                  </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {canEdit && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
+                      <button 
+                        className="btn btn-primary" 
+                        onClick={openCreateDeviceModal}
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                      >
+                        <Plus size={14} /> Vincular Equipamento
+                      </button>
+                    </div>
+                  )}
                   {selectedRoomDevices.map((device, index) => (
                     <div 
                       key={device.id}
@@ -601,14 +619,16 @@ export default function Equipamentos() {
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         {renderCondicaoBadge(device.condicao)}
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
-                            <Edit2 size={12} />
-                          </button>
-                          <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
+                        {canEdit && (
+                          <div style={{ display: 'flex', gap: '0.25rem' }}>
+                            <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
+                              <Edit2 size={12} />
+                            </button>
+                            <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
