@@ -109,6 +109,8 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
   let totalFaltas = 0;
   let raVal = '';
   let digVal = '';
+  let anivVal = '';
+  let idadeVal = '';
 
   // Percorrer as colunas para identificar os dados
   for (let c = 0; c < header.length; c++) {
@@ -124,6 +126,10 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
       raVal = cellVal || raVal;
     } else if (headerVal === 'dig' || headerVal === 'digito' || headerVal === 'dig ra' || headerVal === 'dig. ra' || headerVal === 'digito ra' || headerVal === 'digito do ra' || headerVal === 'dig.ra') {
       digVal = cellVal || digVal;
+    } else if (headerVal === 'aniv' || headerVal === 'aniv.' || headerVal === 'aniversario' || headerVal === 'nascimento' || headerVal === 'nasc' || headerVal === 'data de nascimento') {
+      anivVal = cellVal || anivVal;
+    } else if (headerVal === 'idade' || headerVal === 'age') {
+      idadeVal = cellVal || idadeVal;
     }
 
     // 1. Identificar Frequência por Bimestre
@@ -208,6 +214,8 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
     frequencia4Bimestre: formatPercent(frequencia4Bimestre),
     frequenciaFinal: formatPercent(frequenciaFinal),
     totalFaltas,
-    ra: formattedRA
+    ra: formattedRA,
+    birthDate: anivVal,
+    age: idadeVal
   };
 }

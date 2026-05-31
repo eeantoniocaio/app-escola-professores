@@ -130,18 +130,29 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
   const details = getMockStudentDetails(aluno);
 
   let raDisplay = '---';
+  let birthDateDisplay = '---';
+  let ageDisplay = '---';
+
   if (freqLoading) {
     raDisplay = 'Carregando R.A...';
-  } else if (attendanceData && attendanceData.ra) {
-    raDisplay = attendanceData.ra;
+    birthDateDisplay = 'Carregando...';
+    ageDisplay = 'Carregando...';
+  } else if (attendanceData) {
+    raDisplay = attendanceData.ra || 'Não informado na planilha';
+    birthDateDisplay = attendanceData.birthDate || 'Não informado na planilha';
+    ageDisplay = attendanceData.age || 'Não informado na planilha';
   } else if (!isConfigured) {
     raDisplay = 'N/D (Sheets não config.)';
+    birthDateDisplay = 'N/D (Sheets não config.)';
+    ageDisplay = 'N/D (Sheets não config.)';
   } else if (!accessToken) {
     raDisplay = 'N/D (Pendente de Login)';
+    birthDateDisplay = 'N/D (Pendente de Login)';
+    ageDisplay = 'N/D (Pendente de Login)';
   } else if (freqError) {
     raDisplay = 'Não encontrado no Sheets';
-  } else {
-    raDisplay = 'Não informado na planilha';
+    birthDateDisplay = 'Não encontrado no Sheets';
+    ageDisplay = 'Não encontrado no Sheets';
   }
 
   return (
@@ -303,8 +314,12 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
                   <div>
                     <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Data de Nascimento</label>
                     <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Calendar size={14} color="var(--text-light)" /> {details.birthDate}
+                      <Calendar size={14} color="var(--text-light)" /> {birthDateDisplay}
                     </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Idade</label>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem' }}>{ageDisplay}</div>
                   </div>
                   <div>
                     <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>R.A. (Registro do Aluno)</label>
