@@ -4,7 +4,7 @@ import { useAuth } from '../../../app/providers/AuthProvider';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { supabase } from '../../services/supabase';
 import logoUrl from '../../../assets/logo.png';
-import { Home as HomeIcon, Calendar, BookOpen, BarChart2, ShieldAlert, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench } from 'lucide-react';
+import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench } from 'lucide-react';
 
 export default function MainLayout() {
   const { session, userRole, userName, linkProfileName, isMaster } = useAuth();
@@ -126,20 +126,7 @@ export default function MainLayout() {
             <HomeIcon size={18} /> Início
           </Link>
           
-          {userRole === 'gestao' && (
-            <>
-              <Link to="/eventos" className={`nav-link ${isActive('/eventos')}`} onClick={() => setIsMobileMenuOpen(false)}>
-                <Calendar size={18} /> Eventos
-              </Link>
-              <Link to="/registros" className={`nav-link ${isActive('/registros')}`} onClick={() => setIsMobileMenuOpen(false)}>
-                <BookOpen size={18} /> Registros
-              </Link>
-              <Link to="/ocorrencias" className={`nav-link ${isActive('/ocorrencias')}`} onClick={() => setIsMobileMenuOpen(false)}>
-                <ShieldAlert size={18} /> Histórico de Ocorrências
-              </Link>
-            </>
-          )}
-          
+
           <Link to="/turmas" className={`nav-link ${isActive('/turmas')}`} onClick={() => setIsMobileMenuOpen(false)}>
             <GraduationCap size={18} /> Turmas
           </Link>

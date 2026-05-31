@@ -376,7 +376,7 @@ export default function Equipamentos() {
                 <div 
                   key={sala.id} 
                   className="sala-card"
-                  onClick={() => { setSelectedRoom(sala); setDetailsTab('devices'); setIsDetailsModalOpen(true); }}
+                  onClick={() => { setSelectedRoom(sala); setIsDetailsModalOpen(true); }}
                   style={{ 
                     cursor: 'pointer',
                     borderTop: `5px solid ${roomColor}`

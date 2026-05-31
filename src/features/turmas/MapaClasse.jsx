@@ -1,5 +1,6 @@
 import React from 'react';
-import { Users, Link as LinkIcon, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Link as LinkIcon, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 
 const GRADE_COLORS = {
@@ -28,13 +29,29 @@ const getTurmaSubtextColor = () => 'rgba(255, 255, 255, 0.8)';
 const getChevronBg = () => 'rgba(255, 255, 255, 0.2)';
 
 export default function MapaClasse() {
+  const navigate = useNavigate();
   const { turmas } = useGlobalData();
 
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '2rem', margin: 0, marginBottom: '0.5rem' }}>Mapa de Classe</h2>
-        <p style={{ color: 'var(--text-muted)', margin: 0 }}>Selecione uma turma para visualizar o mapa de assentos</p>
+      <div className="dashboard-header" style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            className="btn-back-home"
+            onClick={() => navigate('/')}
+            title="Voltar ao início"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 style={{ fontSize: '2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Users size={28} color="var(--color-primary)" /> Mapa de Classe
+            </h2>
+            <p style={{ color: 'var(--text-muted)', margin: 0, marginTop: '0.25rem' }}>
+              Selecione uma turma para visualizar o mapa de assentos
+            </p>
+          </div>
+        </div>
       </div>
 
       {turmas.length === 0 ? (
