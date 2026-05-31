@@ -601,9 +601,6 @@ export default function Equipamentos() {
                   <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Wrench size={22} color="#ffffff" /> {selectedRoom.nome}
                   </h3>
-                  <p style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.85)', margin: 0, marginTop: '0.25rem' }}>
-                    {selectedRoom.descricao || 'Sem descrição cadastrada.'} {selectedRoom.capacidade ? ` • Capacidade: ${selectedRoom.capacidade} alunos` : ''}
-                  </p>
                 </div>
                 <button 
                   onClick={() => setIsDetailsModalOpen(false)}
