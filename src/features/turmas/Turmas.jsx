@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, GraduationCap, Link as LinkIcon, School, ChevronRight, X, Calendar, Clipboard, ArrowLeft, Camera, User } from 'lucide-react';
+import { Users, Search, GraduationCap, Link as LinkIcon, School, ChevronRight, X, Calendar, Clipboard, ArrowLeft, Camera, User, FileText } from 'lucide-react';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { useGoogleAuth } from '../../app/providers/GoogleAuthProvider';
@@ -10,6 +10,7 @@ import usePrefetchFrequencia from '../../hooks/usePrefetchFrequencia';
 import useCarometro from '../../hooks/useCarometro';
 import CarometroGrid from './CarometroGrid';
 import CarometroModal from './CarometroModal';
+import FichaAlunoModal from './FichaAlunoModal';
 import { findPhotoInMap } from '../../services/photoService';
 
 const GRADE_COLORS = {
@@ -49,6 +50,9 @@ export default function Turmas() {
   const [classViewMode, setClassViewMode] = useState('list'); // 'list' | 'carometro'
   const [isCarometroModalOpen, setIsCarometroModalOpen] = useState(false);
   const [selectedStudentForCarometro, setSelectedStudentForCarometro] = useState(null);
+
+  const [isFichaOpen, setIsFichaOpen] = useState(false);
+  const [selectedStudentForFicha, setSelectedStudentForFicha] = useState(null);
 
   // Lógica de Parsing das Turmas: extrair Série e Sigla da Turma (Ex: "6º A" -> Série: "6º", Sigla: "A")
   const parsedTurmas = useMemo(() => {
@@ -167,6 +171,30 @@ export default function Turmas() {
 
   const renderStudentActions = (aluno) => (
     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      <button 
+        onClick={() => {
+          setSelectedStudentForFicha(aluno);
+          setIsFichaOpen(true);
+        }}
+        title="Ficha do Aluno"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '32px',
+          height: '32px',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid #F59E0B',
+          background: '#FEF3C7',
+          color: '#d97706',
+          cursor: 'pointer',
+          transition: 'var(--transition-smooth)'
+        }}
+        onMouseOver={e => { e.currentTarget.style.background = '#FDE68A'; e.currentTarget.style.borderColor = '#B45309'; e.currentTarget.style.color = '#B45309'; }}
+        onMouseOut={e => { e.currentTarget.style.background = '#FEF3C7'; e.currentTarget.style.borderColor = '#F59E0B'; e.currentTarget.style.color = '#d97706'; }}
+      >
+        <FileText size={16} />
+      </button>
       {userRole !== 'tecnico' && (
         <button 
           onClick={() => {
@@ -718,6 +746,19 @@ export default function Turmas() {
             setIsCarometroModalOpen(false);
             setSelectedStudentForCarometro(null);
           }}
+        />
+      )}
+
+      {/* Modal da Ficha do Aluno */}
+      {isFichaOpen && selectedStudentForFicha && (
+        <FichaAlunoModal
+          aluno={selectedStudentForFicha}
+          isOpen={isFichaOpen}
+          onClose={() => {
+            setIsFichaOpen(false);
+            setSelectedStudentForFicha(null);
+          }}
+          photosMap={photosMap}
         />
       )}
     </div>
