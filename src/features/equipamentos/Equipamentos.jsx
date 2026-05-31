@@ -615,9 +615,9 @@ export default function Equipamentos() {
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '750px', border: 'none', overflow: 'hidden' }}>
             
-            {/* Cabeçalho do Modal Colorido baseando-se na cor da sala */}
+            {/* Cabeçalho do Modal Colorido usando a cor azul padrão dos modais */}
             <div style={{ 
-              background: getRoomColor(selectedRoom.id),
+              background: '#2B70C9',
               padding: '1.5rem 2rem',
               color: '#ffffff',
               position: 'relative'
@@ -674,7 +674,7 @@ export default function Equipamentos() {
                     fontWeight: 600,
                     fontSize: '0.8rem',
                     background: detailsTab === 'devices' ? '#ffffff' : 'transparent',
-                    color: detailsTab === 'devices' ? getRoomColor(selectedRoom.id) : '#ffffff',
+                    color: detailsTab === 'devices' ? '#2B70C9' : '#ffffff',
                     transition: 'var(--transition-smooth)'
                   }}
                 >
@@ -690,7 +690,7 @@ export default function Equipamentos() {
                     fontWeight: 600,
                     fontSize: '0.8rem',
                     background: detailsTab === 'bookings' ? '#ffffff' : 'transparent',
-                    color: detailsTab === 'bookings' ? getRoomColor(selectedRoom.id) : '#ffffff',
+                    color: detailsTab === 'bookings' ? '#2B70C9' : '#ffffff',
                     transition: 'var(--transition-smooth)'
                   }}
                 >
@@ -743,7 +743,7 @@ export default function Equipamentos() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <span style={{ fontWeight: 800, color: getRoomColor(selectedRoom.id), fontSize: '0.85rem', minWidth: '24px' }}>
+                          <span style={{ fontWeight: 800, color: '#2B70C9', fontSize: '0.85rem', minWidth: '24px' }}>
                             {String(index + 1).padStart(2, '0')}
                           </span>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -807,7 +807,7 @@ export default function Equipamentos() {
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <span style={{ fontWeight: 800, color: getRoomColor(selectedRoom.id), fontSize: '0.85rem', minWidth: '24px' }}>
+                              <span style={{ fontWeight: 800, color: '#2B70C9', fontSize: '0.85rem', minWidth: '24px' }}>
                                 {String(index + 1).padStart(2, '0')}
                               </span>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
