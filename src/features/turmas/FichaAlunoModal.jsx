@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Calendar, MapPin, Mail, Phone, Clipboard, RefreshCw, AlertTriangle, LogOut, FileText } from 'lucide-react';
+import { X, User, Calendar, MapPin, Mail, Phone, Clipboard, RefreshCw, AlertTriangle, LogOut, FileText, Printer, Share2 } from 'lucide-react';
 import { useGoogleAuth } from '../../app/providers/GoogleAuthProvider';
+import { useAuth } from '../../app/providers/AuthProvider';
 import useFrequenciaAluno from '../../hooks/useFrequenciaAluno';
 import FrequenciaAlunoCard from './FrequenciaAlunoCard';
 import { findPhotoInMap } from '../../services/photoService';
@@ -98,6 +99,7 @@ const getMockStudentDetails = (aluno) => {
 
 export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
   const { loginGoogle, logoutGoogle, accessToken, googleAccount, isConfigured } = useGoogleAuth();
+  const { userRole } = useAuth();
   const [activeTab, setActiveTab] = useState('cadastro'); // 'cadastro' | 'boletim' | 'frequencia'
   
   // Auto-autenticação para frequência ao selecionar a aba correspondente
@@ -154,6 +156,32 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
     birthDateDisplay = 'Não encontrado no Sheets';
     ageDisplay = 'Não encontrado no Sheets';
   }
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = async () => {
+    const shareText = `Ficha do Aluno: ${aluno.nome}\nTurma: ${aluno.turma}\nR.A.: ${raDisplay}\nNascimento: ${birthDateDisplay}\nIdade: ${ageDisplay}\nResponsável: ${details.parentName}\nTelefone: ${details.phone}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Ficha do Aluno - ${aluno.nome}`,
+          text: shareText,
+          url: window.location.href
+        });
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        alert('Dados da Ficha copiados para a área de transferência!');
+      } catch (err) {
+        alert('Não foi possível compartilhar ou copiar os dados.');
+      }
+    }
+  };
 
   return (
     <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && onClose()}>
@@ -590,15 +618,262 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
         <div style={{
           padding: '1rem 2rem',
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           borderTop: '1px solid var(--border-light)',
           backgroundColor: '#ffffff'
         }}>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            {(userRole === 'secretaria' || userRole === 'gestao') && (
+              <>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={handlePrint}
+                  style={{ 
+                    margin: 0, 
+                    padding: '0.55rem 1.25rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem',
+                    background: '#d97706',
+                    borderColor: '#d97706',
+                    color: '#ffffff'
+                  }}
+                >
+                  <Printer size={16} />
+                  <span>Imprimir</span>
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={handleShare}
+                  style={{ 
+                    margin: 0, 
+                    padding: '0.55rem 1.25rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem',
+                    border: '1px solid var(--border-light)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-main)'
+                  }}
+                >
+                  <Share2 size={16} />
+                  <span>Compartilhar</span>
+                </button>
+              </>
+            )}
+          </div>
           <button className="btn btn-secondary" onClick={onClose} style={{ margin: 0, padding: '0.55rem 1.25rem' }}>
             Fechar Prontuário
           </button>
         </div>
 
+      </div>
+
+      {/* Área exclusiva para impressão (A4) */}
+      <div className="print-report-only">
+        {/* Cabeçalho Oficial */}
+        <div style={{
+          borderBottom: '2px solid #000000',
+          paddingBottom: '1rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '18pt', fontWeight: 'bold', textTransform: 'uppercase' }}>E.E. ANTÔNIO CAIO</h1>
+            <p style={{ margin: '0.2rem 0 0', fontSize: '11pt', color: '#555555', fontWeight: 600 }}>
+              Ficha de Prontuário e Histórico Escolar
+            </p>
+          </div>
+          <div style={{ textAlign: 'right', fontSize: '10pt', color: '#555555' }}>
+            Emissão: {new Date().toLocaleDateString('pt-BR')}
+          </div>
+        </div>
+
+        {/* Dados Principais do Aluno e Foto */}
+        <div style={{ display: 'flex', gap: '2rem', marginBottom: '1.5rem' }}>
+          {photoUrl && (
+            <div style={{
+              width: '100px',
+              height: '100px',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              border: '2px solid #000000',
+              flexShrink: 0
+            }}>
+              <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          )}
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '11pt' }}>
+            <div style={{ gridColumn: 'span 2' }}>
+              <strong>Nome Completo:</strong> {aluno.nome}
+            </div>
+            <div>
+              <strong>Turma:</strong> {aluno.turma}
+            </div>
+            <div>
+              <strong>R.A. (Registro do Aluno):</strong> {raDisplay}
+            </div>
+            <div>
+              <strong>Data de Nascimento:</strong> {birthDateDisplay}
+            </div>
+            <div>
+              <strong>Idade:</strong> {ageDisplay}
+            </div>
+          </div>
+        </div>
+
+        {/* Dados de Contato e Responsáveis */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{ borderBottom: '1px solid #000000', paddingBottom: '0.25rem', marginBottom: '0.75rem', fontSize: '12pt', fontWeight: 'bold' }}>
+            Dados de Contato & Responsáveis
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 1rem', fontSize: '10.5pt' }}>
+            <div style={{ gridColumn: 'span 2' }}>
+              <strong>Responsável Legal:</strong> {details.parentName}
+            </div>
+            <div>
+              <strong>Telefone:</strong> {details.phone}
+            </div>
+            <div>
+              <strong>E-mail:</strong> {details.email}
+            </div>
+            <div style={{ gridColumn: 'span 2' }}>
+              <strong>Endereço:</strong> {details.address}
+            </div>
+          </div>
+        </div>
+
+        {/* Boletim Escolar */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{ borderBottom: '1px solid #000000', paddingBottom: '0.25rem', marginBottom: '0.75rem', fontSize: '12pt', fontWeight: 'bold' }}>
+            Boletim Escolar
+          </h3>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10pt' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f2f2f2', borderBottom: '1.5px solid #000000' }}>
+                <th style={{ border: '1px solid #000000', padding: '6px', textAlign: 'left' }}>Componente Curricular</th>
+                <th style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>1º Bim</th>
+                <th style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>2º Bim</th>
+                <th style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>3º Bim</th>
+                <th style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>4º Bim</th>
+                <th style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>Média</th>
+                <th style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>Situação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {details.boletim.map((bp, index) => (
+                <tr key={index} style={{ borderBottom: '1px solid #000000' }}>
+                  <td style={{ border: '1px solid #000000', padding: '6px', fontWeight: 'bold' }}>{bp.subject}</td>
+                  <td style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>{bp.b1}</td>
+                  <td style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>{bp.b2}</td>
+                  <td style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>{bp.b3}</td>
+                  <td style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>{bp.b4}</td>
+                  <td style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center', fontWeight: 'bold' }}>{bp.media}</td>
+                  <td style={{ border: '1px solid #000000', padding: '6px', textAlign: 'center' }}>{bp.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Frequência */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h3 style={{ borderBottom: '1px solid #000000', paddingBottom: '0.25rem', marginBottom: '0.75rem', fontSize: '12pt', fontWeight: 'bold' }}>
+            Frequência e Assiduidade
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.75rem', fontSize: '10pt', textAlign: 'center' }}>
+            <div style={{ border: '1px solid #000000', padding: '8px', borderRadius: '4px' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '8pt', textTransform: 'uppercase', marginBottom: '4px' }}>1º Bimestre</div>
+              <div style={{ fontSize: '12pt', fontWeight: 'bold' }}>{attendanceData ? attendanceData.frequencia1Bimestre : '---'}</div>
+            </div>
+            <div style={{ border: '1px solid #000000', padding: '8px', borderRadius: '4px' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '8pt', textTransform: 'uppercase', marginBottom: '4px' }}>2º Bimestre</div>
+              <div style={{ fontSize: '12pt', fontWeight: 'bold' }}>{attendanceData ? attendanceData.frequencia2Bimestre : '---'}</div>
+            </div>
+            <div style={{ border: '1px solid #000000', padding: '8px', borderRadius: '4px' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '8pt', textTransform: 'uppercase', marginBottom: '4px' }}>3º Bimestre</div>
+              <div style={{ fontSize: '12pt', fontWeight: 'bold' }}>{attendanceData ? attendanceData.frequencia3Bimestre : '---'}</div>
+            </div>
+            <div style={{ border: '1px solid #000000', padding: '8px', borderRadius: '4px' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '8pt', textTransform: 'uppercase', marginBottom: '4px' }}>4º Bimestre</div>
+              <div style={{ fontSize: '12pt', fontWeight: 'bold' }}>{attendanceData ? attendanceData.frequencia4Bimestre : '---'}</div>
+            </div>
+            <div style={{ border: '1px solid #000000', padding: '8px', borderRadius: '4px', backgroundColor: '#f2f2f2' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '8pt', textTransform: 'uppercase', marginBottom: '4px' }}>Freq. Final</div>
+              <div style={{ fontSize: '12pt', fontWeight: 'bold' }}>{attendanceData ? attendanceData.frequenciaFinal : '---'}</div>
+            </div>
+          </div>
+          <div style={{ marginTop: '0.75rem', fontSize: '10.5pt', textAlign: 'right' }}>
+            <strong>Total de Faltas no Ano:</strong> {attendanceData ? attendanceData.totalFaltas : 0} falta(s)
+          </div>
+        </div>
+
+        {/* Assinaturas */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', marginTop: '4rem', fontSize: '10pt', textAlign: 'center' }}>
+          <div>
+            <div style={{ borderTop: '1px solid #000000', width: '200px', margin: '0 auto', paddingTop: '4px' }}>
+              Secretaria Escolar
+            </div>
+          </div>
+          <div>
+            <div style={{ borderTop: '1px solid #000000', width: '200px', margin: '0 auto', paddingTop: '4px' }}>
+              Direção de Escola
+            </div>
+          </div>
+        </div>
+
+        {/* Estilos CSS embutidos */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media screen {
+            .print-report-only {
+              display: none !important;
+            }
+          }
+          @media print {
+            #root > *:not(.modal-overlay) {
+              display: none !important;
+            }
+            .modal-overlay {
+              position: absolute !important;
+              background: transparent !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              display: block !important;
+              overflow: visible !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              height: auto !important;
+            }
+            .modal-overlay > *:not(.modal-content) {
+              display: none !important;
+            }
+            .modal-content {
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 !important;
+              box-shadow: none !important;
+              border: none !important;
+              overflow: visible !important;
+              max-height: none !important;
+              height: auto !important;
+            }
+            .modal-content > *:not(.print-report-only) {
+              display: none !important;
+            }
+            .print-report-only {
+              display: block !important;
+              width: 100% !important;
+              background: white !important;
+              color: black !important;
+              padding: 15mm !important;
+              box-sizing: border-box !important;
+            }
+          }
+        ` }} />
       </div>
     </div>
   );
