@@ -146,7 +146,7 @@ export default function MainLayout() {
           )}
           
           {userRole !== 'secretaria' && userRole !== 'tecnico' && (
-            <Link to="/ocorrencias/nova" className={`nav-link ${isActive('/ocorrencias/nova')}`} onClick={() => setIsMobileMenuOpen(false)}>
+            <Link to="/ocorrencias" className={`nav-link ${isActive('/ocorrencias')}`} onClick={() => setIsMobileMenuOpen(false)}>
               <PlusCircle size={18} /> Ocorrências
             </Link>
           )}
