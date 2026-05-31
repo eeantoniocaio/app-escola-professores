@@ -8,7 +8,7 @@ const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', aula: '
 
 export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }) {
   const { addOcorrencia, updateOcorrencia } = useOcorrencias();
-  const { professores, turmas, alunos } = useGlobalData();
+  const { professores, turmas, alunos, disciplinas } = useGlobalData();
   const { userRole, userName } = useAuth();
   
   const [form, setForm] = useState(EMPTY_FORM)
@@ -239,7 +239,14 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
                 </div>
                 <div>
                   <label style={labelStyle}>Disciplina <span style={{ color: 'var(--color-danger)' }}>*</span></label>
-                  <input type="text" placeholder="Ex: Matemática..." value={form.disciplina} onChange={e => setForm({...form, disciplina: e.target.value})} style={inputStyle('disciplina')} />
+                  {disciplinas && disciplinas.length > 0 ? (
+                    <select value={form.disciplina} onChange={e => setForm({...form, disciplina: e.target.value})} style={inputStyle('disciplina')}>
+                      <option value="">Selecione...</option>
+                      {disciplinas.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  ) : (
+                    <input type="text" placeholder="Ex: Matemática..." value={form.disciplina} onChange={e => setForm({...form, disciplina: e.target.value})} style={inputStyle('disciplina')} />
+                  )}
                   {errors.disciplina && <span style={{ color: 'var(--color-danger)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.disciplina}</span>}
                 </div>
               </div>
