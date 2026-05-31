@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, User, Calendar, MapPin, Mail, Phone, Clipboard, RefreshCw, AlertTriangle, LogOut, FileText, Printer, Share2 } from 'lucide-react';
 import { useGoogleAuth } from '../../app/providers/GoogleAuthProvider';
 import { useAuth } from '../../app/providers/AuthProvider';
@@ -183,7 +184,7 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
     }
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" style={{ width: '100%', maxWidth: '800px', display: 'flex', flexDirection: 'column', maxHeight: '92vh', overflow: 'hidden', border: 'none' }}>
         
@@ -833,33 +834,32 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
             }
           }
           @media print {
-            #root > *:not(.modal-overlay) {
+            #root {
               display: none !important;
             }
             .modal-overlay {
               position: absolute !important;
-              background: transparent !important;
-              padding: 0 !important;
-              margin: 0 !important;
-              display: block !important;
-              overflow: visible !important;
               left: 0 !important;
               top: 0 !important;
               width: 100% !important;
               height: auto !important;
-            }
-            .modal-overlay > *:not(.modal-content) {
-              display: none !important;
+              background: transparent !important;
+              display: block !important;
+              overflow: visible !important;
+              padding: 0 !important;
+              margin: 0 !important;
             }
             .modal-content {
+              box-shadow: none !important;
+              border: none !important;
               width: 100% !important;
               max-width: 100% !important;
               margin: 0 !important;
-              box-shadow: none !important;
-              border: none !important;
+              padding: 0 !important;
               overflow: visible !important;
               max-height: none !important;
               height: auto !important;
+              background: white !important;
             }
             .modal-content > *:not(.print-report-only) {
               display: none !important;
@@ -875,6 +875,7 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
           }
         ` }} />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
