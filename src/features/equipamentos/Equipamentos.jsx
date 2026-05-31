@@ -14,7 +14,7 @@ export default function Equipamentos() {
   const { userRole, userName } = useAuth();
   const { showToast } = useToast();
 
-  const canEdit = userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria';
+  const canEdit = userRole === 'gestao' || userRole === 'tecnico';
 
   const [activeTab, setActiveTab] = useState('salas'); // 'salas' | 'dispositivos'
   const [loading, setLoading] = useState(true);
