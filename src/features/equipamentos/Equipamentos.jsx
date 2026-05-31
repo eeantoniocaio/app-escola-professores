@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
