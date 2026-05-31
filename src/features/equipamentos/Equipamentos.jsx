@@ -30,8 +30,6 @@ export default function Equipamentos() {
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null); // null = criar, objeto = editar
   const [roomName, setRoomName] = useState('');
-  const [roomDesc, setRoomDesc] = useState('');
-  const [roomCapacity, setRoomCapacity] = useState('');
 
   // Modais de Criação / Edição de Dispositivo
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
@@ -151,8 +149,6 @@ export default function Equipamentos() {
   const openCreateRoomModal = () => {
     setEditingRoom(null);
     setRoomName('');
-    setRoomDesc('');
-    setRoomCapacity('');
     setIsRoomModalOpen(true);
   };
 
@@ -160,8 +156,6 @@ export default function Equipamentos() {
     e.stopPropagation();
     setEditingRoom(sala);
     setRoomName(sala.nome);
-    setRoomDesc(sala.descricao || '');
-    setRoomCapacity(sala.capacidade || '');
     setIsRoomModalOpen(true);
   };
 
@@ -173,9 +167,7 @@ export default function Equipamentos() {
     }
 
     const payload = {
-      nome: roomName.trim(),
-      descricao: roomDesc.trim() || null,
-      capacidade: roomCapacity ? parseInt(roomCapacity, 10) : null
+      nome: roomName.trim()
     };
 
     try {
@@ -664,28 +656,6 @@ export default function Equipamentos() {
                       placeholder="Ex: Sala 05, Auditório, Sala de Leitura"
                       className="form-text-input"
                       required
-                    />
-                  </div>
-                  
-                  <div className="form-input-group">
-                    <label>Capacidade (Alunos)</label>
-                    <input 
-                      type="number" 
-                      value={roomCapacity}
-                      onChange={(e) => setRoomCapacity(e.target.value)}
-                      placeholder="Ex: 35"
-                      className="form-text-input"
-                      min="1"
-                    />
-                  </div>
-
-                  <div className="form-input-group">
-                    <label>Descrição</label>
-                    <textarea 
-                      value={roomDesc}
-                      onChange={(e) => setRoomDesc(e.target.value)}
-                      placeholder="Breve descrição da utilidade ou particularidade deste local..."
-                      className="form-textarea-input"
                     />
                   </div>
                 </div>
