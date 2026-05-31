@@ -1,10 +1,29 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wrench, Search, Plus, Edit2, Trash2, Calendar, Users, FolderOpen, X, ArrowLeft, BookOpen, AlertTriangle } from 'lucide-react';
+import { Wrench, Search, Plus, Edit2, Trash2, Calendar, Users, FolderOpen, X, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import './Equipamentos.css';
+
+// Cores vibrantes inspiradas na paleta da página Turmas (Duolingo/Pastel style)
+const ROOM_COLORS = [
+  '#1CB0F6', // Azul Celeste (Série 6)
+  '#58CC02', // Verde Limão (Série 3)
+  '#CE82FF', // Roxo (Série 1)
+  '#FF9600', // Laranja (Série 9)
+  '#FF4B4B', // Vermelho (Série 7)
+  '#2B70C9', // Azul Escuro (Série 2)
+  '#FFC800'  // Amarelo (Série 8)
+];
+
+const getRoomColor = (roomId) => {
+  if (!roomId) return '#1CB0F6';
+  // Usa o caractere final ou um hash simples do ID para escolher a cor de forma consistente
+  const charCodeSum = roomId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const index = charCodeSum % ROOM_COLORS.length;
+  return ROOM_COLORS[index];
+};
 
 export default function Equipamentos() {
   const navigate = useNavigate();
@@ -41,8 +60,7 @@ export default function Equipamentos() {
   const [deviceCondicao, setDeviceCondicao] = useState('Funcional');
   const [deviceObs, setDeviceObs] = useState('');
 
-  // Modal de Detalhes da Sala (com abas de dispositivos e reservas)
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  // Sala Selecionada (Substitui o antigo modal de detalhes por exibição direta)
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [detailsTab, setDetailsTab] = useState('devices'); // 'devices' | 'bookings'
 
@@ -69,6 +87,14 @@ export default function Equipamentos() {
       setSalas(salasRes.data || []);
       setDispositivos(dispRes.data || []);
       setAgendamentos(agendRes.data || []);
+
+      // Se a sala selecionada foi atualizada, atualizar a referência na UI
+      if (selectedRoom) {
+        const updatedSelected = salasRes.data.find(s => s.id === selectedRoom.id);
+        if (updatedSelected) {
+          setSelectedRoom(updatedSelected);
+        }
+      }
     } catch (err) {
       console.error('Erro ao carregar dados de equipamentos:', err);
       showToast('Erro ao carregar dados', 'error');
@@ -136,13 +162,15 @@ export default function Equipamentos() {
     return result;
   }, [dispositivos, searchQuery, filterCondicao, filterSala]);
 
-  // Dispositivos pertencentes apenas à sala aberta no modal de detalhes
+  // Dispositivos pertencentes apenas à sala selecionada
   const selectedRoomDevices = useMemo(() => {
     if (!selectedRoom) return [];
-    return dispositivos.filter(d => d.sala_id === selectedRoom.id);
+    return dispositivos
+      .filter(d => d.sala_id === selectedRoom.id)
+      .sort((a, b) => a.tipo.localeCompare(b.tipo));
   }, [dispositivos, selectedRoom]);
 
-  // Agendamentos pertencentes apenas à sala aberta no modal de detalhes
+  // Agendamentos pertencentes apenas à sala selecionada
   const selectedRoomBookings = useMemo(() => {
     if (!selectedRoom) return [];
     return agendamentos
@@ -211,7 +239,7 @@ export default function Equipamentos() {
       if (error) throw error;
       showToast('Sala excluída com sucesso!');
       if (selectedRoom?.id === salaId) {
-        setIsDetailsModalOpen(false);
+        setSelectedRoom(null);
       }
       fetchData();
     } catch (err) {
@@ -366,7 +394,7 @@ export default function Equipamentos() {
 
   return (
     <div className="equipamentos-container">
-      {/* Header com botão de voltar */}
+      {/* Header Geral do Painel */}
       <div className="equipamentos-header">
         <div className="equipamentos-title-section">
           <button className="btn-back-home" onClick={() => navigate('/')} title="Voltar ao início">
@@ -383,109 +411,385 @@ export default function Equipamentos() {
         </div>
       </div>
 
-      {/* Tab bar principal */}
+      {/* Tab bar principal (Salas vs Tabela Completa) */}
       <div className="tab-container">
         <button 
-          onClick={() => { setActiveTab('salas'); setSearchQuery(''); }}
+          onClick={() => { setActiveTab('salas'); setSearchQuery(''); setSelectedRoom(null); }}
           className={`tab-button ${activeTab === 'salas' ? 'active' : ''}`}
         >
           Salas e Locais
         </button>
         <button 
-          onClick={() => { setActiveTab('dispositivos'); setSearchQuery(''); }}
+          onClick={() => { setActiveTab('dispositivos'); setSearchQuery(''); setSelectedRoom(null); }}
           className={`tab-button ${activeTab === 'dispositivos' ? 'active' : ''}`}
         >
           Todos os Dispositivos
         </button>
       </div>
 
-      {/* Barra de pesquisa e ações rápidos */}
-      <div className="search-bar-row">
-        <div className="search-input-wrapper">
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={activeTab === 'salas' ? 'Buscar salas por nome...' : 'Buscar dispositivos por patrimônio, tipo ou série...'}
-            className="search-input"
-          />
-          <Search className="search-icon" size={18} />
-        </div>
-
-        <div className="action-buttons-group">
-          {activeTab === 'salas' ? (
-            <button className="btn btn-primary" onClick={openCreateRoomModal}>
-              <Plus size={16} /> Nova Sala
-            </button>
-          ) : (
-            <button className="btn btn-primary" onClick={openCreateDeviceModal}>
-              <Plus size={16} /> Novo Dispositivo
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* RENDERIZAÇÃO DA TAB SALAS */}
+      {/* ── TAB SALAS E LOCAIS ── */}
       {activeTab === 'salas' && (
-        filteredSalas.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-card)', border: '1px dashed var(--border-light)', borderRadius: 'var(--radius-lg)' }}>
-            <FolderOpen size={48} style={{ color: 'var(--text-light)', marginBottom: '1rem' }} />
-            <p style={{ fontSize: '1.05rem', fontWeight: 600, margin: 0, color: 'var(--text-muted)' }}>Nenhuma sala encontrada</p>
-          </div>
-        ) : (
-          <div className="salas-grid">
-            {filteredSalas.map(sala => (
-              <div 
-                key={sala.id} 
-                className="sala-card"
-                onClick={() => { setSelectedRoom(sala); setDetailsTab('devices'); setIsDetailsModalOpen(true); }}
-                style={{ cursor: 'pointer' }}
-              >
-                <div>
-                  <div className="sala-card-header">
-                    <h3 className="sala-card-title">{sala.nome}</h3>
-                    <div className="card-actions-icons">
-                      <button className="btn-icon" onClick={(e) => openEditRoomModal(e, sala)} title="Editar Sala">
-                        <Edit2 size={14} />
-                      </button>
-                      <button className="btn-icon delete" onClick={(e) => handleDeleteRoom(e, sala.id)} title="Excluir Sala">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {sala.descricao && <p className="sala-card-desc">{sala.descricao}</p>}
-                  {!sala.descricao && <p className="sala-card-desc" style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>Sem descrição cadastrada.</p>}
-                  
-                  <div className="sala-card-info">
-                    {sala.capacidade && (
-                      <div className="sala-card-info-item">
-                        <Users size={14} />
-                        <span>Capacidade: {sala.capacidade} alunos</span>
-                      </div>
-                    )}
-                    <div className="sala-card-info-item">
-                      <Wrench size={14} />
-                      <span>{deviceCounts[sala.id] || 0} dispositivos cadastrados</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="sala-card-footer">
-                  <button className="btn-card-details">
-                    Ver Detalhes
-                  </button>
-                </div>
+        !selectedRoom ? (
+          // Vista 1: Grade de cards das salas
+          <>
+            <div className="search-bar-row">
+              <div className="search-input-wrapper">
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar salas por nome..."
+                  className="search-input"
+                />
+                <Search className="search-icon" size={18} />
               </div>
-            ))}
+
+              <div className="action-buttons-group">
+                <button className="btn btn-primary" onClick={openCreateRoomModal}>
+                  <Plus size={16} /> Nova Sala
+                </button>
+              </div>
+            </div>
+
+            {filteredSalas.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-card)', border: '1px dashed var(--border-light)', borderRadius: 'var(--radius-lg)' }}>
+                <FolderOpen size={48} style={{ color: 'var(--text-light)', marginBottom: '1rem' }} />
+                <p style={{ fontSize: '1.05rem', fontWeight: 600, margin: 0, color: 'var(--text-muted)' }}>Nenhuma sala encontrada</p>
+              </div>
+            ) : (
+              <div className="salas-grid">
+                {filteredSalas.map(sala => {
+                  const roomColor = getRoomColor(sala.id);
+                  return (
+                    <div 
+                      key={sala.id} 
+                      className="sala-card"
+                      onClick={() => { setSelectedRoom(sala); setDetailsTab('devices'); }}
+                      style={{ 
+                        cursor: 'pointer',
+                        borderTop: `5px solid ${roomColor}`
+                      }}
+                    >
+                      <div>
+                        <div className="sala-card-header">
+                          <h3 className="sala-card-title">{sala.nome}</h3>
+                          <div className="card-actions-icons">
+                            <button className="btn-icon" onClick={(e) => openEditRoomModal(e, sala)} title="Editar Sala">
+                              <Edit2 size={14} />
+                            </button>
+                            <button className="btn-icon delete" onClick={(e) => handleDeleteRoom(e, sala.id)} title="Excluir Sala">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {sala.descricao && <p className="sala-card-desc">{sala.descricao}</p>}
+                        {!sala.descricao && <p className="sala-card-desc" style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>Sem descrição cadastrada.</p>}
+                        
+                        <div className="sala-card-info">
+                          {sala.capacidade && (
+                            <div className="sala-card-info-item">
+                              <Users size={14} />
+                              <span>Capacidade: {sala.capacidade} alunos</span>
+                            </div>
+                          )}
+                          <div className="sala-card-info-item">
+                            <Wrench size={14} />
+                            <span>{deviceCounts[sala.id] || 0} dispositivos cadastrados</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="sala-card-footer">
+                        <button className="btn-card-details" style={{ backgroundColor: `${roomColor}15`, color: roomColor }}>
+                          Ver Detalhes
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        ) : (
+          // Vista 2: CONTAINER COLORIDO DA SALA (Estilo idêntico ao de Turmas)
+          <div style={{
+            background: getRoomColor(selectedRoom.id),
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '2rem',
+            boxShadow: 'var(--shadow-sm)',
+            animation: 'fadeIn 0.3s ease-out',
+            color: '#ffffff'
+          }}>
+            {/* Header da Sala Colorida */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: '1.5rem', 
+              borderBottom: '1px solid rgba(255, 255, 255, 0.2)', 
+              paddingBottom: '1rem', 
+              flexWrap: 'wrap', 
+              gap: '1rem' 
+            }}>
+              <div>
+                <button 
+                  onClick={() => setSelectedRoom(null)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    color: '#ffffff',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    marginBottom: '0.75rem',
+                    transition: 'var(--transition-fast)'
+                  }}
+                  onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+                  onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+                >
+                  <ArrowLeft size={14} /> Voltar para Salas
+                </button>
+                
+                <h3 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ffffff' }}>
+                  <Wrench size={22} color="#ffffff" /> {selectedRoom.nome}
+                </h3>
+                
+                <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem', margin: 0, marginTop: '0.25rem' }}>
+                  {selectedRoom.descricao || 'Sem descrição cadastrada.'} {selectedRoom.capacidade ? ` • Capacidade: ${selectedRoom.capacidade} alunos` : ''}
+                </p>
+              </div>
+
+              {/* Botões de Ações no cabeçalho do painel */}
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {detailsTab === 'devices' ? (
+                  <button 
+                    onClick={openCreateDeviceModal}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem', 
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      color: '#ffffff',
+                      padding: '0.5rem 1rem',
+                      borderRadius: 'var(--radius-sm)',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      transition: 'var(--transition-fast)'
+                    }}
+                    onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+                    onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+                  >
+                    <Plus size={16} /> Vincular Equipamento
+                  </button>
+                ) : (
+                  <button 
+                    onClick={openCreateBookingModal}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem', 
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      color: '#ffffff',
+                      padding: '0.5rem 1rem',
+                      borderRadius: 'var(--radius-sm)',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      transition: 'var(--transition-fast)'
+                    }}
+                    onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+                    onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+                  >
+                    <Plus size={16} /> Reservar Sala
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Segmented Control Interno da Sala (Estilo idêntico ao de Turmas) */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '0.35rem', 
+              background: 'rgba(0, 0, 0, 0.12)', 
+              padding: '0.25rem', 
+              borderRadius: 'var(--radius-md)', 
+              width: 'fit-content', 
+              marginBottom: '1.5rem',
+              border: '1px solid rgba(255, 255, 255, 0.15)'
+            }}>
+              <button 
+                onClick={() => setDetailsTab('devices')}
+                style={{
+                  padding: '0.45rem 1rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                  background: detailsTab === 'devices' ? '#ffffff' : 'transparent',
+                  color: detailsTab === 'devices' ? getRoomColor(selectedRoom.id) : '#ffffff',
+                  transition: 'var(--transition-smooth)'
+                }}
+              >
+                Dispositivos da Sala ({selectedRoomDevices.length})
+              </button>
+              <button 
+                onClick={() => setDetailsTab('bookings')}
+                style={{
+                  padding: '0.45rem 1rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                  background: detailsTab === 'bookings' ? '#ffffff' : 'transparent',
+                  color: detailsTab === 'bookings' ? getRoomColor(selectedRoom.id) : '#ffffff',
+                  transition: 'var(--transition-smooth)'
+                }}
+              >
+                Agendamentos ({selectedRoomBookings.length})
+              </button>
+            </div>
+
+            {/* ABA INTERNA: DISPOSITIVOS DA SALA */}
+            {detailsTab === 'devices' && (
+              selectedRoomDevices.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+                  Nenhum dispositivo cadastrado nesta sala.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {selectedRoomDevices.map((device, index) => (
+                    <div 
+                      key={device.id}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        padding: '0.75rem 1.25rem', 
+                        background: '#ffffff', 
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'var(--transition-smooth)'
+                      }}
+                      onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+                      onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {/* Numeração colorida idêntica à lista de alunos */}
+                        <span style={{ fontWeight: 800, color: getRoomColor(selectedRoom.id), fontSize: '0.85rem', minWidth: '24px' }}>
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{device.tipo}</span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            Patrimônio: {device.numero_escola || 'N/D'} • Série: {device.numero_serie || 'N/D'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        {renderCondicaoBadge(device.condicao)}
+                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                          <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
+                            <Edit2 size={14} />
+                          </button>
+                          <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            {/* ABA INTERNA: AGENDAMENTOS */}
+            {detailsTab === 'bookings' && (
+              selectedRoomBookings.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+                  Nenhum agendamento realizado para esta sala.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {selectedRoomBookings.map((booking, index) => {
+                    const formattedDate = new Date(booking.data + 'T12:00:00').toLocaleDateString('pt-BR');
+                    const isCreator = booking.professor_nome === userName;
+                    return (
+                      <div 
+                        key={booking.id}
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between', 
+                          padding: '0.75rem 1.25rem', 
+                          background: '#ffffff', 
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          boxShadow: 'var(--shadow-sm)',
+                          transition: 'var(--transition-smooth)'
+                        }}
+                        onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+                        onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ fontWeight: 800, color: getRoomColor(selectedRoom.id), fontSize: '0.85rem', minWidth: '24px' }}>
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{booking.professor_nome}</span>
+                              <span className={`periodo-badge ${
+                                booking.periodo === 'Manhã' ? 'periodo-manha' : 
+                                booking.periodo === 'Tarde' ? 'periodo-tarde' : 'periodo-noite'
+                              }`}>
+                                {booking.periodo}
+                              </span>
+                            </div>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                              Data de Uso: <strong>{formattedDate}</strong>
+                              {booking.observacao ? ` • Finalidade: ${booking.observacao}` : ''}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {(isCreator || userRole === 'gestao') && (
+                          <button 
+                            className="btn-icon delete" 
+                            onClick={() => handleDeleteBooking(booking.id)}
+                            title="Cancelar Agendamento"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            )}
           </div>
         )
       )}
 
-      {/* RENDERIZAÇÃO DA TAB TODOS OS DISPOSITIVOS */}
+      {/* ── TAB TODOS OS DISPOSITIVOS ── */}
       {activeTab === 'dispositivos' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Painel de Filtros Extras para Dispositivos */}
+          {/* Painel de Filtros para Dispositivos */}
           <div className="controls-panel" style={{ margin: 0, padding: '1rem' }}>
             <div className="filters-group" style={{ gap: '0.75rem' }}>
               <select 
@@ -729,166 +1033,8 @@ export default function Equipamentos() {
         </div>
       )}
 
-      {/* ── MODAL: DETALHES COMPLETOS DA SALA ── */}
-      {isDetailsModalOpen && selectedRoom && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '750px' }}>
-            <div className="modal-header">
-              <div>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>{selectedRoom.nome}</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, marginTop: '0.15rem' }}>
-                  {selectedRoom.descricao || 'Detalhes da sala selecionada.'}
-                </p>
-              </div>
-              <button className="btn-icon" onClick={() => setIsDetailsModalOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Abas internas do modal */}
-            <div className="modal-tabs-container">
-              <button 
-                onClick={() => setDetailsTab('devices')}
-                className={`modal-tab-button ${detailsTab === 'devices' ? 'active' : ''}`}
-              >
-                Dispositivos da Sala ({selectedRoomDevices.length})
-              </button>
-              <button 
-                onClick={() => setDetailsTab('bookings')}
-                className={`modal-tab-button ${detailsTab === 'bookings' ? 'active' : ''}`}
-              >
-                Agendamentos ({selectedRoomBookings.length})
-              </button>
-            </div>
-
-            <div className="modal-body-scroll" style={{ minHeight: '300px' }}>
-              
-              {/* ABA INTERNA: DISPOSITIVOS */}
-              {detailsTab === 'devices' && (
-                selectedRoomDevices.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                    <Wrench size={32} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
-                    <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Nenhum dispositivo cadastrado nesta sala.</p>
-                    <button 
-                      className="btn btn-primary" 
-                      onClick={openCreateDeviceModal}
-                      style={{ marginTop: '1rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                    >
-                      <Plus size={14} /> Vincular Equipamento
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
-                      <button 
-                        className="btn btn-primary" 
-                        onClick={openCreateDeviceModal}
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                      >
-                        <Plus size={14} /> Vincular Equipamento
-                      </button>
-                    </div>
-                    <div className="table-container" style={{ border: '1px solid var(--border-light)' }}>
-                      <table className="equipamentos-table">
-                        <thead>
-                          <tr>
-                            <th>Tipo</th>
-                            <th>Nº Patrimônio</th>
-                            <th>Condição</th>
-                            <th style={{ textAlign: 'center' }}>Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedRoomDevices.map(device => (
-                            <tr key={device.id}>
-                              <td style={{ fontWeight: 600 }}>{device.tipo}</td>
-                              <td>{device.numero_escola || <span style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>Não definido</span>}</td>
-                              <td>{renderCondicaoBadge(device.condicao)}</td>
-                              <td style={{ textAlign: 'center' }}>
-                                <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
-                                  <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
-                                    <Edit2 size={12} />
-                                  </button>
-                                  <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
-                                    <Trash2 size={12} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )
-              )}
-
-              {/* ABA INTERNA: AGENDAMENTOS */}
-              {detailsTab === 'bookings' && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Reservas da sala</span>
-                    <button className="btn btn-primary" onClick={openCreateBookingModal} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
-                      <Plus size={14} /> Reservar Sala
-                    </button>
-                  </div>
-
-                  {selectedRoomBookings.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                      <Calendar size={32} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
-                      <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Nenhum agendamento para esta sala.</p>
-                    </div>
-                  ) : (
-                    <div className="agendamentos-list">
-                      {selectedRoomBookings.map(booking => {
-                        const formattedDate = new Date(booking.data + 'T12:00:00').toLocaleDateString('pt-BR');
-                        const isCreator = booking.professor_nome === userName;
-                        
-                        return (
-                          <div key={booking.id} className="agendamento-card">
-                            <div className="agendamento-details">
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <span className="agendamento-title">{booking.professor_nome}</span>
-                                <span className={`periodo-badge ${
-                                  booking.periodo === 'Manhã' ? 'periodo-manha' : 
-                                  booking.periodo === 'Tarde' ? 'periodo-tarde' : 'periodo-noite'
-                                }`}>
-                                  {booking.periodo}
-                                </span>
-                              </div>
-                              <span className="agendamento-meta">Data de Uso: <strong>{formattedDate}</strong></span>
-                              {booking.observacao && <p className="agendamento-obs">Obs: {booking.observacao}</p>}
-                            </div>
-                            
-                            {(isCreator || userRole === 'gestao') && (
-                              <button 
-                                className="btn-icon delete" 
-                                onClick={() => handleDeleteBooking(booking.id)}
-                                title="Cancelar Agendamento"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            <div className="modal-footer-actions">
-              <button className="btn btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── MODAL: EFETUAR RESERVA / AGENDAMENTO ── */}
-      {isBookingModalOpen && (
+      {isBookingModalOpen && selectedRoom && (
         <div className="modal-overlay" style={{ zIndex: 300 }}>
           <div className="modal-content" style={{ maxWidth: '450px' }}>
             <div className="modal-header">
