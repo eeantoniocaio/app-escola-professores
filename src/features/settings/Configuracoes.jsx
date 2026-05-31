@@ -118,7 +118,7 @@ export default function Configuracoes() {
     }
 
     addDisciplina(cleanNome)
-    setNovoDisciplina('')
+    setNovaDisciplina('')
   }
 
   const handleSaveLink = (turma) => {
@@ -395,7 +395,7 @@ export default function Configuracoes() {
             </h3>
             {renderList(disciplinas, canEditDisciplinas ? removeDisciplina : null, 'Nenhuma disciplina cadastrada.')}
             {canEditDisciplinas && (
-              <AddForm value={novaDisciplina} onChange={e => setNovoDisciplina(e.target.value)} onSubmit={handleAddDisciplina} placeholder="Nome da disciplina (Ex: Matemática)" />
+              <AddForm value={novaDisciplina} onChange={e => setNovaDisciplina(e.target.value)} onSubmit={handleAddDisciplina} placeholder="Nome da disciplina (Ex: Matemática)" />
             )}
             {canEditDisciplinas && (
               <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-light)' }}>
