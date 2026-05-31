@@ -101,8 +101,16 @@ export default function Configuracoes() {
       alert('Apenas usuários com perfil de Gestão podem adicionar disciplinas.')
       return
     }
-    if (!novaDisciplina.trim()) return
-    if (!disciplinas.includes(novaDisciplina.trim())) addDisciplina(novaDisciplina.trim())
+    const cleanNome = novaDisciplina.trim()
+    if (!cleanNome) return
+
+    const isDuplicate = disciplinas.some(d => d.toLowerCase() === cleanNome.toLowerCase())
+    if (isDuplicate) {
+      alert('Esta disciplina já está cadastrada.')
+      return
+    }
+
+    addDisciplina(cleanNome)
     setNovoDisciplina('')
   }
 
@@ -185,10 +193,14 @@ export default function Configuracoes() {
       lines.forEach(line => {
         let name = line.split(',')[0].replace(/^["']|["']$/g, '').trim()
         if (name.toLowerCase() === 'nome' || name.toLowerCase() === 'disciplina' || name.toLowerCase() === 'disciplinas' || name.toLowerCase() === 'materia') return
-        if (name && !disciplinas.includes(name) && !novas.includes(name)) novas.push(name)
+        if (name) {
+          const isDup = disciplinas.some(d => d.toLowerCase() === name.toLowerCase()) || 
+                        novas.some(n => n.toLowerCase() === name.toLowerCase())
+          if (!isDup) novas.push(name)
+        }
       })
       if (novas.length > 0) importDisciplinas(novas)
-      else alert('Nenhuma disciplina nova encontrada.')
+      else alert('Nenhuma disciplina nova encontrada (todas já existem ou arquivo está vazio).')
     }
     reader.readAsText(file)
     e.target.value = ''

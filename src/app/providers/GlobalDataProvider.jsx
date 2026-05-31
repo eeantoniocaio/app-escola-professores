@@ -235,7 +235,16 @@ export function GlobalDataProvider({ children }) {
     }
   };
   const addDisciplina = async (nome) => {
-    const { data, error } = await supabase.from('disciplinas').insert([{ nome }]).select();
+    const cleanNome = nome.trim();
+    if (!cleanNome) return;
+
+    const isDuplicate = disciplinas.some(d => d.toLowerCase() === cleanNome.toLowerCase());
+    if (isDuplicate) {
+      showToast('Esta disciplina já está cadastrada.', 'error');
+      return;
+    }
+
+    const { data, error } = await supabase.from('disciplinas').insert([{ nome: cleanNome }]).select();
     if (error) {
       showToast('Erro ao adicionar disciplina', 'error');
     } else if (data) {
@@ -255,7 +264,16 @@ export function GlobalDataProvider({ children }) {
   };
 
   const importDisciplinas = async (nomes) => {
-    const payloads = nomes.map(nome => ({ nome }));
+    const filteredNomes = nomes
+      .map(n => n.trim())
+      .filter(n => n && !disciplinas.some(d => d.toLowerCase() === n.toLowerCase()));
+
+    if (filteredNomes.length === 0) {
+      showToast('Nenhuma disciplina nova para importar.', 'error');
+      return;
+    }
+
+    const payloads = filteredNomes.map(nome => ({ nome }));
     const { data, error } = await supabase.from('disciplinas').insert(payloads).select();
     if (error) {
       showToast('Erro ao importar disciplinas', 'error');
@@ -265,7 +283,7 @@ export function GlobalDataProvider({ children }) {
         const merged = [...new Set([...prev, ...addedNomes])];
         return merged.sort();
       });
-      showToast('Disciplinas importadas com sucesso!');
+      showToast(`${addedNomes.length} disciplina(s) importada(s) com sucesso!`);
     }
   };
 
