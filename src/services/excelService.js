@@ -25,15 +25,27 @@ export function findNameColumnIndex(header) {
 /**
  * Encontra o índice da linha do aluno na planilha
  */
-export function findStudentRow(values, studentName) {
+export function findStudentRow(values, studentName, nameColIdx = -1, headerRowIdx = -1) {
   if (!values || values.length < 2) return -1;
   const normalizedSearchName = normalizeString(studentName);
 
   for (let r = 1; r < values.length; r++) {
+    if (r === headerRowIdx) continue; // Pula a linha do cabeçalho
+    
     const row = values[r];
+    
+    // Se temos a coluna do nome definida, busca prioritariamente nela
+    if (nameColIdx !== -1 && nameColIdx < row.length) {
+      const val = normalizeString(row[nameColIdx]);
+      if (val === normalizedSearchName || (val && (val.includes(normalizedSearchName) || normalizedSearchName.includes(val)))) {
+        return r;
+      }
+      continue;
+    }
+
+    // Fallback: busca em todas as colunas
     for (let c = 0; c < row.length; c++) {
       const val = normalizeString(row[c]);
-      // Comparação exata ou contida
       if (val === normalizedSearchName || (val && (val.includes(normalizedSearchName) || normalizedSearchName.includes(val)))) {
         return r;
       }
@@ -74,13 +86,15 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
     return { error: 'Planilha sem dados suficientes.' };
   }
 
-  const studentRowIdx = findStudentRow(values, studentName);
+  const headerRowIdx = findHeaderRowIndex(values);
+  const header = headerRowIdx !== -1 ? values[headerRowIdx] : [];
+  const nameColIdx = findNameColumnIndex(header);
+
+  const studentRowIdx = findStudentRow(values, studentName, nameColIdx, headerRowIdx);
   if (studentRowIdx === -1) {
     return { error: `Aluno "${studentName}" não encontrado nesta aba da planilha.` };
   }
 
-  const headerRowIdx = findHeaderRowIndex(values);
-  const header = values[headerRowIdx];
   const studentRow = values[studentRowIdx];
 
   console.log('--- EXCEL HEADERS FOUND ---', header);
@@ -95,8 +109,6 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
   let totalFaltas = 0;
   let raVal = '';
   let digVal = '';
-
-  const nameColIdx = findNameColumnIndex(header);
 
   // Percorrer as colunas para identificar os dados
   for (let c = 0; c < header.length; c++) {
