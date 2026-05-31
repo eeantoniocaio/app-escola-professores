@@ -6,24 +6,8 @@ import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import './Equipamentos.css';
 
-// Cores vibrantes inspiradas na paleta da página Turmas (Duolingo/Pastel style)
-const ROOM_COLORS = [
-  '#1CB0F6', // Azul Celeste
-  '#58CC02', // Verde Limão
-  '#CE82FF', // Roxo
-  '#FF9600', // Laranja
-  '#FF4B4B', // Vermelho
-  '#2B70C9', // Azul Escuro
-  '#FFC800'  // Amarelo
-];
-
-const getRoomColor = (roomId) => {
-  if (!roomId) return '#1CB0F6';
-  // Usa o caractere final ou um hash simples do ID para escolher a cor de forma consistente
-  const charCodeSum = roomId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const index = charCodeSum % ROOM_COLORS.length;
-  return ROOM_COLORS[index];
-};
+// Cor azul padrão adotada para os modais e cards de salas
+const ROOM_COLOR_DEFAULT = '#2B70C9';
 
 export default function Equipamentos() {
   const navigate = useNavigate();
@@ -460,7 +444,7 @@ export default function Equipamentos() {
         ) : (
           <div className="salas-grid">
             {filteredSalas.map(sala => {
-              const roomColor = getRoomColor(sala.id);
+              const roomColor = ROOM_COLOR_DEFAULT;
               return (
                 <div 
                   key={sala.id} 
