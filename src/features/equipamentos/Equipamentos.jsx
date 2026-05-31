@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Wrench, Search, Plus, Edit2, Trash2, Calendar, Users, FolderOpen, X, ArrowLeft } from 'lucide-react';
+import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
@@ -20,7 +19,6 @@ export default function Equipamentos() {
   // Dados do banco
   const [salas, setSalas] = useState([]);
   const [dispositivos, setDispositivos] = useState([]);
-  const [agendamentos, setAgendamentos] = useState([]);
 
   // Termos de busca e filtros
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,31 +45,21 @@ export default function Equipamentos() {
   // Modal de Detalhes da Sala (Floating)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [detailsTab, setDetailsTab] = useState('devices'); // 'devices' | 'bookings'
-
-  // Modal de Criação de Agendamento/Reserva
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [bookingDate, setBookingDate] = useState('');
-  const [bookingPeriod, setBookingPeriod] = useState('Manhã');
-  const [bookingObs, setBookingObs] = useState('');
 
   // Carregar dados iniciais
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [salasRes, dispRes, agendRes] = await Promise.all([
+      const [salasRes, dispRes] = await Promise.all([
         supabase.from('salas').select('*').order('nome'),
-        supabase.from('dispositivos').select('*').order('tipo'),
-        supabase.from('agendamentos_salas').select('*').order('data')
+        supabase.from('dispositivos').select('*').order('tipo')
       ]);
 
       if (salasRes.error) throw salasRes.error;
       if (dispRes.error) throw dispRes.error;
-      if (agendRes.error) throw agendRes.error;
 
       setSalas(salasRes.data || []);
       setDispositivos(dispRes.data || []);
-      setAgendamentos(agendRes.data || []);
 
       // Se a sala selecionada foi atualizada, atualizar a referência na UI
       if (selectedRoom) {
@@ -155,13 +143,7 @@ export default function Equipamentos() {
       .sort((a, b) => a.tipo.localeCompare(b.tipo));
   }, [dispositivos, selectedRoom]);
 
-  // Agendamentos pertencentes apenas à sala selecionada
-  const selectedRoomBookings = useMemo(() => {
-    if (!selectedRoom) return [];
-    return agendamentos
-      .filter(a => a.sala_id === selectedRoom.id)
-      .sort((a, b) => new Date(a.data) - new Date(b.data));
-  }, [agendamentos, selectedRoom]);
+
 
   // ── AÇÕES DE SALAS (CRUD) ──
 
@@ -307,55 +289,7 @@ export default function Equipamentos() {
     }
   };
 
-  // ── AÇÕES DE AGENDAMENTOS (CRUD) ──
 
-  const openCreateBookingModal = () => {
-    setBookingDate('');
-    setBookingPeriod('Manhã');
-    setBookingObs('');
-    setIsBookingModalOpen(true);
-  };
-
-  const handleSaveBooking = async (e) => {
-    e.preventDefault();
-    if (!bookingDate) {
-      showToast('A data do agendamento é obrigatória', 'error');
-      return;
-    }
-
-    const payload = {
-      sala_id: selectedRoom.id,
-      professor_nome: userName || 'Professor',
-      data: bookingDate,
-      periodo: bookingPeriod,
-      observacao: bookingObs.trim() || null
-    };
-
-    try {
-      const { error } = await supabase.from('agendamentos_salas').insert([payload]);
-      if (error) throw error;
-      showToast('Agendamento realizado com sucesso!');
-      setIsBookingModalOpen(false);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      showToast('Erro ao realizar agendamento', 'error');
-    }
-  };
-
-  const handleDeleteBooking = async (bookingId) => {
-    if (!window.confirm('Deseja realmente cancelar este agendamento?')) return;
-
-    try {
-      const { error } = await supabase.from('agendamentos_salas').delete().eq('id', bookingId);
-      if (error) throw error;
-      showToast('Agendamento cancelado!');
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      showToast('Erro ao cancelar agendamento', 'error');
-    }
-  };
 
   // Helper para renderizar badges de condição
   const renderCondicaoBadge = (condicao) => {
@@ -623,195 +557,74 @@ export default function Equipamentos() {
                   <X size={18} />
                 </button>
               </div>
-
-              {/* Segmented Control Interno do Modal (Estilo de Turmas) */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '0.35rem', 
-                background: 'rgba(0, 0, 0, 0.12)', 
-                padding: '0.25rem', 
-                borderRadius: 'var(--radius-md)', 
-                width: 'fit-content', 
-                marginTop: '1.25rem',
-                border: '1px solid rgba(255, 255, 255, 0.15)'
-              }}>
-                <button 
-                  onClick={() => setDetailsTab('devices')}
-                  style={{
-                    padding: '0.45rem 1rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    fontSize: '0.8rem',
-                    background: detailsTab === 'devices' ? '#ffffff' : 'transparent',
-                    color: detailsTab === 'devices' ? '#2B70C9' : '#ffffff',
-                    transition: 'var(--transition-smooth)'
-                  }}
-                >
-                  Dispositivos da Sala ({selectedRoomDevices.length})
-                </button>
-                <button 
-                  onClick={() => setDetailsTab('bookings')}
-                  style={{
-                    padding: '0.45rem 1rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    fontSize: '0.8rem',
-                    background: detailsTab === 'bookings' ? '#ffffff' : 'transparent',
-                    color: detailsTab === 'bookings' ? '#2B70C9' : '#ffffff',
-                    transition: 'var(--transition-smooth)'
-                  }}
-                >
-                  Agendamentos ({selectedRoomBookings.length})
-                </button>
-              </div>
             </div>
 
-            {/* Conteúdo do Modal (Fundo cinza claro tipo app) */}
+            {/* Conteúdo do Modal */}
             <div className="modal-body-scroll" style={{ background: 'var(--bg-secondary)', padding: '1.5rem' }}>
               
-              {/* ABA INTERNA: DISPOSITIVOS DA SALA */}
-              {detailsTab === 'devices' && (
-                selectedRoomDevices.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                    <Wrench size={32} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
-                    <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Nenhum dispositivo cadastrado nesta sala.</p>
+              {selectedRoomDevices.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                  <Wrench size={32} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
+                  <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Nenhum dispositivo cadastrado nesta sala.</p>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={openCreateDeviceModal}
+                    style={{ marginTop: '1rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                  >
+                    <Plus size={14} /> Vincular Equipamento
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
                     <button 
                       className="btn btn-primary" 
                       onClick={openCreateDeviceModal}
-                      style={{ marginTop: '1rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                     >
                       <Plus size={14} /> Vincular Equipamento
                     </button>
                   </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
-                      <button 
-                        className="btn btn-primary" 
-                        onClick={openCreateDeviceModal}
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                      >
-                        <Plus size={14} /> Vincular Equipamento
-                      </button>
-                    </div>
-                    {selectedRoomDevices.map((device, index) => (
-                      <div 
-                        key={device.id}
-                        style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between', 
-                          padding: '0.75rem 1.25rem', 
-                          background: '#ffffff', 
-                          borderRadius: 'var(--radius-md)',
-                          border: '1px solid var(--border-light)',
-                          boxShadow: 'var(--shadow-sm)',
-                          transition: 'var(--transition-smooth)'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <span style={{ fontWeight: 800, color: '#2B70C9', fontSize: '0.85rem', minWidth: '24px' }}>
-                            {String(index + 1).padStart(2, '0')}
+                  {selectedRoomDevices.map((device, index) => (
+                    <div 
+                      key={device.id}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        padding: '0.75rem 1.25rem', 
+                        background: '#ffffff', 
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border-light)',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'var(--transition-smooth)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ fontWeight: 800, color: '#2B70C9', fontSize: '0.85rem', minWidth: '24px' }}>
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{device.tipo}</span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            Patrimônio: {device.numero_escola || 'N/D'} • Série: {device.numero_serie || 'N/D'}
                           </span>
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{device.tipo}</span>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                              Patrimônio: {device.numero_escola || 'N/D'} • Série: {device.numero_serie || 'N/D'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                          {renderCondicaoBadge(device.condicao)}
-                          <div style={{ display: 'flex', gap: '0.25rem' }}>
-                            <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
-                              <Edit2 size={12} />
-                            </button>
-                            <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )
-              )}
-
-              {/* ABA INTERNA: AGENDAMENTOS */}
-              {detailsTab === 'bookings' && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Reservas da sala</span>
-                    <button className="btn btn-primary" onClick={openCreateBookingModal} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
-                      <Plus size={14} /> Reservar Sala
-                    </button>
-                  </div>
-
-                  {selectedRoomBookings.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                      <Calendar size={32} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
-                      <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Nenhum agendamento para esta sala.</p>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        {renderCondicaoBadge(device.condicao)}
+                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                          <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
+                            <Edit2 size={12} />
+                          </button>
+                          <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="agendamentos-list" style={{ marginTop: 0 }}>
-                      {selectedRoomBookings.map((booking, index) => {
-                        const formattedDate = new Date(booking.data + 'T12:00:00').toLocaleDateString('pt-BR');
-                        const isCreator = booking.professor_nome === userName;
-                        
-                        return (
-                          <div 
-                            key={booking.id} 
-                            style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'space-between', 
-                              padding: '0.75rem 1.25rem', 
-                              background: '#ffffff', 
-                              borderRadius: 'var(--radius-md)',
-                              border: '1px solid var(--border-light)',
-                              boxShadow: 'var(--shadow-sm)'
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <span style={{ fontWeight: 800, color: '#2B70C9', fontSize: '0.85rem', minWidth: '24px' }}>
-                                {String(index + 1).padStart(2, '0')}
-                              </span>
-                              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{booking.professor_nome}</span>
-                                  <span className={`periodo-badge ${
-                                    booking.periodo === 'Manhã' ? 'periodo-manha' : 
-                                    booking.periodo === 'Tarde' ? 'periodo-tarde' : 'periodo-noite'
-                                  }`}>
-                                    {booking.periodo}
-                                  </span>
-                                </div>
-                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                  Data de Uso: <strong>{formattedDate}</strong>
-                                  {booking.observacao ? ` • Finalidade: ${booking.observacao}` : ''}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            {(isCreator || userRole === 'gestao') && (
-                              <button 
-                                className="btn-icon delete" 
-                                onClick={() => handleDeleteBooking(booking.id)}
-                                title="Cancelar Agendamento"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
@@ -987,83 +800,6 @@ export default function Equipamentos() {
                 </button>
                 <button type="submit" className="btn btn-primary">
                   {editingDevice ? 'Salvar Alterações' : 'Salvar Equipamento'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ── MODAL: EFETUAR RESERVA / AGENDAMENTO ── */}
-      {isBookingModalOpen && selectedRoom && (
-        <div className="modal-overlay" style={{ zIndex: 300 }}>
-          <div className="modal-content" style={{ maxWidth: '450px' }}>
-            <div className="modal-header">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Reservar Sala: {selectedRoom.nome}</h3>
-              <button className="btn-icon" onClick={() => setIsBookingModalOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSaveBooking}>
-              <div className="modal-body-scroll">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  
-                  <div className="form-input-group">
-                    <label>Professor(a) Solicitante</label>
-                    <input 
-                      type="text" 
-                      value={userName || 'Professor'} 
-                      className="form-text-input" 
-                      disabled 
-                      style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}
-                    />
-                  </div>
-
-                  <div className="form-input-group">
-                    <label>Data de Uso <span style={{ color: 'var(--color-danger)' }}>*</span></label>
-                    <input 
-                      type="date"
-                      value={bookingDate}
-                      onChange={(e) => setBookingDate(e.target.value)}
-                      className="form-text-input"
-                      required
-                      min={new Date().toISOString().split('T')[0]} // Impede datas no passado
-                    />
-                  </div>
-
-                  <div className="form-input-group">
-                    <label>Período de Uso</label>
-                    <select
-                      value={bookingPeriod}
-                      onChange={(e) => setBookingPeriod(e.target.value)}
-                      className="form-select-input"
-                    >
-                      <option value="Manhã">Manhã</option>
-                      <option value="Tarde">Tarde</option>
-                      <option value="Noite">Noite</option>
-                    </select>
-                  </div>
-
-                  <div className="form-input-group">
-                    <label>Finalidade / Observação</label>
-                    <textarea 
-                      value={bookingObs}
-                      onChange={(e) => setBookingObs(e.target.value)}
-                      placeholder="Ex: Aula de biologia prática no laboratório, uso dos notebooks..."
-                      className="form-textarea-input"
-                    />
-                  </div>
-
-                </div>
-              </div>
-
-              <div className="modal-footer-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setIsBookingModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Confirmar Reserva
                 </button>
               </div>
             </form>
