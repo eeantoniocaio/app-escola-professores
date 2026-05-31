@@ -13,6 +13,13 @@ const SECTIONS = [
   { key: 'disciplinas',    icon: <BookOpen size={32} />, label: 'Disciplinas',         color: '#B01CF6' },
 ]
 
+const AddForm = ({ value, onChange, onSubmit, placeholder }) => (
+  <form onSubmit={onSubmit} style={{ display: 'flex', gap: '0.75rem' }}>
+    <input type="text" className="form-control" placeholder={placeholder} value={value} onChange={onChange} style={{ flex: 1, margin: 0 }} />
+    <button type="submit" className="btn btn-primary" style={{ margin: 0, padding: '0.5rem 1.25rem' }}>Adicionar</button>
+  </form>
+)
+
 export default function Configuracoes() {
   const navigate = useNavigate();
   const { userRole, isMaster } = useAuth();
@@ -236,12 +243,7 @@ export default function Configuracoes() {
     </ul>
   )
 
-  const renderAddForm = (value, onChange, onSubmit, placeholder) => (
-    <form onSubmit={onSubmit} style={{ display: 'flex', gap: '0.75rem' }}>
-      <input type="text" className="form-control" placeholder={placeholder} value={value} onChange={onChange} style={{ flex: 1, margin: 0 }} />
-      <button type="submit" className="btn btn-primary" style={{ margin: 0, padding: '0.5rem 1.25rem' }}>Adicionar</button>
-    </form>
-  )
+
 
   // ── Section content renderers ──────────────────────────────────────────────
   const renderSection = () => {
@@ -251,7 +253,7 @@ export default function Configuracoes() {
           <>
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={20} color="var(--color-warning)" /> Tipos de Evento</h3>
             {renderList(tiposEvento, removeTipoEvento, 'Nenhum tipo de evento cadastrado.')}
-            {renderAddForm(novoTipoEvento, e => setNovoTipoEvento(e.target.value), handleAddTipoEvento, 'Novo tipo (Ex: Apresentação)')}
+            <AddForm value={novoTipoEvento} onChange={e => setNovoTipoEvento(e.target.value)} onSubmit={handleAddTipoEvento} placeholder="Novo tipo (Ex: Apresentação)" />
           </>
         )
       case 'tiposEvidencia':
@@ -259,7 +261,7 @@ export default function Configuracoes() {
           <>
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Tag size={20} color="var(--color-primary)" /> Tipos de Evidência</h3>
             {renderList(tiposEvidencia, removeTipoEvidencia, 'Nenhum tipo de evidência cadastrado.')}
-            {renderAddForm(novoTipoEvidencia, e => setNovoTipoEvidencia(e.target.value), handleAddTipoEvidencia, 'Novo tipo de evidência')}
+            <AddForm value={novoTipoEvidencia} onChange={e => setNovoTipoEvidencia(e.target.value)} onSubmit={handleAddTipoEvidencia} placeholder="Novo tipo de evidência" />
           </>
         )
       case 'professores':
@@ -267,7 +269,7 @@ export default function Configuracoes() {
           <>
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={20} color="var(--color-success)" /> Corpo Docente</h3>
             {renderList(professores, removeProfessor, 'Nenhum professor cadastrado.')}
-            {renderAddForm(novoProfessor, e => setNovoProfessor(e.target.value), handleAddProfessor, 'Nome do professor (Ex: Profa. Maria)')}
+            <AddForm value={novoProfessor} onChange={e => setNovoProfessor(e.target.value)} onSubmit={handleAddProfessor} placeholder="Nome do professor (Ex: Profa. Maria)" />
             <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-light)' }}>
               <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600 }}>
                 <UploadCloud size={18} />
@@ -283,7 +285,7 @@ export default function Configuracoes() {
           <>
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Briefcase size={20} color="var(--text-main)" /> Equipe de Gestão</h3>
             {renderList(gestores, removeGestor, 'Nenhum gestor cadastrado.')}
-            {renderAddForm(novoGestor, e => setNovoGestor(e.target.value), handleAddGestor, 'Nome do gestor(a)')}
+            <AddForm value={novoGestor} onChange={e => setNovoGestor(e.target.value)} onSubmit={handleAddGestor} placeholder="Nome do gestor(a)" />
           </>
         )
       case 'turmas':
@@ -381,7 +383,7 @@ export default function Configuracoes() {
                 )
               })}
             </div>
-            {renderAddForm(novaTurma, e => setNovaTurma(e.target.value), handleAddTurma, 'Nome da turma (Ex: 6ºA, 7ºB)')}
+            <AddForm value={novaTurma} onChange={e => setNovaTurma(e.target.value)} onSubmit={handleAddTurma} placeholder="Nome da turma (Ex: 6ºA, 7ºB)" />
           </>
         )
       case 'disciplinas':
@@ -392,7 +394,9 @@ export default function Configuracoes() {
               <BookOpen size={20} color="#b01cf6" /> Disciplinas
             </h3>
             {renderList(disciplinas, canEditDisciplinas ? removeDisciplina : null, 'Nenhuma disciplina cadastrada.')}
-            {canEditDisciplinas && renderAddForm(novaDisciplina, e => setNovoDisciplina(e.target.value), handleAddDisciplina, 'Nome da disciplina (Ex: Matemática)')}
+            {canEditDisciplinas && (
+              <AddForm value={novaDisciplina} onChange={e => setNovoDisciplina(e.target.value)} onSubmit={handleAddDisciplina} placeholder="Nome da disciplina (Ex: Matemática)" />
+            )}
             {canEditDisciplinas && (
               <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-light)' }}>
                 <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600 }}>
