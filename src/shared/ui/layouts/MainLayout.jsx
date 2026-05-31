@@ -183,7 +183,7 @@ export default function MainLayout() {
           
           <div className="nav-divider" style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
           
-          {isMaster && (
+          {(isMaster || userRole === 'gestao' || userRole === 'secretaria') && (
             <Link to="/configuracoes" className={`nav-link ${isActive('/configuracoes')}`} onClick={() => setIsMobileMenuOpen(false)} title="Configurações" style={{ padding: '0.4rem' }}>
               <Settings size={20} />
             </Link>

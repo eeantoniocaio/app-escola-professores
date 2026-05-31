@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, Tag, Users, Briefcase, School, Link as LinkIcon, X, Trash2, UploadCloud, ArrowLeft, Settings, Check, BookOpen } from 'lucide-react'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
+import { useAuth } from '../../app/providers/AuthProvider'
 
 const SECTIONS = [
   { key: 'tiposEvento',    icon: <Calendar size={32} />, label: 'Tipos de Evento',    color: '#FFC800' },
@@ -14,6 +15,7 @@ const SECTIONS = [
 
 export default function Configuracoes() {
   const navigate = useNavigate();
+  const { userRole, isMaster } = useAuth();
   const {
     tiposEvento, addTipoEvento, removeTipoEvento,
     tiposEvidencia, addTipoEvidencia, removeTipoEvidencia,
@@ -95,9 +97,13 @@ export default function Configuracoes() {
 
   const handleAddDisciplina = (e) => {
     e.preventDefault()
+    if (!(isMaster || userRole === 'gestao')) {
+      alert('Apenas usuários com perfil de Gestão podem adicionar disciplinas.')
+      return
+    }
     if (!novaDisciplina.trim()) return
     if (!disciplinas.includes(novaDisciplina.trim())) addDisciplina(novaDisciplina.trim())
-    setNovaDisciplina('')
+    setNovoDisciplina('')
   }
 
   const handleSaveLink = (turma) => {
@@ -166,6 +172,10 @@ export default function Configuracoes() {
   }
 
   const handleCSVDisciplinas = (e) => {
+    if (!(isMaster || userRole === 'gestao')) {
+      alert('Apenas usuários com perfil de Gestão podem importar disciplinas.')
+      return
+    }
     const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
@@ -363,21 +373,24 @@ export default function Configuracoes() {
           </>
         )
       case 'disciplinas':
+        const canEditDisciplinas = isMaster || userRole === 'gestao';
         return (
           <>
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <BookOpen size={20} color="#b01cf6" /> Disciplinas
             </h3>
-            {renderList(disciplinas, removeDisciplina, 'Nenhuma disciplina cadastrada.')}
-            {renderAddForm(novaDisciplina, e => setNovaDisciplina(e.target.value), handleAddDisciplina, 'Nome da disciplina (Ex: Matemática)')}
-            <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-light)' }}>
-              <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600 }}>
-                <UploadCloud size={18} />
-                Importar de CSV
-                <input type="file" accept=".csv" onChange={handleCSVDisciplinas} style={{ display: 'none' }} />
-              </label>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>— uma disciplina por linha</span>
-            </div>
+            {renderList(disciplinas, canEditDisciplinas ? removeDisciplina : null, 'Nenhuma disciplina cadastrada.')}
+            {canEditDisciplinas && renderAddForm(novaDisciplina, e => setNovoDisciplina(e.target.value), handleAddDisciplina, 'Nome da disciplina (Ex: Matemática)')}
+            {canEditDisciplinas && (
+              <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-light)' }}>
+                <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600 }}>
+                  <UploadCloud size={18} />
+                  Importar de CSV
+                  <input type="file" accept=".csv" onChange={handleCSVDisciplinas} style={{ display: 'none' }} />
+                </label>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>— uma disciplina por linha</span>
+              </div>
+            )}
           </>
         )
       default:

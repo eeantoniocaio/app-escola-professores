@@ -47,7 +47,7 @@ function AppRoutes() {
             <Route path="registros" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Registros />} />
             <Route path="ocorrencias" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <HistoricoOcorrencias />} />
             <Route path="reposicoes" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <EnvioQuestoes />} />
-            <Route path="configuracoes" element={isMaster ? <Configuracoes /> : <Navigate to="/" replace />} />
+            <Route path="configuracoes" element={(isMaster || userRole === 'gestao' || userRole === 'secretaria') ? <Configuracoes /> : <Navigate to="/" replace />} />
             <Route path="turmas" element={<Turmas />} />
             <Route path="mapa-classe" element={<MapaClasse />} />
             <Route path="documentos" element={<Documentos />} />
