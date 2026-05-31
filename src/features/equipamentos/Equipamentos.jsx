@@ -401,12 +401,6 @@ export default function Equipamentos() {
                       </div>
                     </div>
                   </div>
-
-                  <div className="sala-card-footer">
-                    <button className="btn-card-details" style={{ backgroundColor: `${roomColor}15`, color: roomColor }}>
-                      Ver Detalhes
-                    </button>
-                  </div>
                 </div>
               );
             })}
