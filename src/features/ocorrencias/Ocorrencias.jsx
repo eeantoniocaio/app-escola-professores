@@ -50,7 +50,9 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
 
   // Alunos da turma selecionada no formulário
   const alunosDaTurma = useMemo(
-    () => (alunos || []).filter(a => a.turma === form.turma).sort((a, b) => a.nome.localeCompare(b.nome)),
+    () => (alunos || [])
+      .filter(a => a && a.turma === form.turma && a.nome)
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '')),
     [alunos, form.turma]
   )
 
