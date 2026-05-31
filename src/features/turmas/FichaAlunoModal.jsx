@@ -122,12 +122,27 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
     handleResetFile,
     handleSheetChange,
     handleRefresh: handleFreqRefresh
-  } = useFrequenciaAluno(aluno, isOpen && activeTab === 'frequencia');
+  } = useFrequenciaAluno(aluno, isOpen);
 
   if (!isOpen) return null;
 
   const photoUrl = findPhotoInMap(aluno.nome, photosMap);
   const details = getMockStudentDetails(aluno);
+
+  let raDisplay = '---';
+  if (freqLoading) {
+    raDisplay = 'Carregando R.A...';
+  } else if (attendanceData && attendanceData.ra) {
+    raDisplay = attendanceData.ra;
+  } else if (!isConfigured) {
+    raDisplay = 'N/D (Sheets não config.)';
+  } else if (!accessToken) {
+    raDisplay = 'N/D (Pendente de Login)';
+  } else if (freqError) {
+    raDisplay = 'Não encontrado no Sheets';
+  } else {
+    raDisplay = 'Não informado na planilha';
+  }
 
   return (
     <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && onClose()}>
@@ -167,7 +182,7 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
                   {aluno.nome}
                 </h3>
                 <p style={{ margin: '0.2rem 0 0', opacity: 0.9, fontSize: '0.88rem', fontWeight: 500 }}>
-                  Turma: {aluno.turma} • R.A: {details.ra}
+                  Turma: {aluno.turma} • R.A: {raDisplay}
                 </p>
               </div>
             </div>
@@ -292,20 +307,8 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
                     </div>
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Gênero</label>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem' }}>{details.gender}</div>
-                  </div>
-                  <div>
                     <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>R.A. (Registro do Aluno)</label>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem' }}>{details.ra}</div>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>RG</label>
-                    <div style={{ fontSize: '0.95rem', color: 'var(--text-main)', marginTop: '0.25rem' }}>{details.rg}</div>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>CPF</label>
-                    <div style={{ fontSize: '0.95rem', color: 'var(--text-main)', marginTop: '0.25rem' }}>{details.cpf}</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem' }}>{raDisplay}</div>
                   </div>
                 </div>
               </div>

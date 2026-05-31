@@ -86,6 +86,8 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
   let frequencia4Bimestre = '---';
   let frequenciaFinal = '---';
   let totalFaltas = 0;
+  let raVal = '';
+  let digVal = '';
 
   const nameColIdx = findNameColumnIndex(header);
 
@@ -98,8 +100,15 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
 
     const cellVal = String(studentRow[c] || '').trim();
 
+    // 0. Identificar R.A. e Dígito
+    if (headerVal === 'ra' || headerVal === 'registro de aluno' || headerVal === 'registro do aluno' || headerVal === 'registro') {
+      raVal = cellVal || raVal;
+    } else if (headerVal === 'dig' || headerVal === 'digito' || headerVal === 'dig ra' || headerVal === 'dig. ra' || headerVal === 'digito ra' || headerVal === 'digito do ra' || headerVal === 'dig.ra') {
+      digVal = cellVal || digVal;
+    }
+
     // 1. Identificar Frequência por Bimestre
-    if (headerVal.includes('1') && (headerVal.includes('bim') || headerVal.includes('bimonthly')) && (headerVal.includes('freq') || headerVal.includes('%') || headerVal.includes('pres'))) {
+    else if (headerVal.includes('1') && (headerVal.includes('bim') || headerVal.includes('bimonthly')) && (headerVal.includes('freq') || headerVal.includes('%') || headerVal.includes('pres'))) {
       frequencia1Bimestre = cellVal || frequencia1Bimestre;
     } else if (headerVal.includes('2') && (headerVal.includes('bim') || headerVal.includes('bimonthly')) && (headerVal.includes('freq') || headerVal.includes('%') || headerVal.includes('pres'))) {
       frequencia2Bimestre = cellVal || frequencia2Bimestre;
@@ -169,6 +178,7 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
   };
 
   const alunoNomePlanilha = nameColIdx !== -1 ? studentRow[nameColIdx] : studentName;
+  const formattedRA = raVal ? (digVal ? `${raVal}-${digVal}` : raVal) : '';
 
   return {
     turma: turmaNome,
@@ -178,6 +188,7 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
     frequencia3Bimestre: formatPercent(frequencia3Bimestre),
     frequencia4Bimestre: formatPercent(frequencia4Bimestre),
     frequenciaFinal: formatPercent(frequenciaFinal),
-    totalFaltas
+    totalFaltas,
+    ra: formattedRA
   };
 }
