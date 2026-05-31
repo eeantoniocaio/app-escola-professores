@@ -467,17 +467,7 @@ export default function Equipamentos() {
                         </button>
                       </div>
                     </div>
-                    
-                    {sala.descricao && <p className="sala-card-desc">{sala.descricao}</p>}
-                    {!sala.descricao && <p className="sala-card-desc" style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>Sem descrição cadastrada.</p>}
-                    
                     <div className="sala-card-info">
-                      {sala.capacidade && (
-                        <div className="sala-card-info-item">
-                          <Users size={14} />
-                          <span>Capacidade: {sala.capacidade} alunos</span>
-                        </div>
-                      )}
                       <div className="sala-card-info-item">
                         <Wrench size={14} />
                         <span>{deviceCounts[sala.id] || 0} dispositivos cadastrados</span>
