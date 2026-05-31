@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Tag, Users, Briefcase, School, Link as LinkIcon, X, Trash2, UploadCloud, ArrowLeft, Settings, Check } from 'lucide-react'
+import { Calendar, Tag, Users, Briefcase, School, Link as LinkIcon, X, Trash2, UploadCloud, ArrowLeft, Settings, Check, BookOpen } from 'lucide-react'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 
 const SECTIONS = [
@@ -9,6 +9,7 @@ const SECTIONS = [
   { key: 'professores',    icon: <Users size={32} />, label: 'Corpo Docente',      color: '#58CC02' },
   { key: 'gestores',       icon: <Briefcase size={32} />, label: 'Equipe de Gestão',   color: '#FF9600' },
   { key: 'turmas',         icon: <School size={32} />, label: 'Turmas',             color: '#FF4B4B' },
+  { key: 'disciplinas',    icon: <BookOpen size={32} />, label: 'Disciplinas',         color: '#B01CF6' },
 ]
 
 export default function Configuracoes() {
@@ -19,7 +20,8 @@ export default function Configuracoes() {
     professores, addProfessor, removeProfessor, importProfessores,
     gestores, addGestor, removeGestor,
     turmas, addTurma, removeTurma, updateTurmaLink,
-    alunos, importAlunosTurma, clearAlunosTurma, removeAlunosPorNome
+    alunos, importAlunosTurma, clearAlunosTurma, removeAlunosPorNome,
+    disciplinas, addDisciplina, removeDisciplina, importDisciplinas
   } = useGlobalData();
   const [activeSection, setActiveSection] = useState(null)
   const [novoTipoEvento, setNovoTipoEvento] = useState('')
@@ -27,6 +29,7 @@ export default function Configuracoes() {
   const [novoProfessor, setNovoProfessor] = useState('')
   const [novoGestor, setNovoGestor] = useState('')
   const [novaTurma, setNovaTurma] = useState('')
+  const [novaDisciplina, setNovaDisciplina] = useState('')
   const [editingLink, setEditingLink] = useState({})
   const [selectedAlunos, setSelectedAlunos] = useState({})
   const [novoAlunoPorTurma, setNovoAlunoPorTurma] = useState({})
@@ -88,6 +91,13 @@ export default function Configuracoes() {
     if (!novaTurma.trim()) return
     if (!turmas.find(t => t.nome === novaTurma.trim())) addTurma(novaTurma.trim())
     setNovaTurma('')
+  }
+
+  const handleAddDisciplina = (e) => {
+    e.preventDefault()
+    if (!novaDisciplina.trim()) return
+    if (!disciplinas.includes(novaDisciplina.trim())) addDisciplina(novaDisciplina.trim())
+    setNovaDisciplina('')
   }
 
   const handleSaveLink = (turma) => {
@@ -155,6 +165,25 @@ export default function Configuracoes() {
     e.target.value = ''
   }
 
+  const handleCSVDisciplinas = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const lines = event.target.result.split(/\r?\n/)
+      const novas = []
+      lines.forEach(line => {
+        let name = line.split(',')[0].replace(/^["']|["']$/g, '').trim()
+        if (name.toLowerCase() === 'nome' || name.toLowerCase() === 'disciplina' || name.toLowerCase() === 'disciplinas' || name.toLowerCase() === 'materia') return
+        if (name && !disciplinas.includes(name) && !novas.includes(name)) novas.push(name)
+      })
+      if (novas.length > 0) importDisciplinas(novas)
+      else alert('Nenhuma disciplina nova encontrada.')
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
   // Counts for badge display
   const counts = {
     tiposEvento: tiposEvento.length,
@@ -162,6 +191,7 @@ export default function Configuracoes() {
     professores: professores.length,
     gestores: gestores.length,
     turmas: turmas.length,
+    disciplinas: disciplinas.length,
   }
 
   const renderDeleteBtn = (onClick) => (
@@ -330,6 +360,24 @@ export default function Configuracoes() {
               })}
             </div>
             {renderAddForm(novaTurma, e => setNovaTurma(e.target.value), handleAddTurma, 'Nome da turma (Ex: 6ºA, 7ºB)')}
+          </>
+        )
+      case 'disciplinas':
+        return (
+          <>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <BookOpen size={20} color="#b01cf6" /> Disciplinas
+            </h3>
+            {renderList(disciplinas, removeDisciplina, 'Nenhuma disciplina cadastrada.')}
+            {renderAddForm(novaDisciplina, e => setNovaDisciplina(e.target.value), handleAddDisciplina, 'Nome da disciplina (Ex: Matemática)')}
+            <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-light)' }}>
+              <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600 }}>
+                <UploadCloud size={18} />
+                Importar de CSV
+                <input type="file" accept=".csv" onChange={handleCSVDisciplinas} style={{ display: 'none' }} />
+              </label>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>— uma disciplina por linha</span>
+            </div>
           </>
         )
       default:

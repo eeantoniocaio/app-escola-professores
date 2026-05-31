@@ -37,6 +37,7 @@ export function GlobalDataProvider({ children }) {
   const [alunos, setAlunos] = useState([]);
   const [tiposEvento, setTiposEvento] = useState([]);
   const [tiposEvidencia, setTiposEvidencia] = useState([]);
+  const [disciplinas, setDisciplinas] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
 
   const fetchGlobalData = useCallback(async () => {
@@ -48,14 +49,15 @@ export function GlobalDataProvider({ children }) {
     setLoadingData(true);
     try {
       const [
-        profRes, tipEvtRes, tipEviRes, turmasRes, alunosRes, gestRes
+        profRes, tipEvtRes, tipEviRes, turmasRes, alunosRes, gestRes, discRes
       ] = await Promise.all([
         supabase.from('professores').select('nome'),
         supabase.from('tiposEvento').select('nome'),
         supabase.from('tiposEvidencia').select('nome'),
         supabase.from('turmas').select('id, nome, link').order('nome'),
         supabase.from('alunos').select('id, nome, turma').order('nome'),
-        supabase.from('gestores').select('nome')
+        supabase.from('gestores').select('nome'),
+        supabase.from('disciplinas').select('nome').order('nome')
       ]);
 
       if (profRes.data) setProfessores(profRes.data.map(p => p.nome));
@@ -64,6 +66,7 @@ export function GlobalDataProvider({ children }) {
       if (turmasRes.data) setTurmas(sortTurmasPedagogically(turmasRes.data));
       if (alunosRes.data) setAlunos(alunosRes.data);
       if (gestRes.data) setGestores(gestRes.data.map(g => g.nome));
+      if (discRes.data) setDisciplinas(discRes.data.map(d => d.nome));
     } catch (error) {
       console.error('Erro geral ao buscar dados globais:', error);
       showToast('Erro ao carregar dados do banco', 'error');
@@ -231,6 +234,40 @@ export function GlobalDataProvider({ children }) {
       showToast('Alunos removidos com sucesso!');
     }
   };
+  const addDisciplina = async (nome) => {
+    const { data, error } = await supabase.from('disciplinas').insert([{ nome }]).select();
+    if (error) {
+      showToast('Erro ao adicionar disciplina', 'error');
+    } else if (data) {
+      setDisciplinas(prev => [...prev, data[0].nome].sort());
+      showToast('Disciplina adicionada com sucesso!');
+    }
+  };
+
+  const removeDisciplina = async (nome) => {
+    const { error } = await supabase.from('disciplinas').delete().eq('nome', nome);
+    if (error) {
+      showToast('Erro ao remover disciplina', 'error');
+    } else {
+      setDisciplinas(prev => prev.filter(d => d !== nome));
+      showToast('Disciplina removida com sucesso!');
+    }
+  };
+
+  const importDisciplinas = async (nomes) => {
+    const payloads = nomes.map(nome => ({ nome }));
+    const { data, error } = await supabase.from('disciplinas').insert(payloads).select();
+    if (error) {
+      showToast('Erro ao importar disciplinas', 'error');
+    } else if (data) {
+      const addedNomes = data.map(d => d.nome);
+      setDisciplinas(prev => {
+        const merged = [...new Set([...prev, ...addedNomes])];
+        return merged.sort();
+      });
+      showToast('Disciplinas importadas com sucesso!');
+    }
+  };
 
   const value = {
     professores, setProfessores,
@@ -239,6 +276,7 @@ export function GlobalDataProvider({ children }) {
     alunos, setAlunos,
     tiposEvento, setTiposEvento,
     tiposEvidencia, setTiposEvidencia,
+    disciplinas, setDisciplinas,
     loadingData,
     refreshGlobalData: fetchGlobalData,
     addTipoEvento, removeTipoEvento,
@@ -246,7 +284,8 @@ export function GlobalDataProvider({ children }) {
     addProfessor, removeProfessor, importProfessores,
     addGestor, removeGestor,
     addTurma, removeTurma, updateTurmaLink,
-    importAlunosTurma, clearAlunosTurma, removeAlunosPorNome
+    importAlunosTurma, clearAlunosTurma, removeAlunosPorNome,
+    addDisciplina, removeDisciplina, importDisciplinas
   };
 
   return (
