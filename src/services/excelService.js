@@ -48,11 +48,18 @@ export function findStudentRow(values, studentName) {
  */
 export function findHeaderRowIndex(values) {
   if (!values || values.length === 0) return -1;
-  for (let r = 0; r < Math.min(values.length, 5); r++) {
+  // Buscamos nas primeiras 15 linhas para suportar planilhas com cabeçalhos maiores / decorativos
+  for (let r = 0; r < Math.min(values.length, 15); r++) {
     const row = values[r];
     const hasName = row.some(cell => {
       const normalized = normalizeString(cell);
-      return normalized === 'nome' || normalized.includes('nome') || normalized.includes('aluno');
+      return normalized === 'nome' || 
+             normalized === 'aluno' || 
+             normalized === 'nome do aluno' || 
+             normalized === 'nome do(a) aluno' ||
+             normalized === 'registro de aluno' ||
+             normalized === 'registro do aluno' ||
+             normalized === 'ra';
     });
     if (hasName) return r;
   }
