@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle } from 'lucide-react';
+import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
@@ -113,10 +113,15 @@ export default function Equipamentos() {
   const fetchHelpRequests = async () => {
     setLoadingHelp(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('solicitacoes_ajuda')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+
+      if (userRole === 'professor' && userName) {
+        query = query.eq('professor', userName);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
       setHelpRequests(data || []);
     } catch (err) {
@@ -128,7 +133,7 @@ export default function Equipamentos() {
   };
 
   useEffect(() => {
-    if (activeTab === 'solicitacoes' && (userRole === 'gestao' || userRole === 'tecnico')) {
+    if (activeTab === 'solicitacoes' && (userRole === 'gestao' || userRole === 'tecnico' || userRole === 'professor')) {
       fetchHelpRequests();
     }
   }, [activeTab, userRole]);
@@ -541,12 +546,12 @@ export default function Equipamentos() {
         >
           Todos os Dispositivos
         </button>
-        {(userRole === 'tecnico' || userRole === 'gestao') && (
+        {(userRole === 'tecnico' || userRole === 'gestao' || userRole === 'professor') && (
           <button 
             onClick={() => { setActiveTab('solicitacoes'); setSearchQuery(''); }}
             className={`tab-button ${activeTab === 'solicitacoes' ? 'active' : ''}`}
           >
-            Solicitações de Ajuda
+            {userRole === 'professor' ? 'Minhas Solicitações' : 'Solicitações de Ajuda'}
           </button>
         )}
       </div>
@@ -891,8 +896,8 @@ export default function Equipamentos() {
         </div>
       )}
 
-      {/* ── TAB SOLICITAÇÕES DE AJUDA (Visível apenas para Técnico e Gestão) ── */}
-      {activeTab === 'solicitacoes' && (userRole === 'tecnico' || userRole === 'gestao') && (
+      {/* ── TAB SOLICITAÇÕES DE AJUDA ── */}
+      {activeTab === 'solicitacoes' && (userRole === 'tecnico' || userRole === 'gestao' || userRole === 'professor') && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="search-bar-row">
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Histórico de Solicitações</h3>
