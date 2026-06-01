@@ -756,8 +756,8 @@
 }
 
 .btn-help {
-  background-color: #FF4B4B;
-  color: white;
+  background-color: #89E219;
+  color: #121212;
   border: none;
   font-weight: 700;
   padding: 0.75rem 1.75rem;
@@ -773,7 +773,7 @@
 }
 
 .btn-help:hover {
-  background-color: #e03f3f;
+  background-color: #78c714;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
