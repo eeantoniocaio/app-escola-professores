@@ -4,6 +4,7 @@ import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, A
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
+import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import './Equipamentos.css';
 
 // Cor azul padrão adotada para os modais e cards de salas
@@ -13,6 +14,7 @@ export default function Equipamentos() {
   const navigate = useNavigate();
   const { userRole, userName } = useAuth();
   const { showToast } = useToast();
+  const { professores } = useGlobalData();
 
   const canEdit = userRole === 'gestao' || userRole === 'tecnico';
 
@@ -1264,14 +1266,17 @@ export default function Equipamentos() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div className="form-input-group">
                     <label>Professor(a) <span style={{ color: 'var(--color-danger)' }}>*</span></label>
-                    <input 
-                      type="text" 
+                    <select
                       value={helpProfessor}
                       onChange={(e) => setHelpProfessor(e.target.value)}
-                      placeholder="Nome do(a) Professor(a)"
-                      className="form-text-input"
+                      className="form-select-input"
                       required
-                    />
+                    >
+                      <option value="">Selecione o(a) Professor(a)...</option>
+                      {professores.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="form-input-group">
