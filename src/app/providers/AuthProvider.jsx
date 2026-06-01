@@ -9,12 +9,24 @@ export function AuthProvider({ children }) {
   const [userName, setUserName] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const fetchProfile = async (userId) => {
+  const fetchProfile = async (userId, userEmail) => {
     try {
       const { data, error } = await supabase.from('perfis').select('papel, nome').eq('id', userId).maybeSingle();
       if (data) {
-        setUserRole(data.papel);
-        setUserName(data.nome);
+        let papel = data.papel;
+        let nome = data.nome;
+
+        // Auto-associar e-mail da secretaria ao papel 'secretaria' e nome 'Secretaria'
+        if (userEmail === 'secretariaantoniocaio@gmail.com') {
+          papel = 'secretaria';
+          if (!nome) {
+            nome = 'Secretaria';
+            await supabase.from('perfis').update({ papel: 'secretaria', nome: 'Secretaria' }).eq('id', userId);
+          }
+        }
+
+        setUserRole(papel);
+        setUserName(nome);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -40,7 +52,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id);
+      if (session) fetchProfile(session.user.id, session.user.email);
       else setAuthLoading(false);
     });
 
@@ -48,7 +60,7 @@ export function AuthProvider({ children }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id);
+      if (session) fetchProfile(session.user.id, session.user.email);
       else {
         setUserRole(null);
         setUserName(null);
