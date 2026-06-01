@@ -7,14 +7,16 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [userName, setUserName] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   const fetchProfile = async (userId, userEmail) => {
     try {
-      const { data, error } = await supabase.from('perfis').select('papel, nome').eq('id', userId).maybeSingle();
+      const { data, error } = await supabase.from('perfis').select('papel, nome, avatar_url').eq('id', userId).maybeSingle();
       if (data) {
         let papel = data.papel;
         let nome = data.nome;
+        let avatar = data.avatar_url;
 
         // Auto-associar e-mail da secretaria ao papel 'secretaria' e nome 'Secretaria'
         if (userEmail === 'secretariaantoniocaio@gmail.com') {
@@ -27,6 +29,7 @@ export function AuthProvider({ children }) {
 
         setUserRole(papel);
         setUserName(nome);
+        setAvatarUrl(avatar);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -49,6 +52,20 @@ export function AuthProvider({ children }) {
     return false;
   };
 
+  const updateAvatarUrl = async (url) => {
+    if (!session?.user?.id) return false;
+    const { error } = await supabase
+      .from('perfis')
+      .update({ avatar_url: url })
+      .eq('id', session.user.id);
+    if (!error) {
+      setAvatarUrl(url);
+      return true;
+    }
+    console.error('Error updating avatar url:', error);
+    return false;
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -64,6 +81,7 @@ export function AuthProvider({ children }) {
       else {
         setUserRole(null);
         setUserName(null);
+        setAvatarUrl(null);
         setAuthLoading(false);
       }
     });
@@ -78,8 +96,10 @@ export function AuthProvider({ children }) {
     session,
     userRole,
     userName,
+    avatarUrl,
     isMaster,
     linkProfileName,
+    updateAvatarUrl,
     authLoading,
     setSession
   };

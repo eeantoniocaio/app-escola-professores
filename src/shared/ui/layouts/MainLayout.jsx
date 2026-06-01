@@ -4,15 +4,71 @@ import { useAuth } from '../../../app/providers/AuthProvider';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { supabase } from '../../services/supabase';
 import logoUrl from '../../../assets/logo.png';
-import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench } from 'lucide-react';
+import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench, User, Camera, UploadCloud } from 'lucide-react';
 
 export default function MainLayout() {
-  const { session, userRole, userName, linkProfileName, isMaster } = useAuth();
+  const { session, userRole, userName, avatarUrl, updateAvatarUrl, linkProfileName, isMaster } = useAuth();
   const { professores, gestores, secretarias, tecnicos, loadingData } = useGlobalData();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedNameForLink, setSelectedNameForLink] = useState('');
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'gestao':
+        return 'Gestor(a)';
+      case 'secretaria':
+        return 'Secretaria';
+      case 'tecnico':
+        return 'Técnico';
+      case 'professor':
+        return 'Professor(a)';
+      default:
+        return role || 'Usuário';
+    }
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione uma imagem válida.');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${session?.user?.id || 'anonymous'}_${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const success = await updateAvatarUrl(publicUrl);
+      if (success) {
+        alert('Foto de perfil atualizada com sucesso!');
+      } else {
+        alert('Erro ao salvar foto de perfil no banco.');
+      }
+    } catch (err) {
+      console.error('Erro no upload do avatar:', err);
+      alert('Erro ao carregar a foto.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
   const [linking, setLinking] = useState(false);
   const [openOccurrencesCount, setOpenOccurrencesCount] = useState(0);
   const [openHelpRequestsCount, setOpenHelpRequestsCount] = useState(0);
@@ -250,6 +306,16 @@ export default function MainLayout() {
     return () => window.removeEventListener('click', handleClose);
   }, [isNotificationDropdownOpen]);
 
+  useEffect(() => {
+    if (!isProfileDropdownOpen) return;
+    const handleClose = (e) => {
+      if (e.target.closest('.profile-dropdown-container')) return;
+      setIsProfileDropdownOpen(false);
+    };
+    window.addEventListener('click', handleClose);
+    return () => window.removeEventListener('click', handleClose);
+  }, [isProfileDropdownOpen]);
+
   return (
     <div className="app-container">
       <header className="header">
@@ -440,15 +506,201 @@ export default function MainLayout() {
           
           <div className="nav-divider" style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
           
-          {(isMaster || userRole === 'gestao' || userRole === 'secretaria') && (
-            <Link to="/configuracoes" className={`nav-link ${isActive('/configuracoes')}`} onClick={() => setIsMobileMenuOpen(false)} title="Configurações" style={{ padding: '0.4rem' }}>
-              <Settings size={20} />
-            </Link>
+          {/* Menu de Perfil / Dropdown */}
+          {userName && (
+            <div className="profile-dropdown-container" style={{ position: 'relative', display: 'inline-block' }}>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsProfileDropdownOpen(prev => !prev);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.35rem',
+                  borderRadius: '30px',
+                  transition: 'var(--transition-smooth)',
+                  outline: 'none'
+                }}
+                onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                onMouseOut={e => e.currentTarget.style.background = 'none'}
+              >
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <User size={18} color="var(--text-light)" />
+                  )}
+                </div>
+                <span className="profile-header-name" style={{
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  color: 'var(--text-main)',
+                  maxWidth: '120px',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {userName}
+                </span>
+              </button>
+
+              {isProfileDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '0.5rem',
+                  width: '260px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: 'var(--shadow-lg)',
+                  padding: '1.25rem',
+                  zIndex: 1000,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  animation: 'fadeIn 0.2s ease-out',
+                  textAlign: 'center'
+                }}>
+                  {/* Foto de Perfil Grande */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{
+                        width: '72px',
+                        height: '72px',
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        background: 'var(--bg-secondary)',
+                        border: '2px solid var(--color-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <User size={36} color="var(--text-light)" />
+                        )}
+                      </div>
+                      
+                      {/* Botão de Upload da Câmera */}
+                      <label 
+                        htmlFor="avatar-upload" 
+                        style={{
+                          position: 'absolute',
+                          bottom: '-2px',
+                          right: '-2px',
+                          background: 'var(--color-primary)',
+                          color: '#ffffff',
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          boxShadow: 'var(--shadow-sm)',
+                          transition: 'var(--transition-fast)'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.filter = 'brightness(0.9)'}
+                        onMouseOut={e => e.currentTarget.style.filter = 'none'}
+                        title="Alterar foto de perfil"
+                      >
+                        <Camera size={14} />
+                      </label>
+                      <input 
+                        type="file" 
+                        id="avatar-upload" 
+                        accept="image/*" 
+                        style={{ display: 'none' }} 
+                        onChange={handleAvatarChange}
+                        disabled={uploadingAvatar}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                      <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        {userName}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--bg-secondary)', color: 'var(--color-primary)', padding: '2px 8px', borderRadius: '12px', width: 'fit-content', margin: '0 auto' }}>
+                        {getRoleDisplayName(userRole)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="nav-divider" style={{ height: '1px', backgroundColor: 'var(--border-light)', margin: '0 -1.25rem' }}></div>
+
+                  {/* Links de Ação */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', textAlign: 'left' }}>
+                    {(isMaster || userRole === 'gestao' || userRole === 'secretaria') && (
+                      <Link 
+                        to="/configuracoes" 
+                        onClick={() => setIsProfileDropdownOpen(false)} 
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem 0.75rem',
+                          fontSize: '0.88rem',
+                          color: 'var(--text-main)',
+                          textDecoration: 'none',
+                          borderRadius: 'var(--radius-sm)',
+                          transition: 'var(--transition-fast)'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                        onMouseOut={e => e.currentTarget.style.background = 'none'}
+                      >
+                        <Settings size={16} /> Configurações
+                      </Link>
+                    )}
+                    
+                    <button 
+                      onClick={() => {
+                        setIsProfileDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 0.75rem',
+                        fontSize: '0.88rem',
+                        color: 'var(--color-danger)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        width: '100%',
+                        textAlign: 'left',
+                        borderRadius: 'var(--radius-sm)',
+                        transition: 'var(--transition-fast)'
+                      }}
+                      onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                      onMouseOut={e => e.currentTarget.style.background = 'none'}
+                    >
+                      <LogOut size={16} /> Sair da conta
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
-          
-          <button className="nav-link" onClick={handleLogout} title="Sair" style={{ padding: '0.4rem' }}>
-            <LogOut size={20} />
-          </button>
         </div>
       </header>
 
