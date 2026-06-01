@@ -301,9 +301,6 @@ export default function Turmas() {
             <h2 style={{ fontSize: '2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <GraduationCap size={28} color="var(--color-primary)" /> Consulta de Turmas
             </h2>
-            <p style={{ color: 'var(--text-muted)', margin: 0, marginTop: '0.25rem' }}>
-              Consulte a listagem de alunos por turma ou pesquise individualmente pelo nome.
-            </p>
           </div>
         </div>
       </div>

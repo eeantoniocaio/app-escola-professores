@@ -12,10 +12,7 @@ export default function ReportHeader() {
           </svg>
         </button>
         <div>
-          <h2 style={{ marginBottom: '0.1rem' }}>Relatórios e Estatísticas</h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-            Visão gerencial dos registros pedagógicos e acompanhamento de docentes.
-          </p>
+          <h2 style={{ margin: 0 }}>Relatórios e Estatísticas</h2>
         </div>
       </div>
     </div>

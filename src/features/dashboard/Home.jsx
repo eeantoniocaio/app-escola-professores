@@ -14,8 +14,7 @@ export default function Home() {
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <div className="welcome-section" style={{ marginBottom: '3rem', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>Painel de Evidências</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Acesse rapidamente as principais áreas do sistema.</p>
+        <h2 style={{ fontSize: '2.2rem', marginBottom: '0' }}>Painel de Evidências</h2>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', width: '100%', maxWidth: '1000px', padding: '0 1rem' }}>

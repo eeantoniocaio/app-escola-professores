@@ -504,9 +504,6 @@ export default function Equipamentos() {
             <h2 style={{ fontSize: '2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Wrench size={28} color="var(--color-primary)" /> Controle de Equipamentos
             </h2>
-            <p style={{ color: 'var(--text-muted)', margin: 0, marginTop: '0.25rem' }}>
-              Gerencie as salas de informática, laboratórios e equipamentos de nossa escola.
-            </p>
           </div>
         </div>
 
