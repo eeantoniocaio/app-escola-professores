@@ -10,7 +10,7 @@ import { useGoogleAuth } from '../../app/providers/GoogleAuthProvider';
 // Mapeamento de Extensão -> Ícones e Cores (Tema Premium semelhante ao de Turmas)
 const getFileIconDetails = (name, isFolder) => {
   if (isFolder) {
-    return { icon: <Folder size={18} color="#1CB0F6" />, color: "#1CB0F6", bg: "#EAF7FD" };
+    return { icon: <Folder size={18} color="#FFC800" />, color: "#FFC800", bg: "#FFF9E6" };
   }
   const ext = name.split('.').pop().toLowerCase();
   switch (ext) {
@@ -152,7 +152,7 @@ export default function Documentos() {
           </button>
           <div>
             <h2 style={{ fontSize: '2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <FolderOpen size={28} color="var(--color-primary)" /> Compartilhamento de Documentos
+              <FolderOpen size={28} color="#FFC800" /> Compartilhamento de Documentos
             </h2>
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function Documentos() {
 
       {/* Painel Principal */}
       <div style={{
-        background: '#1CB0F6',
+        background: '#FFC800',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: 'var(--radius-lg)',
         padding: '2rem',
@@ -384,7 +384,7 @@ export default function Documentos() {
             {/* Listagem de Arquivos/Pastas */}
             {loading ? (
               <div style={{ background: '#ffffff', borderRadius: 'var(--radius-md)', padding: '4rem 1rem', textAlign: 'center', color: '#64748b', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                <RefreshCw size={28} className="spin-animation" color="var(--color-primary)" />
+                <RefreshCw size={28} className="spin-animation" color="#FFC800" />
                 <span>Carregando arquivos do Google Drive...</span>
               </div>
             ) : error ? (
