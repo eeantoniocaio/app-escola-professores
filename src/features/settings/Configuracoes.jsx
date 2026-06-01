@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Tag, Users, Briefcase, School, Link as LinkIcon, X, Trash2, UploadCloud, ArrowLeft, Settings, Check, BookOpen } from 'lucide-react'
+import { Calendar, Tag, Users, Briefcase, School, Link as LinkIcon, X, Trash2, UploadCloud, ArrowLeft, Settings, Check, BookOpen, Wrench } from 'lucide-react'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 import { useAuth } from '../../app/providers/AuthProvider'
 
@@ -9,6 +9,8 @@ const SECTIONS = [
   { key: 'tiposEvidencia', icon: <Tag size={32} />, label: 'Tipos de Evidência', color: '#1CB0F6' },
   { key: 'professores',    icon: <Users size={32} />, label: 'Corpo Docente',      color: '#58CC02' },
   { key: 'gestores',       icon: <Briefcase size={32} />, label: 'Equipe de Gestão',   color: '#FF9600' },
+  { key: 'secretarias',    icon: <Users size={32} />, label: 'Secretaria',          color: '#E91E63' },
+  { key: 'tecnicos',       icon: <Wrench size={32} />, label: 'Técnicos',            color: '#00BCD4' },
   { key: 'turmas',         icon: <School size={32} />, label: 'Turmas',             color: '#FF4B4B' },
   { key: 'disciplinas',    icon: <BookOpen size={32} />, label: 'Disciplinas',         color: '#B01CF6' },
 ]
@@ -28,6 +30,8 @@ export default function Configuracoes() {
     tiposEvidencia, addTipoEvidencia, removeTipoEvidencia,
     professores, addProfessor, removeProfessor, importProfessores,
     gestores, addGestor, removeGestor,
+    secretarias, addSecretaria, removeSecretaria,
+    tecnicos, addTecnico, removeTecnico,
     turmas, addTurma, removeTurma, updateTurmaLink,
     alunos, importAlunosTurma, clearAlunosTurma, removeAlunosPorNome,
     disciplinas, addDisciplina, removeDisciplina, importDisciplinas
@@ -37,6 +41,8 @@ export default function Configuracoes() {
   const [novoTipoEvidencia, setNovoTipoEvidencia] = useState('')
   const [novoProfessor, setNovoProfessor] = useState('')
   const [novoGestor, setNovoGestor] = useState('')
+  const [novaSecretaria, setNovaSecretaria] = useState('')
+  const [novoTecnico, setNovoTecnico] = useState('')
   const [novaTurma, setNovaTurma] = useState('')
   const [novaDisciplina, setNovaDisciplina] = useState('')
   const [editingLink, setEditingLink] = useState({})
@@ -93,6 +99,20 @@ export default function Configuracoes() {
     if (!novoGestor.trim()) return
     if (!gestores.includes(novoGestor.trim())) addGestor(novoGestor.trim())
     setNovoGestor('')
+  }
+
+  const handleAddSecretaria = (e) => {
+    e.preventDefault()
+    if (!novaSecretaria.trim()) return
+    if (!secretarias.includes(novaSecretaria.trim())) addSecretaria(novaSecretaria.trim())
+    setNovaSecretaria('')
+  }
+
+  const handleAddTecnico = (e) => {
+    e.preventDefault()
+    if (!novoTecnico.trim()) return
+    if (!tecnicos.includes(novoTecnico.trim())) addTecnico(novoTecnico.trim())
+    setNovoTecnico('')
   }
 
   const handleAddTurma = (e) => {
@@ -219,6 +239,8 @@ export default function Configuracoes() {
     tiposEvidencia: tiposEvidencia.length,
     professores: professores.length,
     gestores: gestores.length,
+    secretarias: secretarias ? secretarias.length : 0,
+    tecnicos: tecnicos ? tecnicos.length : 0,
     turmas: turmas.length,
     disciplinas: disciplinas.length,
   }
@@ -286,6 +308,22 @@ export default function Configuracoes() {
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Briefcase size={20} color="var(--text-main)" /> Equipe de Gestão</h3>
             {renderList(gestores, removeGestor, 'Nenhum gestor cadastrado.')}
             <AddForm value={novoGestor} onChange={e => setNovoGestor(e.target.value)} onSubmit={handleAddGestor} placeholder="Nome do gestor(a)" />
+          </>
+        )
+      case 'secretarias':
+        return (
+          <>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={20} color="#E91E63" /> Secretaria</h3>
+            {renderList(secretarias, removeSecretaria, 'Nenhum perfil de secretaria cadastrado.')}
+            <AddForm value={novaSecretaria} onChange={e => setNovaSecretaria(e.target.value)} onSubmit={handleAddSecretaria} placeholder="Nome do profissional da secretaria" />
+          </>
+        )
+      case 'tecnicos':
+        return (
+          <>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Wrench size={20} color="#00BCD4" /> Técnicos</h3>
+            {renderList(tecnicos, removeTecnico, 'Nenhum perfil de técnico cadastrado.')}
+            <AddForm value={novoTecnico} onChange={e => setNovoTecnico(e.target.value)} onSubmit={handleAddTecnico} placeholder="Nome do técnico" />
           </>
         )
       case 'turmas':

@@ -33,6 +33,8 @@ export function GlobalDataProvider({ children }) {
   
   const [professores, setProfessores] = useState([]);
   const [gestores, setGestores] = useState([]);
+  const [secretarias, setSecretarias] = useState([]);
+  const [tecnicos, setTecnicos] = useState([]);
   const [turmas, setTurmas] = useState([]);
   const [alunos, setAlunos] = useState([]);
   const [tiposEvento, setTiposEvento] = useState([]);
@@ -49,7 +51,7 @@ export function GlobalDataProvider({ children }) {
     setLoadingData(true);
     try {
       const [
-        profRes, tipEvtRes, tipEviRes, turmasRes, alunosRes, gestRes, discRes
+        profRes, tipEvtRes, tipEviRes, turmasRes, alunosRes, gestRes, discRes, secRes, tecRes
       ] = await Promise.all([
         supabase.from('professores').select('nome'),
         supabase.from('tiposEvento').select('nome'),
@@ -57,7 +59,9 @@ export function GlobalDataProvider({ children }) {
         supabase.from('turmas').select('id, nome, link').order('nome'),
         supabase.from('alunos').select('id, nome, turma').order('nome'),
         supabase.from('gestores').select('nome'),
-        supabase.from('disciplinas').select('nome').order('nome')
+        supabase.from('disciplinas').select('nome').order('nome'),
+        supabase.from('secretarias').select('nome').order('nome'),
+        supabase.from('tecnicos').select('nome').order('nome')
       ]);
 
       if (profRes.data) setProfessores(profRes.data.map(p => p.nome));
@@ -67,6 +71,8 @@ export function GlobalDataProvider({ children }) {
       if (alunosRes.data) setAlunos(alunosRes.data);
       if (gestRes.data) setGestores(gestRes.data.map(g => g.nome));
       if (discRes.data) setDisciplinas(discRes.data.map(d => d.nome));
+      if (secRes.data) setSecretarias(secRes.data.map(s => s.nome));
+      if (tecRes.data) setTecnicos(tecRes.data.map(t => t.nome));
     } catch (error) {
       console.error('Erro geral ao buscar dados globais:', error);
       showToast('Erro ao carregar dados do banco', 'error');
@@ -167,6 +173,46 @@ export function GlobalDataProvider({ children }) {
     } else {
       setGestores(prev => prev.filter(g => g !== nome));
       showToast('Gestor removido com sucesso!');
+    }
+  };
+
+  const addSecretaria = async (nome) => {
+    const { data, error } = await supabase.from('secretarias').insert([{ nome }]).select();
+    if (error) {
+      showToast('Erro ao adicionar profissional da secretaria', 'error');
+    } else if (data) {
+      setSecretarias(prev => [...prev, data[0].nome].sort());
+      showToast('Profissional da secretaria adicionado com sucesso!');
+    }
+  };
+
+  const removeSecretaria = async (nome) => {
+    const { error } = await supabase.from('secretarias').delete().eq('nome', nome);
+    if (error) {
+      showToast('Erro ao remover profissional da secretaria', 'error');
+    } else {
+      setSecretarias(prev => prev.filter(s => s !== nome));
+      showToast('Profissional da secretaria removido com sucesso!');
+    }
+  };
+
+  const addTecnico = async (nome) => {
+    const { data, error } = await supabase.from('tecnicos').insert([{ nome }]).select();
+    if (error) {
+      showToast('Erro ao adicionar técnico', 'error');
+    } else if (data) {
+      setTecnicos(prev => [...prev, data[0].nome].sort());
+      showToast('Técnico adicionado com sucesso!');
+    }
+  };
+
+  const removeTecnico = async (nome) => {
+    const { error } = await supabase.from('tecnicos').delete().eq('nome', nome);
+    if (error) {
+      showToast('Erro ao remover técnico', 'error');
+    } else {
+      setTecnicos(prev => prev.filter(t => t !== nome));
+      showToast('Técnico removido com sucesso!');
     }
   };
 
@@ -290,6 +336,8 @@ export function GlobalDataProvider({ children }) {
   const value = {
     professores, setProfessores,
     gestores, setGestores,
+    secretarias, setSecretarias,
+    tecnicos, setTecnicos,
     turmas, setTurmas,
     alunos, setAlunos,
     tiposEvento, setTiposEvento,
@@ -301,6 +349,8 @@ export function GlobalDataProvider({ children }) {
     addTipoEvidencia, removeTipoEvidencia,
     addProfessor, removeProfessor, importProfessores,
     addGestor, removeGestor,
+    addSecretaria, removeSecretaria,
+    addTecnico, removeTecnico,
     addTurma, removeTurma, updateTurmaLink,
     importAlunosTurma, clearAlunosTurma, removeAlunosPorNome,
     addDisciplina, removeDisciplina, importDisciplinas

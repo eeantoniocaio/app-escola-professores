@@ -8,7 +8,7 @@ import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogO
 
 export default function MainLayout() {
   const { session, userRole, userName, linkProfileName, isMaster } = useAuth();
-  const { professores, gestores, loadingData } = useGlobalData();
+  const { professores, gestores, secretarias, tecnicos, loadingData } = useGlobalData();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -544,9 +544,11 @@ export default function MainLayout() {
               <div style={{ fontSize: '3.5rem', marginBottom: '1.25rem' }}>👋</div>
               <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.75rem 0' }}>Identifique-se</h3>
               <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.5, margin: '0 0 1.75rem 0' }}>
-                {userRole === 'gestao' 
-                  ? 'Para gerenciar o portal, selecione o seu nome de Gestor(a) para vincular à sua conta de e-mail.'
-                  : 'Para ver e gerenciar suas ocorrências, boas práticas e reposições, selecione o seu nome de Professor(a) para vincular à sua conta de e-mail.'}
+                {userRole === 'gestao' && 'Para gerenciar o portal, selecione o seu nome de Gestor(a) para vincular à sua conta de e-mail.'}
+                {userRole === 'professor' && 'Para ver e gerenciar suas ocorrências, boas práticas e reposições, selecione o seu nome de Professor(a) para vincular à sua conta de e-mail.'}
+                {userRole === 'secretaria' && 'Para gerenciar o portal e emitir avisos, selecione o seu nome de profissional da Secretaria para vincular à sua conta de e-mail.'}
+                {userRole === 'tecnico' && 'Para receber e gerenciar chamados de suporte, selecione o seu nome de Técnico para vincular à sua conta de e-mail.'}
+                {userRole !== 'gestao' && userRole !== 'professor' && userRole !== 'secretaria' && userRole !== 'tecnico' && 'Para acessar o portal, selecione o seu nome para vincular à sua conta de e-mail.'}
               </p>
               {loadingData ? (
                 <div style={{ color: '#64748b', fontSize: '0.95rem' }}>Carregando opções...</div>
@@ -554,7 +556,11 @@ export default function MainLayout() {
                 <form onSubmit={handleLinkProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div style={{ textAlign: 'left' }}>
                     <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: '#475569', marginBottom: '0.5rem' }}>
-                      {userRole === 'gestao' ? 'Seu nome de Gestor(a)' : 'Seu nome de Professor(a)'} <span style={{ color: '#ef4444' }}>*</span>
+                      {userRole === 'gestao' && 'Seu nome de Gestor(a)'}
+                      {userRole === 'professor' && 'Seu nome de Professor(a)'}
+                      {userRole === 'secretaria' && 'Seu nome (Secretaria)'}
+                      {userRole === 'tecnico' && 'Seu nome (Técnico)'}
+                      {userRole !== 'gestao' && userRole !== 'professor' && userRole !== 'secretaria' && userRole !== 'tecnico' && 'Seu nome'} <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <select
                       value={selectedNameForLink}
@@ -572,10 +578,10 @@ export default function MainLayout() {
                       }}
                     >
                       <option value="">Selecione...</option>
-                      {userRole === 'gestao' 
-                        ? gestores.map(g => <option key={g} value={g}>{g}</option>)
-                        : professores.map(p => <option key={p} value={p}>{p}</option>)
-                      }
+                      {userRole === 'gestao' && gestores.map(g => <option key={g} value={g}>{g}</option>)}
+                      {userRole === 'professor' && professores.map(p => <option key={p} value={p}>{p}</option>)}
+                      {userRole === 'secretaria' && secretarias && secretarias.map(s => <option key={s} value={s}>{s}</option>)}
+                      {userRole === 'tecnico' && tecnicos && tecnicos.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                   <button

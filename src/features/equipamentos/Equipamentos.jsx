@@ -28,6 +28,7 @@ export default function Equipamentos() {
   const [helpData, setHelpData] = useState(new Date().toISOString().split('T')[0]);
   const [helpSala, setHelpSala] = useState('');
   const [helpDescricao, setHelpDescricao] = useState('');
+  const [techComment, setTechComment] = useState('');
 
   // Lista de Solicitações (para técnico/gestão)
   const [helpRequests, setHelpRequests] = useState([]);
@@ -176,15 +177,20 @@ export default function Equipamentos() {
     }
   };
 
-  const handleUpdateHelpStatus = async (id, status) => {
+  const handleUpdateHelpStatus = async (id, status, comentarios = null) => {
     try {
+      const payload = { status };
+      if (comentarios !== null) {
+        payload.comentarios = comentarios;
+      }
       const { error } = await supabase
         .from('solicitacoes_ajuda')
-        .update({ status })
+        .update(payload)
         .eq('id', id);
       if (error) throw error;
       showToast('Solicitação atualizada!');
       fetchHelpRequests();
+      setSelectedHelpRequest(prev => prev && prev.id === id ? { ...prev, ...payload } : prev);
     } catch (err) {
       console.error(err);
       showToast('Erro ao atualizar solicitação', 'error');
@@ -924,6 +930,7 @@ export default function Equipamentos() {
                   className="help-request-card"
                   onClick={() => {
                     setSelectedHelpRequest(req);
+                    setTechComment(req.comentarios || '');
                     setIsHelpDetailsModalOpen(true);
                   }}
                   style={{
@@ -1417,6 +1424,42 @@ export default function Equipamentos() {
                 </p>
               </div>
 
+              {canEdit ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Comentários / Ação do Técnico (Opcional)
+                  </label>
+                  <textarea
+                    value={techComment}
+                    onChange={(e) => setTechComment(e.target.value)}
+                    placeholder="Descreva as ações realizadas ou comentários sobre o problema..."
+                    className="form-textarea-input"
+                    style={{ minHeight: '80px', width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.9rem', resize: 'vertical' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => handleUpdateHelpStatus(selectedHelpRequest.id, selectedHelpRequest.status, techComment)}
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                    >
+                      Salvar Comentário
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                selectedHelpRequest.comentarios && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                      Comentários / Ação do Técnico
+                    </span>
+                    <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                      {selectedHelpRequest.comentarios}
+                    </p>
+                  </div>
+                )
+              )}
+
             </div>
 
             <div className="modal-footer-actions">
@@ -1431,7 +1474,7 @@ export default function Equipamentos() {
                       type="button" 
                       className="btn btn-success" 
                       onClick={async () => {
-                        await handleUpdateHelpStatus(selectedHelpRequest.id, 'Resolvido');
+                        await handleUpdateHelpStatus(selectedHelpRequest.id, 'Resolvido', techComment);
                         setIsHelpDetailsModalOpen(false);
                       }}
                       style={{ backgroundColor: 'var(--color-success)', color: 'white', border: 'none' }}
