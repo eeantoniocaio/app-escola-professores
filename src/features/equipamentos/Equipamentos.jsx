@@ -24,7 +24,7 @@ export default function Equipamentos() {
 
   // Estados de Solicitação de Ajuda
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [helpProfessor, setHelpProfessor] = useState(userName || '');
+  const [helpProfessor, setHelpProfessor] = useState((userRole !== 'gestao' && userName) ? userName : '');
   const [helpData, setHelpData] = useState(new Date().toISOString().split('T')[0]);
   const [helpSala, setHelpSala] = useState('');
   const [helpDescricao, setHelpDescricao] = useState('');
@@ -97,9 +97,9 @@ export default function Equipamentos() {
 
   useEffect(() => {
     if (userName) {
-      setHelpProfessor(userName);
+      setHelpProfessor((userRole !== 'gestao') ? userName : '');
     }
-  }, [userName]);
+  }, [userName, userRole]);
 
   // Sincronizar aba ativa via parâmetro da URL (ex: tab=solicitacoes ao clicar na notificação)
   useEffect(() => {
@@ -135,13 +135,14 @@ export default function Equipamentos() {
 
   const handleSaveHelpRequest = async (e) => {
     e.preventDefault();
-    if (!helpProfessor.trim() || !helpSala.trim() || !helpDescricao.trim()) {
+    const finalProfessor = (userRole !== 'gestao' && userName) ? userName : helpProfessor;
+    if (!finalProfessor.trim() || !helpSala.trim() || !helpDescricao.trim()) {
       showToast('Preencha todos os campos obrigatórios', 'error');
       return;
     }
 
     const payload = {
-      professor: helpProfessor.trim(),
+      professor: finalProfessor.trim(),
       data: helpData,
       sala: helpSala.trim(),
       descricao: helpDescricao.trim(),
@@ -511,7 +512,7 @@ export default function Equipamentos() {
         <button 
           className="btn-help" 
           onClick={() => {
-            setHelpProfessor(userName || '');
+            setHelpProfessor((userRole !== 'gestao' && userName) ? userName : '');
             setHelpData(new Date().toISOString().split('T')[0]);
             setIsHelpModalOpen(true);
           }}
@@ -1263,17 +1264,31 @@ export default function Equipamentos() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div className="form-input-group">
                     <label>Professor(a) <span style={{ color: 'var(--color-danger)' }}>*</span></label>
-                    <select
-                      value={helpProfessor}
-                      onChange={(e) => setHelpProfessor(e.target.value)}
-                      className="form-select-input"
-                      required
-                    >
-                      <option value="">Selecione o(a) Professor(a)...</option>
-                      {professores.map((p) => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
+                    {userRole !== 'gestao' && userName ? (
+                      <div style={{
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-muted)',
+                        fontWeight: 600,
+                        fontSize: '0.95rem'
+                      }}>
+                        {userName}
+                      </div>
+                    ) : (
+                      <select
+                        value={helpProfessor}
+                        onChange={(e) => setHelpProfessor(e.target.value)}
+                        className="form-select-input"
+                        required
+                      >
+                        <option value="">Selecione o(a) Professor(a)...</option>
+                        {professores.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   <div className="form-input-group">
