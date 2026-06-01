@@ -147,35 +147,6 @@ export default function Equipamentos() {
     return data.sort((a, b) => b.count - a.count);
   }, [salas, dispositivos]);
 
-  const deviceTypesData = useMemo(() => {
-    const counts = {
-      'Notebooks/PCs': 0,
-      'Projetores': 0,
-      'TVs/Telas': 0,
-      'Impressoras': 0,
-      'Outros': 0
-    };
-    dispositivos.forEach(d => {
-      const t = d.tipo.toLowerCase();
-      if (t.includes('notebook') || t.includes('computador') || t.includes('pc') || t.includes('computadores')) {
-        counts['Notebooks/PCs'] += 1;
-      } else if (t.includes('projetor') || t.includes('datashow') || t.includes('data show')) {
-        counts['Projetores'] += 1;
-      } else if (t.includes('tv') || t.includes('televis') || t.includes('monitor') || t.includes('tela')) {
-        counts['TVs/Telas'] += 1;
-      } else if (t.includes('impressora') || t.includes('multifuncional')) {
-        counts['Impressoras'] += 1;
-      } else {
-        counts['Outros'] += 1;
-      }
-    });
-    
-    return Object.entries(counts)
-      .map(([name, count]) => ({ name, count }))
-      .filter(item => item.count > 0)
-      .sort((a, b) => b.count - a.count);
-  }, [dispositivos]);
-
   // Contagem dinâmica de dispositivos por sala
   const deviceCounts = useMemo(() => {
     const counts = {};
@@ -632,35 +603,7 @@ export default function Equipamentos() {
             </div>
           </div>
 
-          {/* Linha inferior: Distribuição de Tipos */}
-          <div className="dashboard-charts-row">
-            <div className="dashboard-chart-box full-width-chart">
-              <h3 className="chart-title">Tipos de Equipamento em Destaque</h3>
-              <div className="types-distribution-container">
-                {deviceTypesData.length === 0 ? (
-                  <p className="no-data-text">Nenhum equipamento cadastrado</p>
-                ) : (
-                  <div className="types-grid">
-                    {deviceTypesData.map((type) => {
-                      const maxVal = Math.max(...deviceTypesData.map(t => t.count), 1);
-                      const widthPercent = (type.count / maxVal) * 100;
-                      return (
-                        <div key={type.name} className="type-card">
-                          <div className="type-card-header">
-                            <span className="type-card-name">{type.name}</span>
-                            <span className="type-card-count">{type.count}</span>
-                          </div>
-                          <div className="type-card-bar">
-                            <div className="type-card-fill" style={{ width: `${widthPercent}%` }}></div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+
         </div>
       )}
 
