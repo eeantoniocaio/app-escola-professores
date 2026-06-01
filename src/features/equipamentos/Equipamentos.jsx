@@ -1320,7 +1320,7 @@ export default function Equipamentos() {
                 <button type="button" className="btn btn-secondary" onClick={() => setIsHelpModalOpen(false)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#FF4B4B', borderColor: '#FF4B4B' }}>
+                <button type="submit" className="btn btn-help-submit">
                   Enviar Solicitação
                 </button>
               </div>

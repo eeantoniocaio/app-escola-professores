@@ -781,3 +781,15 @@
 .btn-help:active {
   transform: translateY(0);
 }
+
+.btn-help-submit {
+  background-color: #89E219;
+  border-color: #89E219;
+  color: #121212;
+}
+
+.btn-help-submit:hover {
+  background-color: #78c714;
+  border-color: #78c714;
+  color: #121212;
+}
