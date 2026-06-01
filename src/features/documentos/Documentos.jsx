@@ -117,7 +117,7 @@ export default function Documentos() {
       return;
     }
 
-    const MASTER_FOLDER_ID = '1qjKw8m550_0lSQcPvbJLZMQVhN-VpKyh';
+    const MASTER_FOLDER_ID = '12Yhu49ccFTIHhTylOREMJQ8CZX6vJDlA';
     const folder = { id: MASTER_FOLDER_ID, name: 'Principal' };
     setRootFolder(folder);
     setActiveFolder(folder);
