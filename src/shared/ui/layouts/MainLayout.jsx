@@ -15,6 +15,7 @@ export default function MainLayout() {
   const [selectedNameForLink, setSelectedNameForLink] = useState('');
   const [linking, setLinking] = useState(false);
   const [openOccurrencesCount, setOpenOccurrencesCount] = useState(0);
+  const [openHelpRequestsCount, setOpenHelpRequestsCount] = useState(0);
   const [activePopup, setActivePopup] = useState(null);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
 
@@ -99,6 +100,65 @@ export default function MainLayout() {
   }, [userRole]);
 
   useEffect(() => {
+    if (userRole !== 'tecnico') return;
+
+    const fetchHelpCount = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('solicitacoes_ajuda')
+          .select('id')
+          .eq('status', 'Pendente');
+        if (data) {
+          setOpenHelpRequestsCount(data.length);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar solicitações de ajuda pendentes:', err);
+      }
+    };
+
+    fetchHelpCount();
+
+    const channel = supabase.channel('realtime-solicitacoes-layout')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'solicitacoes_ajuda' },
+        (payload) => {
+          setOpenHelpRequestsCount(prev => prev + 1);
+
+          setActivePopup({
+            id: payload.new.id,
+            type: 'ajuda',
+            title: 'Solicitação de Ajuda',
+            body: `Professor(a) ${payload.new.professor} solicita ajuda na ${payload.new.sala}.`,
+            descricao: payload.new.descricao
+          });
+
+          const audio = new Audio('/notification.ogg');
+          audio.play().catch(err => console.log('Audio block by browser:', err));
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'solicitacoes_ajuda' },
+        () => {
+          fetchHelpCount();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'solicitacoes_ajuda' },
+        () => {
+          fetchHelpCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userRole]);
+
+  useEffect(() => {
     if (activePopup) {
       const timer = setTimeout(() => {
         setActivePopup(null);
@@ -166,6 +226,9 @@ export default function MainLayout() {
                 if (userRole === 'gestao') {
                   setIsMobileMenuOpen(false);
                   navigate('/ocorrencias');
+                } else if (userRole === 'tecnico') {
+                  setIsMobileMenuOpen(false);
+                  navigate('/equipamentos?tab=solicitacoes');
                 } else {
                   e.stopPropagation();
                   setIsNotificationDropdownOpen(prev => !prev);
@@ -192,6 +255,25 @@ export default function MainLayout() {
                   boxShadow: '0 0 0 2px var(--bg-card)'
                 }}>
                   {openOccurrencesCount}
+                </span>
+              )}
+              {userRole === 'tecnico' && openHelpRequestsCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  background: 'var(--color-danger)',
+                  color: 'white',
+                  borderRadius: '50%',
+                  padding: '2px 5px',
+                  fontSize: '0.62rem',
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  minWidth: '15px',
+                  textAlign: 'center',
+                  boxShadow: '0 0 0 2px var(--bg-card)'
+                }}>
+                  {openHelpRequestsCount}
                 </span>
               )}
             </button>
@@ -276,7 +358,11 @@ export default function MainLayout() {
             <button 
               onClick={() => {
                 setActivePopup(null);
-                navigate('/ocorrencias');
+                if (activePopup.type === 'ajuda') {
+                  navigate('/equipamentos?tab=solicitacoes');
+                } else {
+                  navigate('/ocorrencias');
+                }
               }}
               style={{
                 background: 'var(--color-danger)',

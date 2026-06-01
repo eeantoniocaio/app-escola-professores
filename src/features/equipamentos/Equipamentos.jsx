@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
@@ -16,8 +16,20 @@ export default function Equipamentos() {
 
   const canEdit = userRole === 'gestao' || userRole === 'tecnico';
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'salas' | 'dispositivos'
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'salas' | 'dispositivos' | 'solicitacoes'
   const [loading, setLoading] = useState(true);
+
+  // Estados de Solicitação de Ajuda
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [helpProfessor, setHelpProfessor] = useState(userName || '');
+  const [helpData, setHelpData] = useState(new Date().toISOString().split('T')[0]);
+  const [helpSala, setHelpSala] = useState('');
+  const [helpDescricao, setHelpDescricao] = useState('');
+
+  // Lista de Solicitações (para técnico/gestão)
+  const [helpRequests, setHelpRequests] = useState([]);
+  const [loadingHelp, setLoadingHelp] = useState(false);
 
   // Dados do banco
   const [salas, setSalas] = useState([]);
@@ -80,6 +92,108 @@ export default function Equipamentos() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (userName) {
+      setHelpProfessor(userName);
+    }
+  }, [userName]);
+
+  // Sincronizar aba ativa via parâmetro da URL (ex: tab=solicitacoes ao clicar na notificação)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab && ['dashboard', 'salas', 'dispositivos', 'solicitacoes'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [location]);
+
+  const fetchHelpRequests = async () => {
+    setLoadingHelp(true);
+    try {
+      const { data, error } = await supabase
+        .from('solicitacoes_ajuda')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setHelpRequests(data || []);
+    } catch (err) {
+      console.error('Erro ao buscar solicitações de ajuda:', err);
+      showToast('Erro ao carregar solicitações', 'error');
+    } finally {
+      setLoadingHelp(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'solicitacoes' && (userRole === 'gestao' || userRole === 'tecnico')) {
+      fetchHelpRequests();
+    }
+  }, [activeTab, userRole]);
+
+  const handleSaveHelpRequest = async (e) => {
+    e.preventDefault();
+    if (!helpProfessor.trim() || !helpSala.trim() || !helpDescricao.trim()) {
+      showToast('Preencha todos os campos obrigatórios', 'error');
+      return;
+    }
+
+    const payload = {
+      professor: helpProfessor.trim(),
+      data: helpData,
+      sala: helpSala.trim(),
+      descricao: helpDescricao.trim(),
+      status: 'Pendente'
+    };
+
+    try {
+      const { error } = await supabase.from('solicitacoes_ajuda').insert([payload]);
+      if (error) throw error;
+      
+      showToast('Solicitação de ajuda enviada com sucesso!');
+      setIsHelpModalOpen(false);
+      setHelpSala('');
+      setHelpDescricao('');
+      
+      if (activeTab === 'solicitacoes') {
+        fetchHelpRequests();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao enviar solicitação de ajuda', 'error');
+    }
+  };
+
+  const handleUpdateHelpStatus = async (id, status) => {
+    try {
+      const { error } = await supabase
+        .from('solicitacoes_ajuda')
+        .update({ status })
+        .eq('id', id);
+      if (error) throw error;
+      showToast('Solicitação atualizada!');
+      fetchHelpRequests();
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao atualizar solicitação', 'error');
+    }
+  };
+
+  const handleDeleteHelpRequest = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta solicitação?')) return;
+    try {
+      const { error } = await supabase
+        .from('solicitacoes_ajuda')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      showToast('Solicitação excluída!');
+      fetchHelpRequests();
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao excluir solicitação', 'error');
+    }
+  };
 
   // --- MÉTRIAS E PROCESSAMENTO DO DASHBOARD ---
   const dashboardStats = useMemo(() => {
@@ -393,9 +507,21 @@ export default function Equipamentos() {
             </p>
           </div>
         </div>
+
+        {/* Botão de Solicitar Ajuda ao Técnico */}
+        <button 
+          className="btn-help" 
+          onClick={() => {
+            setHelpProfessor(userName || '');
+            setHelpData(new Date().toISOString().split('T')[0]);
+            setIsHelpModalOpen(true);
+          }}
+        >
+          Solicitar Ajuda
+        </button>
       </div>
 
-      {/* Tab bar principal (Dashboard vs Salas vs Tabela Completa) */}
+      {/* Tab bar principal (Dashboard vs Salas vs Tabela Completa vs Solicitações) */}
       <div className="tab-container">
         <button 
           onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); }}
@@ -415,6 +541,14 @@ export default function Equipamentos() {
         >
           Todos os Dispositivos
         </button>
+        {(userRole === 'tecnico' || userRole === 'gestao') && (
+          <button 
+            onClick={() => { setActiveTab('solicitacoes'); setSearchQuery(''); }}
+            className={`tab-button ${activeTab === 'solicitacoes' ? 'active' : ''}`}
+          >
+            Solicitações de Ajuda
+          </button>
+        )}
       </div>
 
       {/* Barra de pesquisa e botão nova sala na página principal */}
@@ -757,6 +891,88 @@ export default function Equipamentos() {
         </div>
       )}
 
+      {/* ── TAB SOLICITAÇÕES DE AJUDA (Visível apenas para Técnico e Gestão) ── */}
+      {activeTab === 'solicitacoes' && (userRole === 'tecnico' || userRole === 'gestao') && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="search-bar-row">
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Histórico de Solicitações</h3>
+          </div>
+          
+          {loadingHelp ? (
+            <div style={{ textAlign: 'center', padding: '2rem' }}>Carregando solicitações...</div>
+          ) : helpRequests.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-card)', border: '1px dashed var(--border-light)', borderRadius: 'var(--radius-lg)' }}>
+              <Bell size={48} style={{ color: 'var(--text-light)', marginBottom: '1rem' }} />
+              <p style={{ fontSize: '1.05rem', fontWeight: 600, margin: 0, color: 'var(--text-muted)' }}>Nenhuma solicitação encontrada</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {helpRequests.map((req) => (
+                <div 
+                  key={req.id} 
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-light)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '1.5rem',
+                    boxShadow: 'var(--shadow-sm)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: '1.5rem',
+                    flexWrap: 'wrap',
+                    borderLeft: req.status === 'Pendente' ? '6px solid #FF4B4B' : '6px solid var(--color-success)'
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minWidth: '280px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.1rem' }}>
+                        {req.professor}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        {new Date(req.data + 'T00:00:00').toLocaleDateString('pt-BR')}
+                      </span>
+                      <span className={`condicao-badge ${req.status === 'Pendente' ? 'condicao-danificado' : 'condicao-funcional'}`}>
+                        {req.status}
+                      </span>
+                    </div>
+                    
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
+                      Sala/Local: <span style={{ color: 'var(--color-primary)' }}>{req.sala}</span>
+                    </div>
+                    
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                      {req.descricao}
+                    </p>
+                  </div>
+                  
+                  {canEdit && (
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      {req.status === 'Pendente' && (
+                        <button 
+                          className="btn btn-success" 
+                          onClick={() => handleUpdateHelpStatus(req.id, 'Resolvido')}
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', backgroundColor: 'var(--color-success)', color: 'white', border: 'none' }}
+                        >
+                          Marcar como Resolvido
+                        </button>
+                      )}
+                      <button 
+                        className="btn-icon delete" 
+                        onClick={() => handleDeleteHelpRequest(req.id)}
+                        title="Excluir Solicitação"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── MODAL FLUTUANTE: DETALHES COMPLETOS DA SALA (Estilo Turmas) ── */}
       {isDetailsModalOpen && selectedRoom && (
         <div className="modal-overlay">
@@ -1023,6 +1239,84 @@ export default function Equipamentos() {
                 </button>
                 <button type="submit" className="btn btn-primary">
                   {editingDevice ? 'Salvar Alterações' : 'Salvar Equipamento'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: SOLICITAR AJUDA AO TÉCNICO ── */}
+      {isHelpModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                Solicitar Ajuda do Técnico
+              </h3>
+              <button className="btn-icon" onClick={() => setIsHelpModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveHelpRequest}>
+              <div className="modal-body-scroll">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div className="form-input-group">
+                    <label>Professor(a) <span style={{ color: 'var(--color-danger)' }}>*</span></label>
+                    <input 
+                      type="text" 
+                      value={helpProfessor}
+                      onChange={(e) => setHelpProfessor(e.target.value)}
+                      placeholder="Nome do(a) Professor(a)"
+                      className="form-text-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-input-group">
+                    <label>Data <span style={{ color: 'var(--color-danger)' }}>*</span></label>
+                    <input 
+                      type="date" 
+                      value={helpData}
+                      onChange={(e) => setHelpData(e.target.value)}
+                      className="form-text-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-input-group">
+                    <label>Sala / Local <span style={{ color: 'var(--color-danger)' }}>*</span></label>
+                    <input 
+                      type="text" 
+                      value={helpSala}
+                      onChange={(e) => setHelpSala(e.target.value)}
+                      placeholder="Descreva a sala ou local (Ex: Sala 05, Info 2)"
+                      className="form-text-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-input-group">
+                    <label>Descrição do Problema <span style={{ color: 'var(--color-danger)' }}>*</span></label>
+                    <textarea 
+                      value={helpDescricao}
+                      onChange={(e) => setHelpDescricao(e.target.value)}
+                      placeholder="Descreva o problema que está ocorrendo com os equipamentos..."
+                      className="form-textarea-input"
+                      style={{ minHeight: '120px' }}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-footer-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setIsHelpModalOpen(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#FF4B4B', borderColor: '#FF4B4B' }}>
+                  Enviar Solicitação
                 </button>
               </div>
             </form>
