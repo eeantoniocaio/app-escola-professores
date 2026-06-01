@@ -16,6 +16,7 @@ export default function MainLayout() {
   const [linking, setLinking] = useState(false);
   const [openOccurrencesCount, setOpenOccurrencesCount] = useState(0);
   const [activePopup, setActivePopup] = useState(null);
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
 
   const isActive = (path) => location.pathname === path ? 'active' : '';
 
@@ -106,6 +107,13 @@ export default function MainLayout() {
     }
   }, [activePopup]);
 
+  useEffect(() => {
+    if (!isNotificationDropdownOpen) return;
+    const handleClose = () => setIsNotificationDropdownOpen(false);
+    window.addEventListener('click', handleClose);
+    return () => window.removeEventListener('click', handleClose);
+  }, [isNotificationDropdownOpen]);
+
   return (
     <div className="app-container">
       <header className="header">
@@ -151,15 +159,23 @@ export default function MainLayout() {
             </Link>
           )}
           
-          {userRole === 'gestao' && (
+          <div style={{ position: 'relative', display: 'inline-block' }}>
             <button 
               className="nav-link" 
-              onClick={() => { setIsMobileMenuOpen(false); navigate('/ocorrencias'); }}
-              title="Notificações de Ocorrências" 
+              onClick={(e) => {
+                if (userRole === 'gestao') {
+                  setIsMobileMenuOpen(false);
+                  navigate('/ocorrencias');
+                } else {
+                  e.stopPropagation();
+                  setIsNotificationDropdownOpen(prev => !prev);
+                }
+              }}
+              title="Notificações" 
               style={{ padding: '0.4rem', position: 'relative', border: 'none', background: 'transparent', cursor: 'pointer' }}
             >
               <Bell size={20} />
-              {openOccurrencesCount > 0 && (
+              {userRole === 'gestao' && openOccurrencesCount > 0 && (
                 <span style={{
                   position: 'absolute',
                   top: '2px',
@@ -179,7 +195,30 @@ export default function MainLayout() {
                 </span>
               )}
             </button>
-          )}
+            {isNotificationDropdownOpen && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '0.5rem',
+                  width: '240px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: 'var(--shadow-lg)',
+                  padding: '0.85rem',
+                  zIndex: 1000,
+                  textAlign: 'center',
+                  animation: 'fadeIn 0.2s ease-out'
+                }}
+              >
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                  Nenhuma notificação no momento.
+                </p>
+              </div>
+            )}
+          </div>
           
           <div className="nav-divider" style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)', margin: '0 0.5rem' }}></div>
           
