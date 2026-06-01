@@ -191,8 +191,8 @@ export default function Documentos() {
 
   const handleSendNotification = async (e) => {
     e.preventDefault();
-    if (!notifyFolder || !notifyTitle.trim() || !notifyDescription.trim()) {
-      alert('Por favor, preencha todos os campos.');
+    if (!notifyFolder || !notifyTitle.trim()) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
 
@@ -246,7 +246,7 @@ export default function Documentos() {
               padding: '0.65rem 1.25rem',
               fontSize: '0.9rem',
               fontWeight: 700,
-              background: '#FFC800',
+              background: '#FF4B4B',
               color: '#ffffff',
               border: 'none',
               borderRadius: 'var(--radius-md)',
@@ -726,7 +726,7 @@ export default function Documentos() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   <label style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    Descrição <span style={{ color: 'var(--color-danger)' }}>*</span>
+                    Descrição
                   </label>
                   <textarea 
                     value={notifyDescription}
@@ -745,7 +745,6 @@ export default function Documentos() {
                       minHeight: '120px',
                       resize: 'vertical'
                     }}
-                    required
                   />
                 </div>
               </div>
@@ -767,7 +766,7 @@ export default function Documentos() {
                   padding: '0.65rem 1.25rem',
                   fontSize: '0.9rem',
                   fontWeight: 700,
-                  background: '#FFC800',
+                  background: '#FF4B4B',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: 'var(--radius-md)',
