@@ -528,11 +528,13 @@
 .donut-segment {
   cursor: pointer;
   transform-origin: center;
-  transition: transform 0.2s ease, stroke-width 0.2s ease;
+  transform-box: fill-box;
+  transform: rotate(-90deg);
+  transition: transform 0.2s ease, stroke-width 0.2s ease, stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .donut-segment:hover {
-  transform: scale(1.03) rotate(-90deg);
+  transform: scale(1.05) rotate(-90deg);
   stroke-width: 18px;
 }
 

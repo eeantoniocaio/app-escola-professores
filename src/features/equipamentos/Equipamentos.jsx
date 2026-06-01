@@ -551,12 +551,10 @@ export default function Equipamentos() {
                             fill="transparent"
                             stroke={strokeColors[slice.name] || '#374151'}
                             strokeWidth="16"
-                            strokeDasharray={`${strokeLength} 314.159`}
-                            strokeDashoffset={-offset}
-                            transform="rotate(-90 80 80)"
                             className="donut-segment"
                             style={{
-                              transition: 'stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                              strokeDasharray: `${strokeLength} 314.159`,
+                              strokeDashoffset: -offset,
                               strokeLinecap: percentage === 100 ? 'butt' : 'round'
                             }}
                           />
