@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FolderOpen, Folder, FileText, FileSpreadsheet, Image, File, 
   ArrowLeft, ExternalLink, Search, X, ChevronRight, AlertTriangle,
-  RefreshCw, LogOut
+  RefreshCw, LogOut, Bell
 } from 'lucide-react';
 import { useGoogleAuth } from '../../app/providers/GoogleAuthProvider';
+import { useAuth } from '../../app/providers/AuthProvider';
+import { supabase } from '../../shared/services/supabase';
 
 // Mapeamento de Extensão -> Ícones e Cores (Tema Premium semelhante ao de Turmas)
 const getFileIconDetails = (name, isFolder) => {
@@ -40,6 +42,7 @@ const getFileIconDetails = (name, isFolder) => {
 export default function Documentos() {
   const navigate = useNavigate();
   const { accessToken, loginGoogle, logoutGoogle, googleAccount, isConfigured } = useGoogleAuth();
+  const { userRole, userName } = useAuth();
   
   const [rootFolder, setRootFolder] = useState(null);
   const [activeFolder, setActiveFolder] = useState(null);
@@ -49,6 +52,54 @@ export default function Documentos() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Estados do Modal de Notificação
+  const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
+  const [notifyFolder, setNotifyFolder] = useState('');
+  const [notifyTitle, setNotifyTitle] = useState('');
+  const [notifyDescription, setNotifyDescription] = useState('');
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
+
+  // Notificações recebidas (para Professores)
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('dismissed_doc_notifications');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (userRole === 'professor') {
+      const fetchNotifications = async () => {
+        setLoadingNotifications(true);
+        try {
+          const { data, error } = await supabase
+            .from('notificacoes_documentos')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (error) throw error;
+          setNotifications(data || []);
+        } catch (err) {
+          console.error('Erro ao buscar notificações de documentos:', err);
+        } finally {
+          setLoadingNotifications(false);
+        }
+      };
+      fetchNotifications();
+    }
+  }, [userRole]);
+
+  const handleDismissNotification = (id) => {
+    const updated = [...dismissedIds, id];
+    setDismissedIds(updated);
+    localStorage.setItem('dismissed_doc_notifications', JSON.stringify(updated));
+  };
+
+  const activeNotifications = notifications.filter(n => !dismissedIds.includes(n.id));
 
   // Auto-autenticação Google ao entrar na página de Documentos
   useEffect(() => {
@@ -138,10 +189,40 @@ export default function Documentos() {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  const handleSendNotification = async (e) => {
+    e.preventDefault();
+    if (!notifyFolder || !notifyTitle.trim() || !notifyDescription.trim()) {
+      alert('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    setIsSendingNotification(true);
+    try {
+      const { error } = await supabase.from('notificacoes_documentos').insert([{
+        titulo: notifyTitle.trim(),
+        descricao: notifyDescription.trim(),
+        pasta: notifyFolder,
+        remetente: userName || 'Gestor'
+      }]);
+      if (error) throw error;
+      
+      alert('Notificação enviada aos professores com sucesso!');
+      setIsNotifyModalOpen(false);
+      setNotifyFolder('');
+      setNotifyTitle('');
+      setNotifyDescription('');
+    } catch (err) {
+      console.error('Erro ao enviar notificação:', err);
+      alert('Erro ao enviar a notificação. Tente novamente.');
+    } finally {
+      setIsSendingNotification(false);
+    }
+  };
+
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
       {/* Header */}
-      <div className="dashboard-header" style={{ marginBottom: '2rem' }}>
+      <div className="dashboard-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button 
             className="btn-back-home"
@@ -156,6 +237,32 @@ export default function Documentos() {
             </h2>
           </div>
         </div>
+
+        {/* Botão de Enviar Notificação (Apenas Gestão e Secretaria) */}
+        {(userRole === 'gestao' || userRole === 'secretaria') && (
+          <button 
+            onClick={() => setIsNotifyModalOpen(true)}
+            style={{
+              padding: '0.65rem 1.25rem',
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              background: '#FFC800',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'var(--transition-smooth)'
+            }}
+            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1.5px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+            onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+          >
+            <Bell size={16} /> Enviar notificação
+          </button>
+        )}
       </div>
 
       {/* Painel Principal */}
@@ -338,6 +445,66 @@ export default function Documentos() {
               </div>
             )}
 
+            {/* Painel de Notificações para Professores */}
+            {userRole === 'professor' && activeNotifications.length > 0 && (
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid var(--border-light)',
+                borderRadius: 'var(--radius-md)',
+                padding: '1rem',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                boxShadow: 'var(--shadow-sm)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#FFC800', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem' }}>
+                  <Bell size={18} />
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>Avisos da Coordenação / Direção / Secretaria</span>
+                  <span style={{ fontSize: '0.75rem', background: '#FFC800', color: 'white', padding: '1px 6px', borderRadius: '10px', fontWeight: 700, marginLeft: 'auto' }}>
+                    {activeNotifications.length} novo(s)
+                  </span>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
+                  {activeNotifications.map(notif => (
+                    <div key={notif.id} style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', position: 'relative' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#FFC800', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>
+                            {notif.pasta}
+                          </span>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                            {notif.titulo}
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginLeft: 'auto' }}>
+                            {new Date(notif.created_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', lineHeight: 1.3 }}>
+                          {notif.descricao}
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => handleDismissNotification(notif.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--text-light)',
+                          padding: '0 0.25rem',
+                          alignSelf: 'flex-start'
+                        }}
+                        title="Descartar"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Campo de Pesquisa */}
             <div style={{ position: 'relative', width: '100%', marginBottom: '1.25rem' }}>
               <input 
@@ -490,6 +657,130 @@ export default function Documentos() {
           </div>
         )}
       </div>
+
+      {/* ── MODAL: ENVIAR NOTIFICAÇÃO ── */}
+      {isNotifyModalOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={(e) => { if (e.target === e.currentTarget) setIsNotifyModalOpen(false); }}>
+          <div className="modal-content" style={{ maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div className="modal-header" style={{ padding: '1.5rem 2rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-light)' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)' }}>
+                <Bell size={20} color="#FFC800" /> Enviar Notificação aos Professores
+              </h3>
+              <button className="btn-icon" onClick={() => setIsNotifyModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSendNotification} style={{ margin: 0 }}>
+              <div className="modal-body" style={{ padding: '1.5rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    Seleção da pasta <span style={{ color: 'var(--color-danger)' }}>*</span>
+                  </label>
+                  <select
+                    value={notifyFolder}
+                    onChange={(e) => setNotifyFolder(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-light)',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      backgroundColor: 'var(--bg-card)',
+                      color: 'var(--text-main)',
+                      fontFamily: 'inherit'
+                    }}
+                    required
+                  >
+                    <option value="">Selecione a pasta...</option>
+                    <option value="Coordenação">Coordenação</option>
+                    <option value="Direção">Direção</option>
+                    <option value="Secretaria">Secretaria</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    Título da notificação <span style={{ color: 'var(--color-danger)' }}>*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    value={notifyTitle}
+                    onChange={(e) => setNotifyTitle(e.target.value)}
+                    placeholder="Digite o título da notificação"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-light)',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      backgroundColor: 'var(--bg-card)',
+                      color: 'var(--text-main)',
+                      fontFamily: 'inherit'
+                    }}
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    Descrição <span style={{ color: 'var(--color-danger)' }}>*</span>
+                  </label>
+                  <textarea 
+                    value={notifyDescription}
+                    onChange={(e) => setNotifyDescription(e.target.value)}
+                    placeholder="Descreva a mensagem para os professores..."
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-light)',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      backgroundColor: 'var(--bg-card)',
+                      color: 'var(--text-main)',
+                      fontFamily: 'inherit',
+                      minHeight: '120px',
+                      resize: 'vertical'
+                    }}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{
+                padding: '1.25rem 2rem',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '0.75rem',
+                borderTop: '1px solid var(--border-light)',
+                background: 'var(--bg-secondary)',
+                borderBottomLeftRadius: 'var(--radius-md)',
+                borderBottomRightRadius: 'var(--radius-md)'
+              }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsNotifyModalOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.65rem 1.25rem' }}>
+                  Cancelar
+                </button>
+                <button type="submit" disabled={isSendingNotification} style={{
+                  padding: '0.65rem 1.25rem',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  background: '#FFC800',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  opacity: isSendingNotification ? 0.7 : 1
+                }}>
+                  {isSendingNotification ? 'Enviando...' : 'Salvar e Enviar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -16,6 +16,15 @@ export default function MainLayout() {
   const [linking, setLinking] = useState(false);
   const [openOccurrencesCount, setOpenOccurrencesCount] = useState(0);
   const [openHelpRequestsCount, setOpenHelpRequestsCount] = useState(0);
+  const [docNotifications, setDocNotifications] = useState([]);
+  const [dismissedDocIds, setDismissedDocIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('dismissed_doc_notifications');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [activePopup, setActivePopup] = useState(null);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
 
@@ -159,6 +168,73 @@ export default function MainLayout() {
   }, [userRole]);
 
   useEffect(() => {
+    if (userRole !== 'professor') return;
+
+    const fetchDocNotifications = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('notificacoes_documentos')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (data) {
+          setDocNotifications(data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar notificações de documentos:', err);
+      }
+    };
+
+    fetchDocNotifications();
+
+    const channel = supabase.channel('realtime-doc-notifications-layout')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notificacoes_documentos' },
+        (payload) => {
+          setDocNotifications(prev => [payload.new, ...prev]);
+
+          setActivePopup({
+            id: payload.new.id,
+            type: 'documento',
+            title: `Novo Aviso: ${payload.new.pasta}`,
+            body: payload.new.titulo,
+            descricao: payload.new.descricao
+          });
+
+          const audio = new Audio('/notification.ogg');
+          audio.play().catch(err => console.log('Audio block by browser:', err));
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'notificacoes_documentos' },
+        () => {
+          fetchDocNotifications();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'notificacoes_documentos' },
+        () => {
+          fetchDocNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userRole]);
+
+  const handleDismissDocNotif = (id) => {
+    const updated = [...dismissedDocIds, id];
+    setDismissedDocIds(updated);
+    localStorage.setItem('dismissed_doc_notifications', JSON.stringify(updated));
+  };
+
+  const activeDocNotifications = docNotifications.filter(n => !dismissedDocIds.includes(n.id));
+
+  useEffect(() => {
     if (activePopup) {
       const timer = setTimeout(() => {
         setActivePopup(null);
@@ -276,6 +352,25 @@ export default function MainLayout() {
                   {openHelpRequestsCount}
                 </span>
               )}
+              {userRole === 'professor' && activeDocNotifications.length > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  background: 'var(--color-danger)',
+                  color: 'white',
+                  borderRadius: '50%',
+                  padding: '2px 5px',
+                  fontSize: '0.62rem',
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  minWidth: '15px',
+                  textAlign: 'center',
+                  boxShadow: '0 0 0 2px var(--bg-card)'
+                }}>
+                  {activeDocNotifications.length}
+                </span>
+              )}
             </button>
             {isNotificationDropdownOpen && (
               <div 
@@ -284,20 +379,61 @@ export default function MainLayout() {
                   top: '100%',
                   right: 0,
                   marginTop: '0.5rem',
-                  width: '240px',
+                  width: '280px',
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border-light)',
                   borderRadius: 'var(--radius-md)',
                   boxShadow: 'var(--shadow-lg)',
                   padding: '0.85rem',
                   zIndex: 1000,
-                  textAlign: 'center',
+                  textAlign: 'left',
                   animation: 'fadeIn 0.2s ease-out'
                 }}
               >
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                  Nenhuma notificação no momento.
-                </p>
+                {userRole === 'professor' ? (
+                  activeDocNotifications.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500, textAlign: 'center' }}>
+                      Nenhuma notificação no momento.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.35rem', color: 'var(--text-main)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Notificações</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', cursor: 'pointer' }} onClick={() => { setIsNotificationDropdownOpen(false); navigate('/documentos'); }}>Ver todas</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto' }}>
+                        {activeDocNotifications.map(notif => (
+                          <div key={notif.id} style={{ display: 'flex', gap: '0.35rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', position: 'relative' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', flex: 1, overflow: 'hidden' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 800, background: '#FFC800', color: 'white', padding: '1px 4px', borderRadius: '3px' }}>
+                                  {notif.pasta}
+                                </span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }} title={notif.titulo}>
+                                  {notif.titulo}
+                                </span>
+                              </div>
+                              <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.2 }}>
+                                {notif.descricao}
+                              </p>
+                            </div>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleDismissDocNotif(notif.id); }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', padding: '0 0.15rem', alignSelf: 'flex-start' }}
+                              title="Descartar"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500, textAlign: 'center' }}>
+                    Nenhuma notificação no momento.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -325,7 +461,7 @@ export default function MainLayout() {
           zIndex: 9999,
           background: 'var(--bg-card)',
           borderRadius: 'var(--radius-md)',
-          borderLeft: '6px solid var(--color-danger)',
+          borderLeft: `6px solid ${activePopup.type === 'documento' ? '#FFC800' : 'var(--color-danger)'}`,
           boxShadow: 'var(--shadow-lg)',
           width: '320px',
           padding: '1.25rem',
@@ -339,8 +475,8 @@ export default function MainLayout() {
           textAlign: 'left'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-danger)', fontWeight: 700, fontSize: '0.9rem' }}>
-              <AlertTriangle size={16} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: activePopup.type === 'documento' ? '#FFC800' : 'var(--color-danger)', fontWeight: 700, fontSize: '0.9rem' }}>
+              {activePopup.type === 'documento' ? <Bell size={16} /> : <AlertTriangle size={16} />}
               <span>{activePopup.title}</span>
             </div>
             <button 
@@ -360,12 +496,14 @@ export default function MainLayout() {
                 setActivePopup(null);
                 if (activePopup.type === 'ajuda') {
                   navigate('/equipamentos?tab=solicitacoes');
+                } else if (activePopup.type === 'documento') {
+                  navigate('/documentos');
                 } else {
                   navigate('/ocorrencias');
                 }
               }}
               style={{
-                background: 'var(--color-danger)',
+                background: activePopup.type === 'documento' ? '#FFC800' : 'var(--color-danger)',
                 color: 'white',
                 border: 'none',
                 borderRadius: 'var(--radius-sm)',
