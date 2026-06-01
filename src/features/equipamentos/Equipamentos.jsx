@@ -61,6 +61,10 @@ export default function Equipamentos() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
 
+  // Modal de Detalhes da Solicitação de Ajuda
+  const [selectedHelpRequest, setSelectedHelpRequest] = useState(null);
+  const [isHelpDetailsModalOpen, setIsHelpDetailsModalOpen] = useState(false);
+
   // Carregar dados iniciais
   const fetchData = async () => {
     setLoading(true);
@@ -187,8 +191,8 @@ export default function Equipamentos() {
     }
   };
 
-  const handleDeleteHelpRequest = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta solicitação?')) return;
+  const handleDeleteHelpRequest = async (id, skipConfirm = false) => {
+    if (!skipConfirm && !window.confirm('Tem certeza que deseja excluir esta solicitação?')) return false;
     try {
       const { error } = await supabase
         .from('solicitacoes_ajuda')
@@ -197,9 +201,11 @@ export default function Equipamentos() {
       if (error) throw error;
       showToast('Solicitação excluída!');
       fetchHelpRequests();
+      return true;
     } catch (err) {
       console.error(err);
       showToast('Erro ao excluir solicitação', 'error');
+      return false;
     }
   };
 
@@ -915,17 +921,12 @@ export default function Equipamentos() {
               {helpRequests.map((req) => (
                 <div 
                   key={req.id} 
+                  className="help-request-card"
+                  onClick={() => {
+                    setSelectedHelpRequest(req);
+                    setIsHelpDetailsModalOpen(true);
+                  }}
                   style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border-light)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '1.5rem',
-                    boxShadow: 'var(--shadow-sm)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    gap: '1.5rem',
-                    flexWrap: 'wrap',
                     borderLeft: req.status === 'Pendente' ? '6px solid #FF4B4B' : '6px solid var(--color-success)'
                   }}
                 >
@@ -956,7 +957,10 @@ export default function Equipamentos() {
                       {req.status === 'Pendente' && (
                         <button 
                           className="btn btn-success" 
-                          onClick={() => handleUpdateHelpStatus(req.id, 'Resolvido')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUpdateHelpStatus(req.id, 'Resolvido');
+                          }}
                           style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', backgroundColor: 'var(--color-success)', color: 'white', border: 'none' }}
                         >
                           Marcar como Resolvido
@@ -964,7 +968,10 @@ export default function Equipamentos() {
                       )}
                       <button 
                         className="btn-icon delete" 
-                        onClick={() => handleDeleteHelpRequest(req.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteHelpRequest(req.id);
+                        }}
                         title="Excluir Solicitação"
                       >
                         <Trash2 size={16} />
@@ -1342,6 +1349,110 @@ export default function Equipamentos() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: DETALHES DA SOLICITAÇÃO DE AJUDA ── */}
+      {isHelpDetailsModalOpen && selectedHelpRequest && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsHelpDetailsModalOpen(false); }}>
+          <div className="modal-content" style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Bell size={20} color="var(--color-primary)" /> Detalhes da Solicitação
+              </h3>
+              <button className="btn-icon" onClick={() => setIsHelpDetailsModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="modal-body-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  Professor(a)
+                </span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                  {selectedHelpRequest.professor}
+                </span>
+              </div>
+
+              <div className="form-grid">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Data da Solicitação
+                  </span>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-main)' }}>
+                    {new Date(selectedHelpRequest.data + 'T00:00:00').toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Sala / Local
+                  </span>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-primary)' }}>
+                    {selectedHelpRequest.sala}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  Status Atual
+                </span>
+                <div>
+                  <span className={`condicao-badge ${selectedHelpRequest.status === 'Pendente' ? 'condicao-danificado' : 'condicao-funcional'}`}>
+                    {selectedHelpRequest.status}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  Descrição do Problema
+                </span>
+                <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                  {selectedHelpRequest.descricao}
+                </p>
+              </div>
+
+            </div>
+
+            <div className="modal-footer-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setIsHelpDetailsModalOpen(false)}>
+                Fechar
+              </button>
+              
+              {canEdit && (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {selectedHelpRequest.status === 'Pendente' && (
+                    <button 
+                      type="button" 
+                      className="btn btn-success" 
+                      onClick={async () => {
+                        await handleUpdateHelpStatus(selectedHelpRequest.id, 'Resolvido');
+                        setIsHelpDetailsModalOpen(false);
+                      }}
+                      style={{ backgroundColor: 'var(--color-success)', color: 'white', border: 'none' }}
+                    >
+                      Marcar como Resolvido
+                    </button>
+                  )}
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    onClick={async () => {
+                      const deleted = await handleDeleteHelpRequest(selectedHelpRequest.id);
+                      if (deleted) setIsHelpDetailsModalOpen(false);
+                    }}
+                    style={{ backgroundColor: 'var(--color-danger)', color: 'white', border: 'none' }}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
