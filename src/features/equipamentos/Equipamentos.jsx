@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft } from 'lucide-react';
+import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
@@ -16,7 +16,7 @@ export default function Equipamentos() {
 
   const canEdit = userRole === 'gestao' || userRole === 'tecnico';
 
-  const [activeTab, setActiveTab] = useState('salas'); // 'salas' | 'dispositivos'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'salas' | 'dispositivos'
   const [loading, setLoading] = useState(true);
 
   // Dados do banco
@@ -80,6 +80,101 @@ export default function Equipamentos() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // --- MÉTRIAS E PROCESSAMENTO DO DASHBOARD ---
+  const dashboardStats = useMemo(() => {
+    const totalRooms = salas.length;
+    const totalDevices = dispositivos.length;
+    const functionalCount = dispositivos.filter(d => d.condicao === 'Funcional').length;
+    const maintenanceCount = dispositivos.filter(d => d.condicao === 'Em manutenção').length;
+    const damagedCount = dispositivos.filter(d => d.condicao === 'Danificado' || d.condicao === 'Danificado sem garantia').length;
+    const warrantyCount = dispositivos.filter(d => d.condicao === 'Garantia solicitada').length;
+    
+    const functionalPercentage = totalDevices > 0 ? Math.round((functionalCount / totalDevices) * 100) : 0;
+    const attentionCount = totalDevices - functionalCount;
+
+    return {
+      totalRooms,
+      totalDevices,
+      functionalCount,
+      maintenanceCount,
+      damagedCount,
+      warrantyCount,
+      functionalPercentage,
+      attentionCount
+    };
+  }, [salas, dispositivos]);
+
+  const conditionsData = useMemo(() => {
+    const counts = {
+      'Funcional': 0,
+      'Em manutenção': 0,
+      'Danificado': 0,
+      'Garantia solicitada': 0,
+      'Danificado sem garantia': 0
+    };
+    dispositivos.forEach(d => {
+      if (counts[d.condicao] !== undefined) {
+        counts[d.condicao]++;
+      } else {
+        counts['Danificado']++;
+      }
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [dispositivos]);
+
+  const roomDistributionData = useMemo(() => {
+    const counts = {};
+    dispositivos.forEach(d => {
+      const roomKey = d.sala_id || 'unlinked';
+      counts[roomKey] = (counts[roomKey] || 0) + 1;
+    });
+
+    const data = salas.map(sala => ({
+      id: sala.id,
+      nome: sala.nome,
+      count: counts[sala.id] || 0
+    }));
+
+    if (counts['unlinked']) {
+      data.push({
+        id: 'unlinked',
+        nome: 'Sem sala vinculada',
+        count: counts['unlinked']
+      });
+    }
+
+    return data.sort((a, b) => b.count - a.count);
+  }, [salas, dispositivos]);
+
+  const deviceTypesData = useMemo(() => {
+    const counts = {
+      'Notebooks/PCs': 0,
+      'Projetores': 0,
+      'TVs/Telas': 0,
+      'Impressoras': 0,
+      'Outros': 0
+    };
+    dispositivos.forEach(d => {
+      const t = d.tipo.toLowerCase();
+      if (t.includes('notebook') || t.includes('computador') || t.includes('pc') || t.includes('computadores')) {
+        counts['Notebooks/PCs'] += 1;
+      } else if (t.includes('projetor') || t.includes('datashow') || t.includes('data show')) {
+        counts['Projetores'] += 1;
+      } else if (t.includes('tv') || t.includes('televis') || t.includes('monitor') || t.includes('tela')) {
+        counts['TVs/Telas'] += 1;
+      } else if (t.includes('impressora') || t.includes('multifuncional')) {
+        counts['Impressoras'] += 1;
+      } else {
+        counts['Outros'] += 1;
+      }
+    });
+    
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .filter(item => item.count > 0)
+      .sort((a, b) => b.count - a.count);
+  }, [dispositivos]);
 
   // Contagem dinâmica de dispositivos por sala
   const deviceCounts = useMemo(() => {
@@ -329,8 +424,14 @@ export default function Equipamentos() {
         </div>
       </div>
 
-      {/* Tab bar principal (Salas vs Tabela Completa) */}
+      {/* Tab bar principal (Dashboard vs Salas vs Tabela Completa) */}
       <div className="tab-container">
+        <button 
+          onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); }}
+          className={`tab-button ${activeTab === 'dashboard' ? 'active' : ''}`}
+        >
+          Dashboard
+        </button>
         <button 
           onClick={() => { setActiveTab('salas'); setSearchQuery(''); }}
           className={`tab-button ${activeTab === 'salas' ? 'active' : ''}`}
@@ -366,6 +467,202 @@ export default function Equipamentos() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── TAB DASHBOARD (Painel de Indicadores e Gráficos) ── */}
+      {activeTab === 'dashboard' && (
+        <div className="dashboard-grid-view">
+          {/* Cards de Métricas Rápidas */}
+          <div className="dashboard-stats-cards">
+            <div className="dashboard-stat-card card-blue">
+              <div className="card-stat-icon">
+                <Wrench size={24} />
+              </div>
+              <div className="card-stat-info">
+                <span className="card-stat-value">{dashboardStats.totalDevices}</span>
+                <span className="card-stat-label">Total de Equipamentos</span>
+              </div>
+            </div>
+            
+            <div className="dashboard-stat-card card-purple">
+              <div className="card-stat-icon">
+                <FolderOpen size={24} />
+              </div>
+              <div className="card-stat-info">
+                <span className="card-stat-value">{dashboardStats.totalRooms}</span>
+                <span className="card-stat-label">Salas e Locais</span>
+              </div>
+            </div>
+
+            <div className="dashboard-stat-card card-green">
+              <div className="card-stat-icon">
+                <Activity size={24} />
+              </div>
+              <div className="card-stat-info">
+                <span className="card-stat-value">{dashboardStats.functionalPercentage}%</span>
+                <span className="card-stat-label">Taxa de Funcionamento</span>
+              </div>
+            </div>
+
+            <div className="dashboard-stat-card card-amber">
+              <div className="card-stat-icon">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="card-stat-info">
+                <span className="card-stat-value">{dashboardStats.attentionCount}</span>
+                <span className="card-stat-label">Necessitam Atenção</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Seção Principal de Gráficos */}
+          <div className="dashboard-charts-row">
+            {/* Gráfico Donut de Condições */}
+            <div className="dashboard-chart-box donut-chart-box">
+              <h3 className="chart-title">Condição de Funcionamento</h3>
+              <div className="donut-chart-container">
+                <div className="donut-svg-wrapper">
+                  <svg width="160" height="160" viewBox="0 0 160 160">
+                    <circle cx="80" cy="80" r="50" fill="transparent" stroke="#f1f5f9" strokeWidth="16" />
+                    {(() => {
+                      let accumulatedPercentage = 0;
+                      return conditionsData.map((slice) => {
+                        const percentage = dashboardStats.totalDevices > 0 ? (slice.value / dashboardStats.totalDevices) * 100 : 0;
+                        if (percentage === 0) return null;
+                        const strokeLength = (percentage / 100) * 314.159;
+                        const offset = (accumulatedPercentage / 100) * 314.159;
+                        accumulatedPercentage += percentage;
+                        
+                        const strokeColors = {
+                          'Funcional': '#16A34A',
+                          'Em manutenção': '#D97706',
+                          'Danificado': '#DC2626',
+                          'Garantia solicitada': '#2563EB',
+                          'Danificado sem garantia': '#6B7280'
+                        };
+                        
+                        return (
+                          <circle
+                            key={slice.name}
+                            cx="80"
+                            cy="80"
+                            r="50"
+                            fill="transparent"
+                            stroke={strokeColors[slice.name] || '#374151'}
+                            strokeWidth="16"
+                            strokeDasharray={`${strokeLength} 314.159`}
+                            strokeDashoffset={-offset}
+                            transform="rotate(-90 80 80)"
+                            className="donut-segment"
+                            style={{
+                              transition: 'stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                              strokeLinecap: percentage === 100 ? 'butt' : 'round'
+                            }}
+                          />
+                        );
+                      });
+                    })()}
+                    <circle cx="80" cy="80" r="42" fill="var(--bg-card)" />
+                  </svg>
+                  <div className="donut-center-label">
+                    <span className="donut-center-value">{dashboardStats.totalDevices}</span>
+                    <span className="donut-center-text">Dispositivos</span>
+                  </div>
+                </div>
+                
+                {/* Legenda do Gráfico Donut */}
+                <div className="donut-legend">
+                  {conditionsData.map((slice) => {
+                    const percentage = dashboardStats.totalDevices > 0 ? Math.round((slice.value / dashboardStats.totalDevices) * 100) : 0;
+                    const strokeColors = {
+                      'Funcional': '#16A34A',
+                      'Em manutenção': '#D97706',
+                      'Danificado': '#DC2626',
+                      'Garantia solicitada': '#2563EB',
+                      'Danificado sem garantia': '#6B7280'
+                    };
+                    return (
+                      <div key={slice.name} className="legend-item">
+                        <div className="legend-marker-wrapper">
+                          <span className="legend-dot" style={{ backgroundColor: strokeColors[slice.name] || '#374151' }}></span>
+                          <span className="legend-name">{slice.name}</span>
+                        </div>
+                        <span className="legend-value">{slice.value} <small>({percentage}%)</small></span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Gráfico de Barras de Distribuição por Sala */}
+            <div className="dashboard-chart-box bar-chart-box">
+              <h3 className="chart-title">Equipamentos por Sala</h3>
+              <div className="bar-chart-container">
+                {roomDistributionData.length === 0 ? (
+                  <p className="no-data-text">Nenhuma sala ou dispositivo cadastrado</p>
+                ) : (
+                  roomDistributionData.slice(0, 6).map((item) => {
+                    const maxVal = Math.max(...roomDistributionData.map(r => r.count), 1);
+                    const widthPercent = (item.count / maxVal) * 100;
+                    return (
+                      <div key={item.id} className="bar-chart-row">
+                        <div className="bar-row-header">
+                          <span className="bar-row-label">{item.nome}</span>
+                          <span className="bar-row-value">{item.count} {item.count === 1 ? 'item' : 'itens'}</span>
+                        </div>
+                        <div className="bar-row-track">
+                          <div 
+                            className="bar-row-fill" 
+                            style={{ 
+                              width: `${widthPercent}%`,
+                              backgroundColor: item.id === 'unlinked' ? '#9CA3AF' : '#2563EB'
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                {roomDistributionData.length > 6 && (
+                  <button className="btn-show-all-rooms" onClick={() => setActiveTab('salas')}>
+                    Ver todas as {roomDistributionData.length} salas
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Linha inferior: Distribuição de Tipos */}
+          <div className="dashboard-charts-row">
+            <div className="dashboard-chart-box full-width-chart">
+              <h3 className="chart-title">Tipos de Equipamento em Destaque</h3>
+              <div className="types-distribution-container">
+                {deviceTypesData.length === 0 ? (
+                  <p className="no-data-text">Nenhum equipamento cadastrado</p>
+                ) : (
+                  <div className="types-grid">
+                    {deviceTypesData.map((type) => {
+                      const maxVal = Math.max(...deviceTypesData.map(t => t.count), 1);
+                      const widthPercent = (type.count / maxVal) * 100;
+                      return (
+                        <div key={type.name} className="type-card">
+                          <div className="type-card-header">
+                            <span className="type-card-name">{type.name}</span>
+                            <span className="type-card-count">{type.count}</span>
+                          </div>
+                          <div className="type-card-bar">
+                            <div className="type-card-fill" style={{ width: `${widthPercent}%` }}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
