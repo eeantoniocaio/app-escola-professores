@@ -20,6 +20,9 @@ const Relatorios = React.lazy(() => import('../features/relatorios/Relatorios/Re
 const BoasPraticas = React.lazy(() => import('../features/boaspraticas/BoasPraticas'));
 const Documentos = React.lazy(() => import('../features/documentos/Documentos'));
 const Equipamentos = React.lazy(() => import('../features/equipamentos/Equipamentos'));
+const ChamadaLayout = React.lazy(() => import('../pages/Chamada/ChamadaLayout'));
+const ChamadaHome = React.lazy(() => import('../pages/Chamada/ChamadaHome'));
+const ChamadaClasse = React.lazy(() => import('../pages/Chamada/ChamadaClasse'));
 
 function AppRoutes() {
   const { session, authLoading, isMaster, userRole } = useAuth();
@@ -51,6 +54,10 @@ function AppRoutes() {
             <Route path="turmas" element={<Turmas />} />
             <Route path="mapa-classe" element={<MapaClasse />} />
             <Route path="documentos" element={<Documentos />} />
+            <Route path="chamada" element={<ChamadaLayout />}>
+              <Route index element={<ChamadaHome />} />
+              <Route path="classe/:classId" element={<ChamadaClasse />} />
+            </Route>
             <Route path="equipamentos" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'gestao' || userRole === 'professor') ? <Equipamentos /> : <Navigate to="/turmas" replace />} />
             <Route path="relatorios" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Relatorios />} />
             <Route path="boas-praticas" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <BoasPraticas />} />
