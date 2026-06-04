@@ -16,7 +16,7 @@ export default function Home() {
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <div className="welcome-section" style={{ marginBottom: '3rem', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '2.2rem', marginBottom: '0' }}>Painel de Evidências</h2>
+        <h2 style={{ marginBottom: '0' }}>Painel de Evidências</h2>
       </div>
 
       <div className="dashboard-grid">
