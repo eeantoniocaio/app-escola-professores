@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench, CheckSquare } from 'lucide-react';
+import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench, CheckSquare, Library, UserCheck } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
+import { useToast } from '../../app/providers/ToastProvider';
 
 export default function Home() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
+  const { showToast } = useToast();
 
   const handleEquipamentosClick = () => {
     navigate('/equipamentos');
@@ -58,6 +60,18 @@ export default function Home() {
           <FolderOpen />
           <span>Documentos</span>
         </button>
+
+        <button className="dashboard-action-card" onClick={() => showToast('Funcionalidade em desenvolvimento', 'info')}>
+          <Library />
+          <span>Acervo</span>
+        </button>
+
+        {(userRole === 'gestao' || userRole === 'professor') && (
+          <button className="dashboard-action-card" onClick={() => showToast('Funcionalidade em desenvolvimento', 'info')}>
+            <UserCheck />
+            <span>Perfil da Turma</span>
+          </button>
+        )}
 
         {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor') && (
           <button className="dashboard-action-card" onClick={handleEquipamentosClick}>
