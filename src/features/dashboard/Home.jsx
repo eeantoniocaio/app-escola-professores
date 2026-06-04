@@ -19,7 +19,7 @@ export default function Home() {
         <h2 style={{ fontSize: '2.2rem', marginBottom: '0' }}>Painel de Evidências</h2>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', width: '100%', maxWidth: '1000px', padding: '0 1rem' }}>
+      <div className="dashboard-grid">
         {userRole === 'gestao' && (
           <>
             {/* Navigates to a specific route or we could open a modal context */}

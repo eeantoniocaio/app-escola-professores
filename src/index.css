@@ -346,6 +346,22 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 1rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 .dashboard-action-card {
   background: var(--bg-card);
   border: 1px solid var(--border-light);
