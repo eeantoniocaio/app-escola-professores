@@ -4,7 +4,7 @@ import { useAuth } from '../../../app/providers/AuthProvider';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { supabase } from '../../services/supabase';
 import logoUrl from '../../../assets/logo.png';
-import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench, User, Camera, UploadCloud, CheckSquare } from 'lucide-react';
+import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench, User, Camera, UploadCloud } from 'lucide-react';
 
 export default function MainLayout() {
   const { session, userRole, userName, avatarUrl, updateAvatarUrl, linkProfileName, isMaster } = useAuth();
@@ -339,10 +339,6 @@ export default function MainLayout() {
 
           <Link to="/turmas" className={`nav-link ${isActive('/turmas')}`} onClick={() => setIsMobileMenuOpen(false)}>
             <GraduationCap size={18} /> Turmas
-          </Link>
-
-          <Link to="/chamada" className={`nav-link ${isActive('/chamada')}`} onClick={() => setIsMobileMenuOpen(false)}>
-            <CheckSquare size={18} /> Chamada
           </Link>
 
           <Link to="/mapa-classe" className={`nav-link ${isActive('/mapa-classe')}`} onClick={() => setIsMobileMenuOpen(false)}>

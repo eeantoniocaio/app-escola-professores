@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench } from 'lucide-react';
+import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench, CheckSquare } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
 
 export default function Home() {
@@ -36,6 +36,10 @@ export default function Home() {
             <button className="dashboard-action-card" onClick={() => navigate('/relatorios')}>
               <BarChart2 />
               <span>Relatórios</span>
+            </button>
+            <button className="dashboard-action-card" onClick={() => navigate('/chamada')}>
+              <CheckSquare />
+              <span>Chamada</span>
             </button>
           </>
         )}
