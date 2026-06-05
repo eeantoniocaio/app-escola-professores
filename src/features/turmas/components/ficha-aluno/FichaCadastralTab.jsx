@@ -38,7 +38,7 @@ export default function FichaCadastralTab({ aluno, details, birthDateDisplay, ag
           <Phone size={18} /> Dados de Contato & Responsáveis
         </h4>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5">
-          <div className="col-span-2">
+          <div className="col-span-1 sm:col-span-2">
             <label className="text-[0.78rem] font-bold text-gray-400 uppercase">Responsável Legal</label>
             <div className="text-[0.95rem] font-semibold text-gray-900 mt-1">{details.parentName}</div>
           </div>
@@ -54,7 +54,7 @@ export default function FichaCadastralTab({ aluno, details, birthDateDisplay, ag
               <Mail size={14} className="text-gray-400 shrink-0" /> {details.email}
             </div>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 sm:col-span-2">
             <label className="text-[0.78rem] font-bold text-gray-400 uppercase">Endereço Residencial</label>
             <div className="text-[0.95rem] text-gray-900 mt-1 flex items-start gap-1.5">
               <MapPin size={14} className="text-gray-400 mt-0.5 shrink-0" /> {details.address}

@@ -63,7 +63,7 @@ export default function StudentSearchPanel({
             {filteredStudents.map(aluno => (
               <div 
                 key={aluno.id}
-                className="flex items-center justify-between p-3 px-5 bg-gray-50 rounded-[10px] border border-gray-200 transition-all duration-200 hover:-translate-y-px hover:shadow-md"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 px-4 sm:px-5 bg-gray-50 rounded-[10px] border border-gray-200 transition-all duration-200 hover:-translate-y-px hover:shadow-md gap-3 sm:gap-0"
               >
                 <div className="flex flex-col gap-1">
                   <span className="text-[0.95rem] font-semibold text-gray-900">{aluno.nome}</span>
@@ -75,18 +75,20 @@ export default function StudentSearchPanel({
                     <School size={12} /> {aluno.turma}
                   </span>
                 </div>
-                <StudentActionButtons
-                  aluno={aluno}
-                  userRole={userRole}
-                  isConfigured={isConfigured}
-                  accessToken={accessToken}
-                  loginGoogle={loginGoogle}
-                  showToast={showToast}
-                  photosMap={photosMap}
-                  onOpenFicha={onOpenFicha}
-                  onOpenFrequencia={onOpenFrequencia}
-                  onOpenCarometro={onOpenCarometro}
-                />
+                <div className="self-end sm:self-auto">
+                  <StudentActionButtons
+                    aluno={aluno}
+                    userRole={userRole}
+                    isConfigured={isConfigured}
+                    accessToken={accessToken}
+                    loginGoogle={loginGoogle}
+                    showToast={showToast}
+                    photosMap={photosMap}
+                    onOpenFicha={onOpenFicha}
+                    onOpenFrequencia={onOpenFrequencia}
+                    onOpenCarometro={onOpenCarometro}
+                  />
+                </div>
               </div>
             ))}
           </div>

@@ -93,7 +93,7 @@ export default function ClassStudentsList({
               return (
                 <div 
                   key={aluno.id}
-                  className="flex items-center justify-between p-3 px-5 bg-white rounded-[10px] border border-[rgba(255,255,255,0.1)] shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-md"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 px-4 sm:px-5 bg-white rounded-[10px] border border-[rgba(255,255,255,0.1)] shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-md gap-3 sm:gap-0"
                 >
                   <div className="flex items-center gap-3">
                     <span 
@@ -128,21 +128,23 @@ export default function ClassStudentsList({
 
                     <span className="text-[0.95rem] font-semibold text-gray-900">{aluno.nome}</span>
                   </div>
-                  <StudentActionButtons
-                    aluno={aluno}
-                    userRole={userRole}
-                    isConfigured={isConfigured}
-                    accessToken={accessToken}
-                    loginGoogle={loginGoogle}
-                    showToast={showToast}
-                    photosMap={photosMap}
-                    onOpenFicha={onOpenFicha}
-                    onOpenFrequencia={onOpenFrequencia}
-                    onOpenCarometro={(std) => {
-                      setSelectedStudentForCarometro(std);
-                      setIsCarometroModalOpen(true);
-                    }}
-                  />
+                  <div className="self-end sm:self-auto">
+                    <StudentActionButtons
+                      aluno={aluno}
+                      userRole={userRole}
+                      isConfigured={isConfigured}
+                      accessToken={accessToken}
+                      loginGoogle={loginGoogle}
+                      showToast={showToast}
+                      photosMap={photosMap}
+                      onOpenFicha={onOpenFicha}
+                      onOpenFrequencia={onOpenFrequencia}
+                      onOpenCarometro={(std) => {
+                        setSelectedStudentForCarometro(std);
+                        setIsCarometroModalOpen(true);
+                      }}
+                    />
+                  </div>
                 </div>
               );
             })}

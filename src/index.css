@@ -1258,6 +1258,17 @@ textarea.form-control {
 .hamburger-icon.open::before { top: 0; transform: rotate(45deg); }
 .hamburger-icon.open::after { top: 0; transform: rotate(-45deg); }
 
+@keyframes slideDownMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 992px) {
   .hamburger-btn {
     display: block;
@@ -1279,6 +1290,7 @@ textarea.form-control {
 
   .header-actions.mobile-open {
     display: flex;
+    animation: slideDownMenu 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .nav-divider {
