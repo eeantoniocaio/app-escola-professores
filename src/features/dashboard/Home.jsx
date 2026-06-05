@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench, CheckSquare, Library, UserCheck } from 'lucide-react';
+import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench, CheckSquare, Library, UserCheck, ClipboardList } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 
@@ -64,6 +64,11 @@ export default function Home() {
         <button className="dashboard-action-card" onClick={() => showToast('Funcionalidade em desenvolvimento', 'info')}>
           <Library />
           <span>Acervo</span>
+        </button>
+
+        <button className="dashboard-action-card" onClick={() => showToast('Em desenvolvimento', 'info')}>
+          <ClipboardList />
+          <span>Solicitação de materiais ou serviços</span>
         </button>
 
         {(userRole === 'gestao' || userRole === 'professor') && (
