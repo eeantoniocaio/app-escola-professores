@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useToast } from './ToastProvider';
+import logger from '../../shared/utils/logger';
 
 const GoogleAuthContext = createContext(null);
 
@@ -27,6 +29,7 @@ const loadGsiScript = () => {
 };
 
 export function GoogleAuthProvider({ children }) {
+  const { showToast } = useToast();
   const [accessToken, setAccessToken] = useState(null);
   const [googleAccount, setGoogleAccount] = useState(null);
   const [initialized, setInitialized] = useState(false);
@@ -52,11 +55,11 @@ export function GoogleAuthProvider({ children }) {
         setGoogleAccount(accountInfo);
         localStorage.setItem('google_account_info', JSON.stringify(accountInfo));
       } else {
-        console.warn('[GoogleAuth] Falha ao obter dados de perfil (Status: ' + response.status + '). Usando fallback.');
+        logger.warn('[GoogleAuth] Falha ao obter dados de perfil (Status: ' + response.status + '). Usando fallback.');
         setGoogleAccount({ name: 'Professor' });
       }
     } catch (err) {
-      console.error('[GoogleAuth] Erro ao buscar informações do usuário:', err);
+      logger.error('[GoogleAuth] Erro ao buscar informações do usuário:', err);
       setGoogleAccount({ name: 'Professor' });
     }
   };
@@ -109,26 +112,26 @@ export function GoogleAuthProvider({ children }) {
         });
         setTokenClient(client);
         if (pendingLogin) {
-          console.log('[GoogleAuth] Executando login agendado.');
+          logger.log('[GoogleAuth] Executando login agendado.');
           client.requestAccessToken({ prompt: '' });
           setPendingLogin(false);
         }
       } catch (err) {
-        console.error('[GoogleAuth] Falha ao inicializar TokenClient:', err);
+        logger.error('[GoogleAuth] Falha ao inicializar TokenClient:', err);
       }
     }
   }, [initialized, isConfigured, clientId, pendingLogin]);
 
   const loginGoogle = () => {
     if (!isConfigured) {
-      alert('Integração com Google não configurada. Defina VITE_GOOGLE_CLIENT_ID no arquivo .env.');
+      showToast('Integração com Google não configurada. Defina VITE_GOOGLE_CLIENT_ID no arquivo .env.', 'error');
       return;
     }
     if (tokenClient) {
       // Solicitar token. Se já houver consentimento prévio, será rápido e silencioso
       tokenClient.requestAccessToken({ prompt: '' });
     } else {
-      console.log('[GoogleAuth] TokenClient não está pronto. Agendando login para quando inicializar.');
+      logger.log('[GoogleAuth] TokenClient não está pronto. Agendando login para quando inicializar.');
       setPendingLogin(true);
     }
   };
@@ -138,10 +141,10 @@ export function GoogleAuthProvider({ children }) {
       try {
         // Revogar o token de acesso no servidor do Google para segurança
         window.google?.accounts?.oauth2?.revoke(accessToken, () => {
-          console.log('[GoogleAuth] Token revogado com sucesso.');
+          logger.log('[GoogleAuth] Token revogado com sucesso.');
         });
       } catch (e) {
-        console.warn('[GoogleAuth] Erro ao revogar token:', e);
+        logger.warn('[GoogleAuth] Erro ao revogar token:', e);
       }
     }
     setAccessToken(null);

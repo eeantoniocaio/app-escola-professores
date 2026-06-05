@@ -5,13 +5,15 @@ import { useAuth } from '../../app/providers/AuthProvider';
 import useFrequenciaAluno from '../../hooks/useFrequenciaAluno';
 import FrequenciaAlunoCard from './FrequenciaAlunoCard';
 
+import logger from '../../shared/utils/logger';
+
 export default function Frequencia({ aluno, isOpen, onClose }) {
   const { loginGoogle, logoutGoogle, accessToken, googleAccount, isConfigured } = useGoogleAuth();
   const { isMaster } = useAuth();
 
   React.useEffect(() => {
     if (isOpen && isConfigured && !accessToken) {
-      console.log('[Frequencia] Auto-autenticação Google disparada.');
+      logger.log('[Frequencia] Auto-autenticação Google disparada.');
       loginGoogle();
     }
   }, [isOpen, isConfigured, accessToken, loginGoogle]);

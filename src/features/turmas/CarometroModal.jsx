@@ -3,12 +3,14 @@ import { X, RefreshCw, AlertTriangle, Camera, User, BadgeAlert } from 'lucide-re
 import useCarometro from '../../hooks/useCarometro';
 import { findPhotoInMap } from '../../services/photoService';
 
+import logger from '../../shared/utils/logger';
+
 export default function CarometroModal({ aluno, isOpen, onClose }) {
   const { photosMap, loading, error, handleRefresh, needsAuth, loginMicrosoft: loginGoogle } = useCarometro(aluno?.turma);
 
   React.useEffect(() => {
     if (isOpen && needsAuth) {
-      console.log('[CarometroModal] Auto-autenticação Google disparada.');
+      logger.log('[CarometroModal] Auto-autenticação Google disparada.');
       loginGoogle();
     }
   }, [isOpen, needsAuth, loginGoogle]);

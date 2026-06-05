@@ -3,8 +3,10 @@ import { createPortal } from 'react-dom'
 import { X, User, Printer, Share2 } from 'lucide-react'
 import { useGoogleAuth } from '@/app/providers/GoogleAuthProvider'
 import { useAuth } from '@/app/providers/AuthProvider'
+import { useToast } from '@/app/providers/ToastProvider'
 import useFrequenciaAluno from '@/hooks/useFrequenciaAluno'
 import { findPhotoInMap } from '@/services/photoService'
+import logger from '@/shared/utils/logger'
 
 // Componentes modulares do prontuário do aluno
 import { getMockStudentDetails } from './components/ficha-aluno/mockStudentDetails'
@@ -16,6 +18,7 @@ import FichaPrintReport from './components/ficha-aluno/FichaPrintReport'
 export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
   const { loginGoogle, logoutGoogle, accessToken, googleAccount, isConfigured } = useGoogleAuth()
   const { userRole, isMaster } = useAuth()
+  const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState('cadastro') // 'cadastro' | 'boletim' | 'frequencia'
 
   // Auto-autenticação para frequência ao selecionar a aba correspondente
@@ -84,14 +87,14 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
           url: window.location.href,
         })
       } catch (err) {
-        console.log('Error sharing:', err)
+        logger.log('Error sharing:', err)
       }
     } else {
       try {
         await navigator.clipboard.writeText(shareText)
-        alert('Dados da Ficha copiados para a área de transferência!')
+        showToast('Dados da Ficha copiados para a área de transferência!', 'success')
       } catch (err) {
-        alert('Não foi possível compartilhar ou copiar os dados.')
+        showToast('Não foi possível compartilhar ou copiar os dados.', 'error')
       }
     }
   }

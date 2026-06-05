@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Calendar, Tag, Users, Briefcase, School, Link as LinkIcon, X, Trash2, UploadCloud, ArrowLeft, Settings, Check, BookOpen, Wrench } from 'lucide-react'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 import { useAuth } from '../../app/providers/AuthProvider'
+import { useToast } from '../../app/providers/ToastProvider'
+import logger from '../../shared/utils/logger'
 
 const SECTIONS = [
   { key: 'tiposEvento',    icon: <Calendar size={32} />, label: 'Tipos de Evento',    color: '#FFC800' },
@@ -24,6 +26,7 @@ const AddForm = ({ value, onChange, onSubmit, placeholder }) => (
 
 export default function Configuracoes() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { userRole, isMaster } = useAuth();
   const {
     tiposEvento, addTipoEvento, removeTipoEvento,
@@ -125,7 +128,7 @@ export default function Configuracoes() {
   const handleAddDisciplina = (e) => {
     e.preventDefault()
     if (!(isMaster || userRole === 'gestao')) {
-      alert('Apenas usuários com perfil de Gestão podem adicionar disciplinas.')
+      showToast('Apenas usuários com perfil de Gestão podem adicionar disciplinas.', 'warning')
       return
     }
     const cleanNome = novaDisciplina.trim()
@@ -133,7 +136,7 @@ export default function Configuracoes() {
 
     const isDuplicate = disciplinas.some(d => d.toLowerCase() === cleanNome.toLowerCase())
     if (isDuplicate) {
-      alert('Esta disciplina já está cadastrada.')
+      showToast('Esta disciplina já está cadastrada.', 'warning')
       return
     }
 
@@ -155,7 +158,7 @@ export default function Configuracoes() {
       const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim() !== '')
       if (lines.length < 2) return
       const sep = lines[0].includes(';') ? ';' : ','
-      let headerIdx = -1, nomeIdx = -1, situacaoIdx = -1
+      let headerIdx = -1, nomeIdx = -1, situacaoIdx = -1, raIdx = -1, digIdx = -1
       for (let i = 0; i < lines.length; i++) {
         const cols = lines[i].split(sep).map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase())
         const idx = cols.indexOf('nome do aluno')
@@ -163,10 +166,12 @@ export default function Configuracoes() {
           headerIdx = i; 
           nomeIdx = idx; 
           situacaoIdx = cols.findIndex(c => c === 'situação' || c === 'situacao')
+          raIdx = cols.findIndex(c => c === 'ra' || c === 'registro do aluno' || c === 'registro' || c === 'número ra' || c === 'numero ra' || c === 'registro ra')
+          digIdx = cols.findIndex(c => c === 'digito' || c === 'dígito' || c === 'dig' || c === 'digito ra' || c === 'dígito ra' || c === 'digito do ra' || c === 'dígito do ra')
           break 
         }
       }
-      if (nomeIdx === -1) { alert('Coluna "Nome do Aluno" não encontrada no CSV.'); e.target.value = ''; return }
+      if (nomeIdx === -1) { showToast('Coluna "Nome do Aluno" não encontrada no CSV.', 'error'); e.target.value = ''; return }
       const novos = []
       const situacoesIgnoradas = ['TRAN', 'REMA', 'BXTR', 'RECL']
       for (let i = headerIdx + 1; i < lines.length; i++) {
@@ -179,10 +184,23 @@ export default function Configuracoes() {
           if (situacoesIgnoradas.includes(situacao)) continue
         }
 
-        if (!existingNames.has(name.toLowerCase())) { novos.push(name); existingNames.add(name.toLowerCase()) }
+        let raVal = null
+        if (raIdx !== -1) {
+          const rawRa = cols[raIdx] || ''
+          const rawDig = digIdx !== -1 ? (cols[digIdx] || '') : ''
+          if (rawRa) {
+            raVal = rawDig ? `${rawRa}-${rawDig}` : rawRa
+          }
+        }
+
+        if (!existingNames.has(name.toLowerCase())) {
+          const item = raVal ? { nome: name.toUpperCase(), ra: raVal } : name.toUpperCase();
+          novos.push(item);
+          existingNames.add(name.toLowerCase());
+        }
       }
       if (novos.length > 0) importAlunosTurma(turmaNome, novos)
-      else alert('Nenhum aluno novo encontrado.')
+      else showToast('Nenhum aluno novo encontrado.', 'info')
     }
     reader.readAsText(file, 'UTF-8')
     e.target.value = ''
@@ -208,7 +226,7 @@ export default function Configuracoes() {
 
   const handleCSVDisciplinas = (e) => {
     if (!(isMaster || userRole === 'gestao')) {
-      alert('Apenas usuários com perfil de Gestão podem importar disciplinas.')
+      showToast('Apenas usuários com perfil de Gestão podem importar disciplinas.', 'warning')
       return
     }
     const file = e.target.files[0]
@@ -227,7 +245,7 @@ export default function Configuracoes() {
         }
       })
       if (novas.length > 0) importDisciplinas(novas)
-      else alert('Nenhuma disciplina nova encontrada (todas já existem ou arquivo está vazio).')
+      else showToast('Nenhuma disciplina nova encontrada (todas já existem ou arquivo está vazio).', 'info')
     }
     reader.readAsText(file)
     e.target.value = ''

@@ -8,6 +8,8 @@ import {
 import { useGoogleAuth } from '../../app/providers/GoogleAuthProvider';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { supabase } from '../../shared/services/supabase';
+import { useToast } from '../../app/providers/ToastProvider';
+import logger from '../../shared/utils/logger';
 
 // Mapeamento de Extensão -> Ícones e Cores (Tema Premium semelhante ao de Turmas)
 const getFileIconDetails = (name, isFolder) => {
@@ -43,6 +45,7 @@ export default function Documentos() {
   const navigate = useNavigate();
   const { accessToken, loginGoogle, logoutGoogle, googleAccount, isConfigured } = useGoogleAuth();
   const { userRole, userName } = useAuth();
+  const { showToast } = useToast();
   
   const [rootFolder, setRootFolder] = useState(null);
   const [activeFolder, setActiveFolder] = useState(null);
@@ -84,7 +87,7 @@ export default function Documentos() {
           if (error) throw error;
           setNotifications(data || []);
         } catch (err) {
-          console.error('Erro ao buscar notificações de documentos:', err);
+          logger.error('Erro ao buscar notificações de documentos:', err);
         } finally {
           setLoadingNotifications(false);
         }
@@ -160,7 +163,7 @@ export default function Documentos() {
           setFilesList(mapped);
         }
       } catch (err) {
-        console.error('Erro ao listar arquivos:', err);
+        logger.error('Erro ao listar arquivos:', err);
         setError('Erro ao carregar conteúdo da pasta.');
       } finally {
         setLoading(false);
@@ -192,7 +195,7 @@ export default function Documentos() {
   const handleSendNotification = async (e) => {
     e.preventDefault();
     if (!notifyFolder || !notifyTitle.trim()) {
-      alert('Por favor, preencha todos os campos obrigatórios.');
+      showToast('Por favor, preencha todos os campos obrigatórios.', 'warning');
       return;
     }
 
@@ -206,14 +209,14 @@ export default function Documentos() {
       }]);
       if (error) throw error;
       
-      alert('Notificação enviada aos professores com sucesso!');
+      showToast('Notificação enviada aos professores com sucesso!', 'success');
       setIsNotifyModalOpen(false);
       setNotifyFolder('');
       setNotifyTitle('');
       setNotifyDescription('');
     } catch (err) {
-      console.error('Erro ao enviar notificação:', err);
-      alert('Erro ao enviar a notificação. Tente novamente.');
+      logger.error('Erro ao enviar notificação:', err);
+      showToast('Erro ao enviar a notificação. Tente novamente.', 'error');
     } finally {
       setIsSendingNotification(false);
     }

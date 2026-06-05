@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useGoogleAuth } from '../app/providers/GoogleAuthProvider';
 import { useToast } from '../app/providers/ToastProvider';
 import { getAlunoFrequencia } from '../services/excelService';
+import { getCachedData, setCachedData, clearCacheWithPrefix, getOrFetch } from '../shared/utils/sheetsCache';
 
 const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1w6bPGoUUfCMoNpFYUKur4BrbvkCVr_5uAHi3ZwRh3NA/edit?usp=sharing";
 const MASTER_SPREADSHEET_ID = "1w6bPGoUUfCMoNpFYUKur4BrbvkCVr_5uAHi3ZwRh3NA";
@@ -122,7 +123,7 @@ export default function useFrequenciaAluno(aluno, isOpen) {
         })) || [];
 
         setWorksheets(mappedSheets);
-        sessionStorage.setItem(`google_worksheets_${fileId}`, JSON.stringify(mappedSheets));
+        setCachedData(`google_worksheets_${fileId}`, mappedSheets);
 
         selectAndFetchSheetData(fileId, mappedSheets);
       } else {
@@ -170,38 +171,36 @@ export default function useFrequenciaAluno(aluno, isOpen) {
 
     // Otimização: Tentar carregar a lista de abas do cache do sessionStorage
     const cacheKey = `google_worksheets_${fileId}`;
-    const cachedWorksheets = sessionStorage.getItem(cacheKey);
+    const cachedWorksheets = getCachedData(cacheKey);
     if (cachedWorksheets) {
-      try {
-        const parsedSheets = JSON.parse(cachedWorksheets);
-        setWorksheets(parsedSheets);
-        selectAndFetchSheetData(fileId, parsedSheets);
-        setLoading(false);
-        return;
-      } catch (e) {
-        console.warn('Falha ao ler cache de abas do sessionStorage, consultando API...', e);
-      }
+      setWorksheets(cachedWorksheets);
+      selectAndFetchSheetData(fileId, cachedWorksheets);
+      setLoading(false);
+      return;
     }
 
     try {
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${fileId}?fields=sheets.properties(title,sheetId)`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` }
+      const mappedSheets = await getOrFetch(cacheKey, async () => {
+        const response = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${fileId}?fields=sheets.properties(title,sheetId)`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          }
+        );
+        if (!response.ok) throw new Error('Falha ao obter metadados da planilha.');
+        const data = await response.json();
+        if (data && data.sheets) {
+          const mapped = data.sheets.map(sheet => ({
+            id: sheet.properties.sheetId,
+            name: sheet.properties.title
+          }));
+          setCachedData(cacheKey, mapped);
+          return mapped;
         }
-      );
-      if (!response.ok) throw new Error('Falha ao obter metadados da planilha.');
-      const data = await response.json();
-      if (data && data.sheets) {
-        const mappedSheets = data.sheets.map(sheet => ({
-          id: sheet.properties.sheetId,
-          name: sheet.properties.title
-        }));
-        setWorksheets(mappedSheets);
-        // Salvar abas no cache
-        sessionStorage.setItem(cacheKey, JSON.stringify(mappedSheets));
-        selectAndFetchSheetData(fileId, mappedSheets);
-      }
+        throw new Error('Nenhuma aba encontrada.');
+      });
+      setWorksheets(mappedSheets);
+      selectAndFetchSheetData(fileId, mappedSheets);
     } catch (err) {
       console.error('Erro ao carregar abas da planilha:', err);
       setError('Erro ao carregar abas da planilha.');
@@ -218,44 +217,40 @@ export default function useFrequenciaAluno(aluno, isOpen) {
 
     // Otimização: Tentar carregar os dados desta aba do cache do sessionStorage
     const cacheKey = `google_sheet_${fileId}_${sheetName}`;
-    const cachedSheetData = sessionStorage.getItem(cacheKey);
+    const cachedSheetData = getCachedData(cacheKey);
     if (cachedSheetData) {
-      try {
-        const parsedValues = JSON.parse(cachedSheetData);
-        const parsedResult = getAlunoFrequencia(parsedValues, aluno.nome, sheetName);
-        if (parsedResult.error) {
-          setError(parsedResult.error);
-        } else {
-          setAttendanceData(parsedResult);
-        }
-        setLoading(false);
-        return;
-      } catch (e) {
-        console.warn('Falha ao ler cache de células da aba, consultando API...', e);
+      const parsedResult = getAlunoFrequencia(cachedSheetData, aluno.nome, sheetName, aluno.ra);
+      if (parsedResult.error) {
+        setError(parsedResult.error);
+      } else {
+        setAttendanceData(parsedResult);
       }
+      setLoading(false);
+      return;
     }
 
     try {
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${fileId}/values/${encodeURIComponent(sheetName)}?valueRenderOption=FORMATTED_VALUE`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` }
+      const values = await getOrFetch(cacheKey, async () => {
+        const response = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${fileId}/values/${encodeURIComponent(sheetName)}?valueRenderOption=FORMATTED_VALUE`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          }
+        );
+        if (!response.ok) throw new Error('Falha ao buscar dados da aba.');
+        const data = await response.json();
+        if (data && data.values) {
+          setCachedData(cacheKey, data.values);
+          return data.values;
         }
-      );
-      if (!response.ok) throw new Error('Falha ao buscar dados da aba.');
-      const data = await response.json();
-      if (data && data.values) {
-        // Salvar valores no cache
-        sessionStorage.setItem(cacheKey, JSON.stringify(data.values));
-        
-        const parsed = getAlunoFrequencia(data.values, aluno.nome, sheetName);
-        if (parsed.error) {
-          setError(parsed.error);
-        } else {
-          setAttendanceData(parsed);
-        }
+        throw new Error('A planilha está vazia ou sem dados válidos.');
+      });
+
+      const parsed = getAlunoFrequencia(values, aluno.nome, sheetName, aluno.ra);
+      if (parsed.error) {
+        setError(parsed.error);
       } else {
-        setError('A planilha está vazia ou sem dados válidos.');
+        setAttendanceData(parsed);
       }
     } catch (err) {
       console.error('Erro ao ler conteúdo da planilha:', err);
@@ -298,13 +293,9 @@ export default function useFrequenciaAluno(aluno, isOpen) {
       setLoading(true);
       setError(null);
       
-      // Limpar cache de abas
-      sessionStorage.removeItem(`google_worksheets_${selectedFileId}`);
-      
-      // Limpar cache de todas as abas carregadas
-      worksheets.forEach(sheet => {
-        sessionStorage.removeItem(`google_sheet_${selectedFileId}_${sheet.name}`);
-      });
+      // Limpar cache de abas e dados de abas associadas ao arquivo
+      clearCacheWithPrefix(`google_worksheets_${selectedFileId}`);
+      clearCacheWithPrefix(`google_sheet_${selectedFileId}_`);
       
       showToast('Limpando cache e recarregando do Google Sheets...', 'info');
       fetchWorksheets(selectedFileId);

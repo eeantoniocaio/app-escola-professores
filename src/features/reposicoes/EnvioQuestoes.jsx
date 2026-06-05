@@ -7,6 +7,8 @@ import { useAuth } from '../../app/providers/AuthProvider';
 import { supabase } from '../../shared/services/supabase';
 import QuestaoDetailModal from './QuestaoDetailModal';
 import QuestionPrintPreviewModal from './components/QuestionPrintPreviewModal';
+import { useToast } from '../../app/providers/ToastProvider';
+import logger from '../../shared/utils/logger';
 
 const EMPTY_FORM = { 
   professor: '', 
@@ -34,6 +36,7 @@ const getCombinedTurmaName = (serie, turma) => {
 
 export default function EnvioQuestoes() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { userRole, userName, authLoading } = useAuth();
   const { questoes, addQuestao, deleteQuestao, updateQuestao } = useQuestoes();
   const { professores } = useGlobalData();
@@ -230,7 +233,7 @@ export default function EnvioQuestoes() {
       if (uploadedUrl) {
         finalImageUrl = uploadedUrl;
       } else {
-        alert('Falha ao enviar a imagem. Salvando a questão sem imagem.');
+        showToast('Falha ao enviar a imagem. Salvando a questão sem imagem.', 'error');
       }
     }
 
@@ -962,7 +965,7 @@ export default function EnvioQuestoes() {
                             const file = e.target.files[0];
                             if (!file) return;
                             if (file.size > 2 * 1024 * 1024) {
-                              alert('Imagem muito grande! O tamanho máximo é 2MB.');
+                              showToast('Imagem muito grande! O tamanho máximo é 2MB.', 'warning');
                               return;
                             }
                             setImageFile(file);

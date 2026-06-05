@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGoogleAuth } from '../app/providers/GoogleAuthProvider';
+import logger from '../shared/utils/logger';
+import { getCachedData, setCachedData, getOrFetch } from '../shared/utils/sheetsCache';
 
 const DEFAULT_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1w6bPGoUUfCMoNpFYUKur4BrbvkCVr_5uAHi3ZwRh3NA/edit?usp=sharing";
 
@@ -55,7 +57,7 @@ export default function usePrefetchFrequencia(activeClassName) {
                 id: sheet.properties.sheetId,
                 name: sheet.properties.title
               })) || [];
-              sessionStorage.setItem(`google_worksheets_${fileId}`, JSON.stringify(mappedSheets));
+              setCachedData(`google_worksheets_${fileId}`, mappedSheets);
             }
           }
         }
@@ -64,33 +66,33 @@ export default function usePrefetchFrequencia(activeClassName) {
 
         // 2. Buscar abas (se não estiver em cache)
         const worksheetsCacheKey = `google_worksheets_${fileId}`;
-        let worksheets = null;
-        const cachedWorksheets = sessionStorage.getItem(worksheetsCacheKey);
-
-        if (cachedWorksheets) {
-          try {
-            worksheets = JSON.parse(cachedWorksheets);
-          } catch (e) {
-            console.warn('Erro ao ler cache de abas', e);
-          }
-        }
+        let worksheets = getCachedData(worksheetsCacheKey);
 
         if (!worksheets) {
-          const response = await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${fileId}?fields=sheets.properties(title,sheetId)`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-              signal: controller.signal
-            }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            if (data && data.sheets) {
-              worksheets = data.sheets.map(sheet => ({
-                id: sheet.properties.sheetId,
-                name: sheet.properties.title
-              }));
-              sessionStorage.setItem(worksheetsCacheKey, JSON.stringify(worksheets));
+          try {
+            worksheets = await getOrFetch(worksheetsCacheKey, async () => {
+              const response = await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${fileId}?fields=sheets.properties(title,sheetId)`,
+                {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                  signal: controller.signal
+                }
+              );
+              if (!response.ok) throw new Error('Falha ao obter metadados da planilha.');
+              const data = await response.json();
+              if (data && data.sheets) {
+                const mapped = data.sheets.map(sheet => ({
+                  id: sheet.properties.sheetId,
+                  name: sheet.properties.title
+                }));
+                setCachedData(worksheetsCacheKey, mapped);
+                return mapped;
+              }
+              throw new Error('Nenhuma aba encontrada.');
+            });
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              logger.error('[Prefetch] Erro ao carregar abas da planilha:', err);
             }
           }
         }
@@ -108,31 +110,40 @@ export default function usePrefetchFrequencia(activeClassName) {
 
         const sheetName = matchingSheet.name;
         const sheetCacheKey = `google_sheet_${fileId}_${sheetName}`;
-        const cachedSheetData = sessionStorage.getItem(sheetCacheKey);
+        const cachedSheetData = getCachedData(sheetCacheKey);
 
         // 4. Buscar dados da aba (se não estiver em cache)
         if (!cachedSheetData) {
-          console.log(`[Prefetch] Carregando dados da aba "${sheetName}" do Google Sheets em segundo plano...`);
-          const response = await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${fileId}/values/${encodeURIComponent(sheetName)}?valueRenderOption=FORMATTED_VALUE`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-              signal: controller.signal
-            }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            if (data && data.values && isMounted) {
-              sessionStorage.setItem(sheetCacheKey, JSON.stringify(data.values));
-              console.log(`[Prefetch] Aba "${sheetName}" carregada com sucesso e salva em cache.`);
+          logger.log(`[Prefetch] Carregando dados da aba "${sheetName}" do Google Sheets em segundo plano...`);
+          try {
+            await getOrFetch(sheetCacheKey, async () => {
+              const response = await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${fileId}/values/${encodeURIComponent(sheetName)}?valueRenderOption=FORMATTED_VALUE`,
+                {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                  signal: controller.signal
+                }
+              );
+              if (!response.ok) throw new Error('Falha ao buscar dados da aba.');
+              const data = await response.json();
+              if (data && data.values) {
+                setCachedData(sheetCacheKey, data.values);
+                logger.log(`[Prefetch] Aba "${sheetName}" carregada com sucesso e salva em cache.`);
+                return data.values;
+              }
+              throw new Error('Dados da aba vazios.');
+            });
+          } catch (fetchErr) {
+            if (fetchErr.name !== 'AbortError') {
+              logger.error(`[Prefetch] Erro ao buscar dados da aba ${sheetName}:`, fetchErr);
             }
           }
         } else {
-          console.log(`[Prefetch] Aba "${sheetName}" já está no cache.`);
+          logger.log(`[Prefetch] Aba "${sheetName}" já está no cache.`);
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
-          console.error('[Prefetch] Erro na pré-busca de dados:', err);
+          logger.error('[Prefetch] Erro na pré-busca de dados:', err);
         }
       } finally {
         if (isMounted) {

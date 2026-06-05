@@ -7,6 +7,7 @@ import { GoogleAuthProvider } from './providers/GoogleAuthProvider';
 import MainLayout from '../shared/ui/layouts/MainLayout';
 import InstallPWA from '../shared/ui/InstallPWA';
 import Login from '../features/auth/Login';
+import ErrorBoundary from '../shared/ui/ErrorBoundary';
 
 const Home = React.lazy(() => import('../features/dashboard/Home'));
 const Eventos = React.lazy(() => import('../features/eventos/Eventos'));
@@ -75,7 +76,9 @@ export default function App() {
       <AuthProvider>
         <GoogleAuthProvider>
           <BrowserRouter>
-            <AppRoutes />
+            <ErrorBoundary>
+              <AppRoutes />
+            </ErrorBoundary>
             <InstallPWA />
           </BrowserRouter>
         </GoogleAuthProvider>

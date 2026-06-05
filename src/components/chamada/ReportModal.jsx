@@ -3,6 +3,7 @@ import { useChamadaContext } from '../../pages/Chamada/context/ChamadaContext';
 import { fetchClassAttendance } from '../../services/googleSheetsService';
 import { X, Download } from 'lucide-react';
 import { useToast } from '../../app/providers/ToastProvider';
+import logger from '../../shared/utils/logger';
 
 const ReportModal = ({ isOpen, onClose }) => {
     const { classes } = useChamadaContext();
@@ -35,7 +36,7 @@ const ReportModal = ({ isOpen, onClose }) => {
 
     const handleGenerateReport = async () => {
         if (selectedClassIds.size === 0) {
-            alert('Selecione pelo menos uma turma.');
+            showToast('Selecione pelo menos uma turma.', 'warning');
             return;
         }
 
@@ -56,7 +57,7 @@ const ReportModal = ({ isOpen, onClose }) => {
                 const end = new Date(endDate + 'T12:00:00');
                 
                 if (curr > end) {
-                    alert('A data de início não pode ser maior que a data de término.');
+                    showToast('A data de início não pode ser maior que a data de término.', 'warning');
                     setIsGenerating(false);
                     return;
                 }
@@ -82,13 +83,13 @@ const ReportModal = ({ isOpen, onClose }) => {
                             });
                         }
                     } catch (err) {
-                        console.warn(`[Relatório] Não foi possível ler chamada de ${className} em ${dateVal}. Purgando da exportação.`, err);
+                        logger.warn(`[Relatório] Não foi possível ler chamada de ${className} em ${dateVal}. Purgando da exportação.`, err);
                     }
                 }
             }
 
             if (allFetchedRecords.length === 0) {
-                alert('Nenhum dado de frequência encontrado no Google Sheets para as turmas e datas selecionadas.');
+                showToast('Nenhum dado de frequência encontrado no Google Sheets para as turmas e datas selecionadas.', 'warning');
                 setIsGenerating(false);
                 return;
             }
@@ -134,9 +135,9 @@ const ReportModal = ({ isOpen, onClose }) => {
             });
 
             if (!hasData) {
-                alert(onlyAbsences
+                showToast(onlyAbsences
                     ? 'Nenhuma falta encontrada para os filtros selecionados.'
-                    : 'Nenhum registro de presença encontrado para os filtros selecionados.');
+                    : 'Nenhum registro de presença encontrado para os filtros selecionados.', 'info');
                 setIsGenerating(false);
                 return;
             }
@@ -156,8 +157,8 @@ const ReportModal = ({ isOpen, onClose }) => {
             setIsGenerating(false);
             onClose();
         } catch (error) {
-            console.error('Erro ao gerar relatório:', error);
-            alert('Erro ao gerar relatório de planilha. Verifique a API.');
+            logger.error('Erro ao gerar relatório:', error);
+            showToast('Erro ao gerar relatório de planilha. Verifique a API.', 'error');
             setIsGenerating(false);
         }
     };

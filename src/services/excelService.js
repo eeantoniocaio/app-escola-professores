@@ -25,8 +25,51 @@ export function findNameColumnIndex(header) {
 /**
  * Encontra o índice da linha do aluno na planilha
  */
-export function findStudentRow(values, studentName, nameColIdx = -1, headerRowIdx = -1) {
+export function findStudentRow(values, studentName, nameColIdx = -1, headerRowIdx = -1, studentRA = null) {
   if (!values || values.length < 2) return -1;
+
+  // 1. Tentar encontrar por RA (se disponível e válido)
+  if (studentRA) {
+    const normalizeRA = (val) => {
+      if (!val) return '';
+      return String(val).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    };
+
+    const normalizedSearchRA = normalizeRA(studentRA);
+    if (normalizedSearchRA) {
+      const headerRowIdxLoc = headerRowIdx !== -1 ? headerRowIdx : findHeaderRowIndex(values);
+      const header = headerRowIdxLoc !== -1 ? values[headerRowIdxLoc] : [];
+      
+      let raColIdx = -1;
+      let digColIdx = -1;
+      
+      for (let c = 0; c < header.length; c++) {
+        const val = normalizeString(header[c]);
+        if (val === 'ra' || val === 'registro' || val === 'registro de aluno' || val === 'registro do aluno') {
+          raColIdx = c;
+        } else if (val === 'dig' || val === 'digito' || val === 'dig ra' || val === 'dig. ra' || val === 'digito ra' || val === 'digito do ra' || val === 'dig.ra') {
+          digColIdx = c;
+        }
+      }
+
+      if (raColIdx !== -1) {
+        for (let r = 1; r < values.length; r++) {
+          if (r === headerRowIdxLoc) continue;
+          const row = values[r];
+          if (raColIdx < row.length) {
+            const rawNum = String(row[raColIdx] || '').trim();
+            const rawDig = digColIdx !== -1 && digColIdx < row.length ? String(row[digColIdx] || '').trim() : '';
+            const cellRA = normalizeRA(rawDig ? `${rawNum}${rawDig}` : rawNum);
+            if (cellRA && cellRA === normalizedSearchRA) {
+              return r;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Fallback para busca por nome
   const normalizedSearchName = normalizeString(studentName);
 
   for (let r = 1; r < values.length; r++) {
@@ -81,7 +124,7 @@ export function findHeaderRowIndex(values) {
 /**
  * Extrai as frequências dos bimestres, frequência final e total de faltas para o aluno.
  */
-export function getAlunoFrequencia(values, studentName, turmaNome) {
+export function getAlunoFrequencia(values, studentName, turmaNome, studentRA = null) {
   if (!values || values.length < 2) {
     return { error: 'Planilha sem dados suficientes.' };
   }
@@ -90,7 +133,7 @@ export function getAlunoFrequencia(values, studentName, turmaNome) {
   const header = headerRowIdx !== -1 ? values[headerRowIdx] : [];
   const nameColIdx = findNameColumnIndex(header);
 
-  const studentRowIdx = findStudentRow(values, studentName, nameColIdx, headerRowIdx);
+  const studentRowIdx = findStudentRow(values, studentName, nameColIdx, headerRowIdx, studentRA);
   if (studentRowIdx === -1) {
     return { error: `Aluno "${studentName}" não encontrado nesta aba da planilha.` };
   }

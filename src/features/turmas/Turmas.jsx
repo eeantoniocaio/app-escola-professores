@@ -10,6 +10,7 @@ import usePrefetchFrequencia from '@/hooks/usePrefetchFrequencia';
 import useCarometro from '@/hooks/useCarometro';
 import CarometroModal from './CarometroModal';
 import FichaAlunoModal from './FichaAlunoModal';
+import logger from '@/shared/utils/logger';
 
 // Components & Hooks
 import useTurmasData, { getTurmaColor } from './hooks/useTurmasData';
@@ -71,7 +72,7 @@ export default function Turmas() {
   // Auto-autenticação Google ao selecionar uma turma
   useEffect(() => {
     if (activeClass && isConfigured && !accessToken) {
-      console.log('[Turmas] Turma selecionada e Google não conectado. Iniciando loginGoogle...');
+      logger.log('[Turmas] Turma selecionada e Google não conectado. Iniciando loginGoogle...');
       loginGoogle();
     }
   }, [activeClass, isConfigured, accessToken, loginGoogle]);

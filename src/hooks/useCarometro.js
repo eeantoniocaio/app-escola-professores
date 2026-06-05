@@ -8,6 +8,7 @@ import {
   downloadFileAsBlobUrl,
   buildPhotosMap 
 } from '../services/photoService';
+import logger from '../shared/utils/logger';
 
 export default function useCarometro(activeClassName) {
   const { accessToken, loginGoogle } = useGoogleAuth();
@@ -75,12 +76,12 @@ export default function useCarometro(activeClassName) {
         try {
           rawMap = JSON.parse(cachedPhotos);
         } catch (e) {
-          console.warn('Erro ao ler cache de fotos do sessionStorage, consultando API...', e);
+          logger.warn('Erro ao ler cache de fotos do sessionStorage, consultando API...', e);
         }
       }
 
       if (Object.keys(rawMap).length === 0 || forceRefresh) {
-        console.log(`[useCarometro] Buscando fotos da turma "${activeClassName}" no GDrive...`);
+        logger.log(`[useCarometro] Buscando fotos da turma "${activeClassName}" no GDrive...`);
         const files = await fetchFilesInFolder(accessToken, classFolderId);
         rawMap = buildPhotosMap(files);
         sessionStorage.setItem(photosCacheKey, JSON.stringify(rawMap));
@@ -104,7 +105,7 @@ export default function useCarometro(activeClassName) {
 
       setPhotosMap(finalMap);
     } catch (err) {
-      console.error('Erro ao processar carômetro:', err);
+      logger.error('Erro ao processar carômetro:', err);
       setError('Erro ao carregar fotos do Carômetro.');
     } finally {
       setLoading(false);

@@ -96,6 +96,25 @@ serve(async (req) => {
         body: JSON.stringify(payload)
       })
 
+      // Audit logging for Google Sheets write operations
+      try {
+        const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')
+        if (serviceRoleKey && supabaseUrl) {
+          const systemSupabase = createClient(supabaseUrl, serviceRoleKey)
+          await systemSupabase.from('logs_auditoria').insert([{
+            usuario_id: user.id,
+            usuario_email: user.email,
+            tabela: 'google_sheets_attendance',
+            operacao: body.action || 'POST',
+            registro_id: `${body.sheetName || 'unknown'}_${body.date || 'unknown'}`,
+            valores_novos: body
+          }])
+        }
+      } catch (auditErr) {
+        console.error('Failed to log Sheets audit:', auditErr)
+      }
+
       // Note: Apps Script might redirect or return text/json
       let responseData;
       const contentType = response.headers.get('content-type') || '';

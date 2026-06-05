@@ -5,12 +5,15 @@ import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { supabase } from '../../services/supabase';
 import logoUrl from '../../../assets/logo.png';
 import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench, User, Camera, UploadCloud } from 'lucide-react';
+import { useToast } from '../../../app/providers/ToastProvider';
+import ErrorBoundary from '../ErrorBoundary';
 
 export default function MainLayout() {
   const { session, userRole, userName, avatarUrl, updateAvatarUrl, linkProfileName, isMaster } = useAuth();
   const { professores, gestores, secretarias, tecnicos, loadingData } = useGlobalData();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedNameForLink, setSelectedNameForLink] = useState('');
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -36,7 +39,7 @@ export default function MainLayout() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecione uma imagem válida.');
+      showToast('Por favor, selecione uma imagem válida.', 'warning');
       return;
     }
 
@@ -58,13 +61,13 @@ export default function MainLayout() {
 
       const success = await updateAvatarUrl(publicUrl);
       if (success) {
-        alert('Foto de perfil atualizada com sucesso!');
+        showToast('Foto de perfil atualizada com sucesso!', 'success');
       } else {
-        alert('Erro ao salvar foto de perfil no banco.');
+        showToast('Erro ao salvar foto de perfil no banco.', 'error');
       }
     } catch (err) {
       console.error('Erro no upload do avatar:', err);
-      alert('Erro ao carregar a foto.');
+      showToast('Erro ao carregar a foto.', 'error');
     } finally {
       setUploadingAvatar(false);
     }
@@ -98,7 +101,7 @@ export default function MainLayout() {
     const success = await linkProfileName(selectedNameForLink);
     setLinking(false);
     if (!success) {
-      alert('Erro ao vincular conta. Tente novamente.');
+      showToast('Erro ao vincular conta. Tente novamente.', 'error');
     }
   };
 
@@ -862,7 +865,9 @@ export default function MainLayout() {
             </div>
           </div>
         ) : (
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         )}
       </main>
 

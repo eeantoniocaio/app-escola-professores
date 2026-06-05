@@ -249,8 +249,13 @@ export function GlobalDataProvider({ children }) {
     }
   };
 
-  const importAlunosTurma = async (turmaNome, nomes) => {
-    const payloads = nomes.map(nome => ({ nome, turma: turmaNome }));
+  const importAlunosTurma = async (turmaNome, items) => {
+    const payloads = items.map(item => {
+      if (typeof item === 'object' && item !== null) {
+        return { nome: item.nome, ra: item.ra || null, turma: turmaNome };
+      }
+      return { nome: item, ra: null, turma: turmaNome };
+    });
     const { data, error } = await supabase.from('alunos').insert(payloads).select();
     if (error) {
       showToast('Erro ao importar alunos', 'error');

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../shared/services/supabase';
 import { useToast } from '../../../app/providers/ToastProvider';
 import { useAuth } from '../../../app/providers/AuthProvider';
+import logger from '../../../shared/utils/logger';
 
 export function useOcorrencias() {
   const [ocorrencias, setOcorrencias] = useState([]);
@@ -12,7 +13,7 @@ export function useOcorrencias() {
   const fetchOcorrencias = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase.from('ocorrencias').select('*').order('created_at', { ascending: false });
-    if (error) console.error('Erro ocorrências:', error);
+    if (error) logger.error('Erro ocorrências:', error);
     else setOcorrencias(data || []);
     setLoading(false);
   }, []);
@@ -30,7 +31,7 @@ export function useOcorrencias() {
           setOcorrencias(prev => [payload.new, ...prev]);
           if ("Notification" in window && Notification.permission === "granted") {
             const audio = new Audio('/notification.ogg');
-            audio.play().catch(err => console.log('Audio block by browser:', err));
+            audio.play().catch(err => logger.log('Audio block by browser:', err));
             new Notification('Nova Ocorrência Registrada', {
               body: `Professor(a) ${payload.new.professor} registrou uma nova ocorrência para ${payload.new.aluno}.`,
               requireInteraction: true
