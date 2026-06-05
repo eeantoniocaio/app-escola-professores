@@ -9,7 +9,7 @@ export async function fetchClassAttendance(sheetName, date) {
   try {
     const { data, error } = await supabase.functions.invoke('sheets-proxy', {
       method: 'GET',
-      queryParams: {
+      query: {
         action: 'getStudents',
         sheetName,
         date,
