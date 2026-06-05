@@ -7,13 +7,13 @@ import { supabase } from '@/shared/services/supabase'
  */
 export async function fetchClassAttendance(sheetName, date) {
   try {
-    const { data, error } = await supabase.functions.invoke('sheets-proxy', {
+    const params = new URLSearchParams({
+      action: 'getStudents',
+      sheetName,
+      date,
+    })
+    const { data, error } = await supabase.functions.invoke(`sheets-proxy?${params.toString()}`, {
       method: 'GET',
-      query: {
-        action: 'getStudents',
-        sheetName,
-        date,
-      },
     })
 
     if (error) {
