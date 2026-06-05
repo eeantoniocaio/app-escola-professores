@@ -29,49 +29,24 @@ export default function ClassStudentsList({
   const turmaColor = getTurmaColor(activeClass.nome);
 
   return (
-    <div style={{
-      background: turmaColor,
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      borderRadius: 'var(--radius-lg)',
-      padding: '2rem',
-      boxShadow: 'var(--shadow-sm)',
-      animation: 'fadeIn 0.3s ease-out'
-    }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '1.5rem', 
-        borderBottom: '1px solid rgba(255, 255, 255, 0.2)', 
-        paddingBottom: '1rem', 
-        flexWrap: 'wrap', 
-        gap: '1rem' 
-      }}>
+    <div 
+      style={{ background: turmaColor }}
+      className="border border-[rgba(255,255,255,0.1)] rounded-[14px] p-8 shadow-sm animate-[fadeIn_0.3s_ease-out]"
+    >
+      <div className="flex justify-between items-center mb-6 border-b border-[rgba(255,255,255,0.2)] pb-4 flex-wrap gap-4">
         <div>
-          <h3 style={{ fontSize: '1.35rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ffffff' }}>
+          <h3 className="text-[1.35rem] m-0 flex items-center gap-2 text-white font-semibold">
             <School size={20} color="#ffffff" /> Alunos Matriculados — {activeClass.nome}
           </h3>
-          <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.9rem', margin: 0, marginTop: '0.15rem' }}>
+          <p className="text-[rgba(255,255,255,0.8)] text-[0.9rem] m-0 mt-0.5">
             {classStudents.length} aluno(s) cadastrado(s)
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div className="flex gap-2 items-center">
           {activeClass.link && (
             <button 
               onClick={() => window.open(activeClass.link, '_blank', 'noopener')}
-              className="btn"
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem', 
-                margin: 0,
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                color: '#ffffff',
-                boxShadow: 'none'
-              }}
-              onMouseOver={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'; }}
-              onMouseOut={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; }}
+              className="btn flex items-center gap-2 m-0 bg-[rgba(255,255,255,0.2)] border border-[rgba(255,255,255,0.3)] text-white shadow-none hover:bg-[rgba(255,255,255,0.3)]"
             >
               <LinkIcon size={16} /> Abrir Mapa de Classe
             </button>
@@ -80,29 +55,13 @@ export default function ClassStudentsList({
       </div>
 
       {/* Segmented Control de Abas Internas da Turma */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '0.35rem', 
-        background: 'rgba(0, 0, 0, 0.12)', 
-        padding: '0.25rem', 
-        borderRadius: 'var(--radius-md)', 
-        width: 'fit-content', 
-        marginBottom: '1.5rem',
-        border: '1px solid rgba(255, 255, 255, 0.15)'
-      }}>
+      <div className="flex gap-1.5 bg-[rgba(0,0,0,0.12)] p-1 rounded-[10px] w-fit mb-6 border border-[rgba(255,255,255,0.15)]">
         <button 
           onClick={() => setClassViewMode('list')}
-          style={{
-            padding: '0.45rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: '0.8rem',
-            background: classViewMode === 'list' ? '#ffffff' : 'transparent',
-            color: classViewMode === 'list' ? turmaColor : '#ffffff',
-            transition: 'var(--transition-smooth)'
-          }}
+          style={{ color: classViewMode === 'list' ? turmaColor : '#ffffff' }}
+          className={`py-1.5 px-4 rounded-[6px] border-none cursor-pointer font-bold text-[0.8rem] transition-all duration-200 ${
+            classViewMode === 'list' ? 'bg-white' : 'bg-transparent text-white'
+          }`}
         >
           Lista de Alunos
         </button>
@@ -113,17 +72,10 @@ export default function ClassStudentsList({
               loginGoogle();
             }
           }}
-          style={{
-            padding: '0.45rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: '0.8rem',
-            background: classViewMode === 'carometro' ? '#ffffff' : 'transparent',
-            color: classViewMode === 'carometro' ? turmaColor : '#ffffff',
-            transition: 'var(--transition-smooth)'
-          }}
+          style={{ color: classViewMode === 'carometro' ? turmaColor : '#ffffff' }}
+          className={`py-1.5 px-4 rounded-[6px] border-none cursor-pointer font-bold text-[0.8rem] transition-all duration-200 ${
+            classViewMode === 'carometro' ? 'bg-white' : 'bg-transparent text-white'
+          }`}
         >
           Carômetro (Fotos)
         </button>
@@ -131,32 +83,23 @@ export default function ClassStudentsList({
 
       {classViewMode === 'list' ? (
         classStudents.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+          <div className="text-center py-12 px-4 text-[rgba(255,255,255,0.8)]">
             Nenhum aluno cadastrado nesta turma.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="flex flex-col gap-3">
             {classStudents.map((aluno, index) => {
               const photoUrl = findPhotoInMap(aluno.nome, photosMap);
               return (
                 <div 
                   key={aluno.id}
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between', 
-                    padding: '0.75rem 1.25rem', 
-                    background: '#ffffff', 
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    boxShadow: 'var(--shadow-sm)',
-                    transition: 'var(--transition-smooth)'
-                  }}
-                  onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-                  onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                  className="flex items-center justify-between p-3 px-5 bg-white rounded-[10px] border border-[rgba(255,255,255,0.1)] shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-md"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{ fontWeight: 700, color: turmaColor, fontSize: '0.85rem', minWidth: '24px' }}>
+                  <div className="flex items-center gap-3">
+                    <span 
+                      style={{ color: turmaColor }}
+                      className="font-bold text-[0.85rem] min-w-[24px]"
+                    >
                       {String(index + 1).padStart(2, '0')}
                     </span>
                     
@@ -170,32 +113,20 @@ export default function ClassStudentsList({
                         }
                       }}
                       title="Ver crachá/foto"
-                      style={{ 
-                        width: '30px', 
-                        height: '30px', 
-                        borderRadius: '50%', 
-                        overflow: 'hidden', 
-                        background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-light)',
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        flexShrink: 0
-                      }}
+                      className="w-[30px] h-[30px] rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center cursor-pointer shrink-0"
                     >
                       {photoUrl ? (
                         <img 
                           src={photoUrl} 
                           alt="" 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <User size={14} color="var(--text-light)" />
+                        <User size={14} className="text-gray-400" />
                       )}
                     </div>
 
-                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{aluno.nome}</span>
+                    <span className="text-[0.95rem] font-semibold text-gray-900">{aluno.nome}</span>
                   </div>
                   <StudentActionButtons
                     aluno={aluno}
@@ -218,7 +149,7 @@ export default function ClassStudentsList({
           </div>
         )
       ) : (
-        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="bg-white rounded-[10px] p-6 border border-[rgba(255,255,255,0.1)]">
           <CarometroGrid 
             students={classStudents}
             photosMap={photosMap}

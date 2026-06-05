@@ -97,86 +97,33 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
   }
 
   return createPortal(
-    <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div
-        className="modal-content"
-        style={{
-          width: '100%',
-          maxWidth: '800px',
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '92vh',
-          overflow: 'hidden',
-          border: 'none',
-        }}
-      >
+    <div className="modal-overlay z-[1100]" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content w-full max-w-[800px] flex flex-col max-h-[92vh] overflow-hidden !border-none">
+        
         {/* Cabeçalho do Prontuário */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            padding: '1.5rem 2rem',
-            color: '#ffffff',
-            position: 'relative',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 py-6 px-8 text-white relative">
+          <div className="flex justify-between items-start">
+            <div className="flex gap-5 items-center">
               {/* Foto Ampliada */}
-              <div
-                style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  border: '3px solid #ffffff',
-                  boxShadow: 'var(--shadow-md)',
-                  backgroundColor: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
+              <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-white shadow-md bg-white flex items-center justify-center shrink-0">
                 {photoUrl ? (
-                  <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={photoUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <User size={32} color="#d97706" />
+                  <User size={32} className="text-amber-600" />
                 )}
               </div>
               <div>
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: '1.4rem',
-                    fontWeight: 800,
-                    color: '#ffffff',
-                    letterSpacing: '-0.3px',
-                  }}
-                >
+                <h3 className="m-0 text-[1.4rem] font-extrabold text-white tracking-[-0.3px]">
                   {aluno.nome}
                 </h3>
-                <p style={{ margin: '0.2rem 0 0', opacity: 0.9, fontSize: '0.88rem', fontWeight: 500 }}>
+                <p className="m-0 mt-[0.2rem] opacity-90 text-[0.88rem] font-medium">
                   Turma: {aluno.turma} • R.A: {raDisplay}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#ffffff',
-                cursor: 'pointer',
-                transition: 'var(--transition-fast)',
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)')}
-              onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)')}
+              className="bg-[rgba(255,255,255,0.2)] border-none rounded-full w-8 h-8 flex items-center justify-center text-white cursor-pointer transition-colors duration-100 hover:bg-[rgba(255,255,255,0.3)]"
             >
               <X size={18} />
             </button>
@@ -184,79 +131,35 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
         </div>
 
         {/* Barra de Abas */}
-        <div
-          style={{
-            display: 'flex',
-            borderBottom: '1px solid var(--border-light)',
-            background: 'var(--bg-secondary)',
-            padding: '0 2rem',
-          }}
-        >
+        <div className="flex border-b border-gray-200 bg-gray-100 px-8">
           <button
             onClick={() => setActiveTab('cadastro')}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              borderBottom: '3px solid transparent',
-              padding: '1rem 1.25rem',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              color: activeTab === 'cadastro' ? '#d97706' : 'var(--text-muted)',
-              borderBottomColor: activeTab === 'cadastro' ? '#d97706' : 'transparent',
-              cursor: 'pointer',
-              transition: 'var(--transition-fast)',
-            }}
+            className={`bg-transparent border-none border-b-3 py-4 px-5 font-semibold text-[0.9rem] cursor-pointer transition-all duration-100 ${
+              activeTab === 'cadastro' ? 'text-amber-600 border-amber-600' : 'text-gray-500 border-transparent'
+            }`}
           >
             Ficha Cadastral
           </button>
           <button
             onClick={() => setActiveTab('boletim')}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              borderBottom: '3px solid transparent',
-              padding: '1rem 1.25rem',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              color: activeTab === 'boletim' ? '#d97706' : 'var(--text-muted)',
-              borderBottomColor: activeTab === 'boletim' ? '#d97706' : 'transparent',
-              cursor: 'pointer',
-              transition: 'var(--transition-fast)',
-            }}
+            className={`bg-transparent border-none border-b-3 py-4 px-5 font-semibold text-[0.9rem] cursor-pointer transition-all duration-100 ${
+              activeTab === 'boletim' ? 'text-amber-600 border-amber-600' : 'text-gray-500 border-transparent'
+            }`}
           >
             Boletim Escolar
           </button>
           <button
             onClick={() => setActiveTab('frequencia')}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              borderBottom: '3px solid transparent',
-              padding: '1rem 1.25rem',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              color: activeTab === 'frequencia' ? '#d97706' : 'var(--text-muted)',
-              borderBottomColor: activeTab === 'frequencia' ? '#d97706' : 'transparent',
-              cursor: 'pointer',
-              transition: 'var(--transition-fast)',
-            }}
+            className={`bg-transparent border-none border-b-3 py-4 px-5 font-semibold text-[0.9rem] cursor-pointer transition-all duration-100 ${
+              activeTab === 'frequencia' ? 'text-amber-600 border-amber-600' : 'text-gray-500 border-transparent'
+            }`}
           >
             Frequência
           </button>
         </div>
 
         {/* Corpo do Modal (com Scroll) */}
-        <div
-          style={{
-            padding: '2rem',
-            overflowY: 'auto',
-            flex: 1,
-            background: 'var(--bg-secondary)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-          }}
-        >
+        <div className="p-8 overflow-y-auto flex-1 bg-gray-100 flex flex-col gap-6">
           {/* TAB 1: FICHA CADASTRAL */}
           {activeTab === 'cadastro' && (
             <FichaCadastralTab
@@ -296,49 +199,20 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
         </div>
 
         {/* Rodapé da Ficha */}
-        <div
-          style={{
-            padding: '1rem 2rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderTop: '1px solid var(--border-light)',
-            backgroundColor: '#ffffff',
-          }}
-        >
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="py-4 px-8 flex justify-between items-center border-t border-gray-200 bg-white">
+          <div className="flex gap-3">
             {(userRole === 'secretaria' || userRole === 'gestao') && (
               <>
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary m-0 py-2 px-5 flex items-center gap-2 bg-amber-600 border-amber-600 text-white hover:bg-amber-700 hover:border-amber-700"
                   onClick={handlePrint}
-                  style={{
-                    margin: 0,
-                    padding: '0.55rem 1.25rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    background: '#d97706',
-                    borderColor: '#d97706',
-                    color: '#ffffff',
-                  }}
                 >
                   <Printer size={16} />
                   <span>Imprimir</span>
                 </button>
                 <button
-                  className="btn btn-secondary"
+                  className="btn btn-secondary m-0 py-2 px-5 flex items-center gap-2 border border-gray-200 bg-gray-100 text-gray-900 hover:bg-gray-200"
                   onClick={handleShare}
-                  style={{
-                    margin: 0,
-                    padding: '0.55rem 1.25rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    border: '1px solid var(--border-light)',
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-main)',
-                  }}
                 >
                   <Share2 size={16} />
                   <span>Compartilhar</span>
@@ -346,7 +220,7 @@ export default function FichaAlunoModal({ aluno, isOpen, onClose, photosMap }) {
               </>
             )}
           </div>
-          <button className="btn btn-secondary" onClick={onClose} style={{ margin: 0, padding: '0.55rem 1.25rem' }}>
+          <button className="btn btn-secondary m-0 py-2 px-5" onClick={onClose}>
             Fechar Prontuário
           </button>
         </div>

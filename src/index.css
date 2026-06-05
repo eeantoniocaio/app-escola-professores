@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Design System - App Evidências Docentes */
 :root {
   /* ── New SaaS / Duolingo For Schools Palette ── */

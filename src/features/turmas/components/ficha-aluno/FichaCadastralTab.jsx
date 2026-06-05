@@ -3,73 +3,61 @@ import { User, Calendar, Phone, Mail, MapPin } from 'lucide-react'
 
 export default function FichaCadastralTab({ aluno, details, birthDateDisplay, ageDisplay, raDisplay }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.2s ease-out' }}>
+    <div className="flex flex-col gap-6 animate-[fadeIn_0.2s_ease-out]">
       
       {/* Seção Dados Pessoais */}
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid var(--border-light)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '1.5rem',
-        boxShadow: 'var(--shadow-sm)'
-      }}>
-        <h4 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#d97706', fontSize: '1rem', fontWeight: 700 }}>
+      <div className="bg-white border border-gray-200 rounded-[14px] p-6 shadow-sm">
+        <h4 className="m-0 mb-5 flex items-center gap-2 text-amber-600 text-base font-bold">
           <User size={18} /> Dados Pessoais
         </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5">
           <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Nome Completo</label>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem' }}>{aluno.nome}</div>
+            <label className="text-[0.78rem] font-bold text-gray-400 uppercase">Nome Completo</label>
+            <div className="text-[0.95rem] font-semibold text-gray-900 mt-1">{aluno.nome}</div>
           </div>
           <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Data de Nascimento</label>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Calendar size={14} color="var(--text-light)" /> {birthDateDisplay}
+            <label className="text-[0.78rem] font-bold text-gray-400 uppercase">Data de Nascimento</label>
+            <div className="text-[0.95rem] font-semibold text-gray-900 mt-1 flex items-center gap-1.5">
+              <Calendar size={14} className="text-gray-400" /> {birthDateDisplay}
             </div>
           </div>
           <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Idade</label>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem' }}>{ageDisplay}</div>
+            <label className="text-[0.78rem] font-bold text-gray-400 uppercase">Idade</label>
+            <div className="text-[0.95rem] font-semibold text-gray-900 mt-1">{ageDisplay}</div>
           </div>
           <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>R.A. (Registro do Aluno)</label>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem' }}>{raDisplay}</div>
+            <label className="text-[0.78rem] font-bold text-gray-400 uppercase">R.A. (Registro do Aluno)</label>
+            <div className="text-[0.95rem] font-semibold text-gray-900 mt-1">{raDisplay}</div>
           </div>
         </div>
       </div>
 
       {/* Seção Contato & Endereço */}
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid var(--border-light)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '1.5rem',
-        boxShadow: 'var(--shadow-sm)'
-      }}>
-        <h4 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#d97706', fontSize: '1rem', fontWeight: 700 }}>
+      <div className="bg-white border border-gray-200 rounded-[14px] p-6 shadow-sm">
+        <h4 className="m-0 mb-5 flex items-center gap-2 text-amber-600 text-base font-bold">
           <Phone size={18} /> Dados de Contato & Responsáveis
         </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Responsável Legal</label>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '0.25rem' }}>{details.parentName}</div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5">
+          <div className="col-span-2">
+            <label className="text-[0.78rem] font-bold text-gray-400 uppercase">Responsável Legal</label>
+            <div className="text-[0.95rem] font-semibold text-gray-900 mt-1">{details.parentName}</div>
           </div>
           <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Telefone do Responsável</label>
-            <div style={{ fontSize: '0.95rem', color: 'var(--text-main)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Phone size={14} color="var(--text-light)" /> {details.phone}
+            <label className="text-[0.78rem] font-bold text-gray-400 uppercase">Telefone do Responsável</label>
+            <div className="text-[0.95rem] text-gray-900 mt-1 flex items-center gap-1.5">
+              <Phone size={14} className="text-gray-400" /> {details.phone}
             </div>
           </div>
           <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>E-mail para Recados</label>
-            <div style={{ fontSize: '0.95rem', color: 'var(--text-main)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem', wordBreak: 'break-all' }}>
-              <Mail size={14} color="var(--text-light)" style={{ flexShrink: 0 }} /> {details.email}
+            <label className="text-[0.78rem] font-bold text-gray-400 uppercase">E-mail para Recados</label>
+            <div className="text-[0.95rem] text-gray-900 mt-1 flex items-center gap-1.5 word-break-all">
+              <Mail size={14} className="text-gray-400 shrink-0" /> {details.email}
             </div>
           </div>
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Endereço Residencial</label>
-            <div style={{ fontSize: '0.95rem', color: 'var(--text-main)', marginTop: '0.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
-              <MapPin size={14} color="var(--text-light)" style={{ marginTop: '0.15rem', flexShrink: 0 }} /> {details.address}
+          <div className="col-span-2">
+            <label className="text-[0.78rem] font-bold text-gray-400 uppercase">Endereço Residencial</label>
+            <div className="text-[0.95rem] text-gray-900 mt-1 flex items-start gap-1.5">
+              <MapPin size={14} className="text-gray-400 mt-0.5 shrink-0" /> {details.address}
             </div>
           </div>
         </div>

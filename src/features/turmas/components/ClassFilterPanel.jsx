@@ -9,21 +9,14 @@ export default function ClassFilterPanel({
   availableTurmaSiglas
 }) {
   return (
-    <div style={{
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border-light)',
-      borderRadius: 'var(--radius-lg)',
-      padding: '1.5rem',
-      boxShadow: 'var(--shadow-sm)'
-    }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>Série / Ano</label>
+    <div className="bg-white border border-gray-200 rounded-[14px] p-6 shadow-sm">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6">
+        <div className="flex flex-col gap-2">
+          <label className="text-[0.85rem] font-bold text-gray-500">Série / Ano</label>
           <select 
             value={selectedSerie} 
             onChange={e => { setSelectedSerie(e.target.value); setSelectedTurmaSigla(''); }}
-            className="select-filter"
-            style={{ width: '100%', padding: '0.65rem 1rem' }}
+            className="select-filter w-full p-[0.65rem_1rem]"
           >
             <option value="">Selecione...</option>
             {sortedSeriesList.map(serie => (
@@ -32,14 +25,13 @@ export default function ClassFilterPanel({
           </select>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>Turma</label>
+        <div className="flex flex-col gap-2">
+          <label className="text-[0.85rem] font-bold text-gray-500">Turma</label>
           <select 
             value={selectedTurmaSigla} 
             onChange={e => setSelectedTurmaSigla(e.target.value)}
             disabled={!selectedSerie}
-            className="select-filter"
-            style={{ width: '100%', padding: '0.65rem 1rem', opacity: selectedSerie ? 1 : 0.6 }}
+            className={`select-filter w-full p-[0.65rem_1rem] ${selectedSerie ? 'opacity-100' : 'opacity-60'}`}
           >
             <option value="">Selecione...</option>
             {availableTurmaSiglas.map(sigla => (

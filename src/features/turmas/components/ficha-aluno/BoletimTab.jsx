@@ -3,53 +3,39 @@ import { Clipboard } from 'lucide-react'
 
 export default function BoletimTab({ details }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.2s ease-out' }}>
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid var(--border-light)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-sm)',
-        overflow: 'hidden'
-      }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#d97706', fontSize: '1rem', fontWeight: 700 }}>
+    <div className="flex flex-col gap-6 animate-[fadeIn_0.2s_ease-out]">
+      <div className="bg-white border border-gray-200 rounded-[14px] shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+          <h4 className="m-0 flex items-center gap-2 text-amber-600 text-base font-bold">
             <Clipboard size={18} /> Histórico de Notas (Boletim)
           </h4>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Ano Letivo: {new Date().getFullYear()}</span>
+          <span className="text-[0.8rem] text-gray-500 font-semibold">Ano Letivo: {new Date().getFullYear()}</span>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left min-w-[600px]">
             <thead>
-              <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-light)' }}>
-                <th style={{ padding: '0.9rem 1.25rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Componente Curricular</th>
-                <th style={{ padding: '0.9rem 1rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>1º Bim</th>
-                <th style={{ padding: '0.9rem 1rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>2º Bim</th>
-                <th style={{ padding: '0.9rem 1rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>3º Bim</th>
-                <th style={{ padding: '0.9rem 1rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>4º Bim</th>
-                <th style={{ padding: '0.9rem 1rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>Média</th>
-                <th style={{ padding: '0.9rem 1.25rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>Situação</th>
+              <tr className="bg-gray-100 border-b border-gray-200">
+                <th className="py-3.5 px-5 text-[0.8rem] font-bold text-gray-500 uppercase">Componente Curricular</th>
+                <th className="py-3.5 px-4 text-[0.8rem] font-bold text-gray-500 text-center">1º Bim</th>
+                <th className="py-3.5 px-4 text-[0.8rem] font-bold text-gray-500 text-center">2º Bim</th>
+                <th className="py-3.5 px-4 text-[0.8rem] font-bold text-gray-500 text-center">3º Bim</th>
+                <th className="py-3.5 px-4 text-[0.8rem] font-bold text-gray-500 text-center">4º Bim</th>
+                <th className="py-3.5 px-4 text-[0.8rem] font-bold text-gray-500 text-center">Média</th>
+                <th className="py-3.5 px-5 text-[0.8rem] font-bold text-gray-500 text-center">Situação</th>
               </tr>
             </thead>
             <tbody>
               {details.boletim.map((bp, index) => (
-                <tr key={index} style={{ borderBottom: index === details.boletim.length - 1 ? 'none' : '1px solid var(--border-light)' }}>
-                  <td style={{ padding: '1rem 1.25rem', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>{bp.subject}</td>
-                  <td style={{ padding: '1rem 1rem', fontSize: '0.9rem', textAlign: 'center', color: bp.b1 < 6 ? 'var(--color-danger)' : 'var(--text-main)' }}>{bp.b1}</td>
-                  <td style={{ padding: '1rem 1rem', fontSize: '0.9rem', textAlign: 'center', color: bp.b2 < 6 ? 'var(--color-danger)' : 'var(--text-main)' }}>{bp.b2}</td>
-                  <td style={{ padding: '1rem 1rem', fontSize: '0.9rem', textAlign: 'center', color: bp.b3 < 6 ? 'var(--color-danger)' : 'var(--text-main)' }}>{bp.b3}</td>
-                  <td style={{ padding: '1rem 1rem', fontSize: '0.9rem', textAlign: 'center', color: bp.b4 < 6 ? 'var(--color-danger)' : 'var(--text-main)' }}>{bp.b4}</td>
-                  <td style={{ padding: '1rem 1rem', fontSize: '0.95rem', fontWeight: 800, textAlign: 'center', color: bp.media < 6 ? 'var(--color-danger)' : 'var(--color-success)' }}>{bp.media}</td>
-                  <td style={{ padding: '1rem 1.25rem', textAlign: 'center' }}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '0.25rem 0.6rem',
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      backgroundColor: bp.status === 'Aprovado' ? 'var(--color-success-bg)' : 'var(--color-danger-bg)',
-                      color: bp.status === 'Aprovado' ? 'var(--color-success)' : 'var(--color-danger)'
-                    }}>
+                <tr key={index} className={index === details.boletim.length - 1 ? '' : 'border-b border-gray-200'}>
+                  <td className="p-4 px-5 text-[0.9rem] font-semibold text-gray-900">{bp.subject}</td>
+                  <td className={`p-4 px-4 text-[0.9rem] text-center ${bp.b1 < 6 ? 'text-red-600' : 'text-gray-900'}`}>{bp.b1}</td>
+                  <td className={`p-4 px-4 text-[0.9rem] text-center ${bp.b2 < 6 ? 'text-red-600' : 'text-gray-900'}`}>{bp.b2}</td>
+                  <td className={`p-4 px-4 text-[0.9rem] text-center ${bp.b3 < 6 ? 'text-red-600' : 'text-gray-900'}`}>{bp.b3}</td>
+                  <td className={`p-4 px-4 text-[0.9rem] text-center ${bp.b4 < 6 ? 'text-red-600' : 'text-gray-900'}`}>{bp.b4}</td>
+                  <td className={`p-4 px-4 text-[0.95rem] font-extrabold text-center ${bp.media < 6 ? 'text-red-600' : 'text-green-600'}`}>{bp.media}</td>
+                  <td className="p-4 px-5 text-center">
+                    <span className={`inline-block py-1 px-2.5 rounded-[12px] text-[0.75rem] font-bold ${bp.status === 'Aprovado' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                       {bp.status}
                     </span>
                   </td>
