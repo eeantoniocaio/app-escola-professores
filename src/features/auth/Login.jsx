@@ -58,6 +58,24 @@ export default function Login({ setSession }) {
     }
   }
 
+  const handleGoogleLogin = async () => {
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const { error: err } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      })
+      if (err) throw err
+    } catch (err) {
+      setError(err.message || 'Erro ao iniciar autenticação com o Google.')
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="login-container" style={{
       display: 'flex', justifyContent: 'center', alignItems: 'center', 
@@ -125,6 +143,50 @@ export default function Login({ setSession }) {
             {loading ? 'Aguarde...' : (isSignUp ? 'Cadastrar' : 'Entrar')}
           </button>
         </form>
+
+        {!isSignUp && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '1.25rem 0', color: '#9ca3af' }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
+              <span style={{ padding: '0 0.75rem', fontSize: '0.8rem', fontWeight: '500' }}>ou</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
+            </div>
+
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleGoogleLogin}
+              className="btn"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                backgroundColor: '#ffffff',
+                color: '#374151',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#f9fafb' }}
+              onMouseOut={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#ffffff' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18">
+                <path fill="#EA4335" d="M9 3.58c1.12 0 2.12.39 2.92 1.15l2.19-2.19C12.78.89 11.02 0 9 0 5.48 0 2.52 2.02 1.13 4.96l2.82 2.18C4.6 5.16 6.6 3.58 9 3.58z"/>
+                <path fill="#4285F4" d="M17.64 9.2c0-.65-.06-1.28-.16-1.89H9v3.58h4.84c-.21 1.12-.84 2.07-1.79 2.7l2.79 2.16c1.63-1.51 2.57-3.73 2.57-6.55z"/>
+                <path fill="#FBBC05" d="M3.95 10.86c-.23-.69-.36-1.43-.36-2.2s.13-1.51.36-2.2L1.13 4.28C.41 5.72 0 7.31 0 9s.41 3.28 1.13 4.72l2.82-2.86z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.79-2.16c-.78.52-1.78.83-2.92.83-2.4 0-4.43-1.58-5.15-3.72l-2.82 2.18C2.52 15.98 5.48 18 9 18z"/>
+              </svg>
+              Entrar com o Google
+            </button>
+          </>
+        )}
 
         <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem' }}>
           {isSignUp ? (

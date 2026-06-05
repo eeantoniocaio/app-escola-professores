@@ -10,21 +10,52 @@ export function AuthProvider({ children }) {
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const fetchProfile = async (userId, userEmail) => {
+  const fetchProfile = async (userId, userEmail, userMetadata = {}) => {
     try {
-      const { data, error } = await supabase.from('perfis').select('papel, nome, avatar_url').eq('id', userId).maybeSingle();
+      let { data, error } = await supabase.from('perfis').select('papel, nome, avatar_url').eq('id', userId).maybeSingle();
+      
+      // Se o perfil não existir (ex: primeiro login com Google), cria automaticamente
+      if (!data && !error) {
+        let papel = 'professor';
+        let nome = userMetadata.full_name || userMetadata.name || userEmail.split('@')[0];
+        let avatar = userMetadata.avatar_url || '';
+
+        // Auto-associar e-mail da secretaria ao papel 'secretaria'
+        if (userEmail === 'secretariaantoniocaio@gmail.com') {
+          papel = 'secretaria';
+          nome = 'Secretaria';
+        }
+
+        const newProfile = {
+          id: userId,
+          nome,
+          papel,
+          avatar_url: avatar
+        };
+
+        const { data: insertedData, error: insertError } = await supabase
+          .from('perfis')
+          .insert([newProfile])
+          .select()
+          .maybeSingle();
+
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+        } else {
+          data = insertedData;
+        }
+      }
+
       if (data) {
         let papel = data.papel;
         let nome = data.nome;
         let avatar = data.avatar_url;
 
         // Auto-associar e-mail da secretaria ao papel 'secretaria' e nome 'Secretaria'
-        if (userEmail === 'secretariaantoniocaio@gmail.com') {
+        if (userEmail === 'secretariaantoniocaio@gmail.com' && papel !== 'secretaria') {
           papel = 'secretaria';
-          if (!nome) {
-            nome = 'Secretaria';
-            await supabase.from('perfis').update({ papel: 'secretaria', nome: 'Secretaria' }).eq('id', userId);
-          }
+          nome = 'Secretaria';
+          await supabase.from('perfis').update({ papel: 'secretaria', nome: 'Secretaria' }).eq('id', userId);
         }
 
         setUserRole(papel);
@@ -69,7 +100,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id, session.user.email);
+      if (session) fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
       else setAuthLoading(false);
     });
 
@@ -77,7 +108,7 @@ export function AuthProvider({ children }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id, session.user.email);
+      if (session) fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
       else {
         setUserRole(null);
         setUserName(null);
