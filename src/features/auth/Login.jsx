@@ -18,16 +18,6 @@ export default function Login({ setSession }) {
 
     try {
       if (isSignUp) {
-        const allowedDomains = ['@prof.educacao.sp.gov.br', '@servidor.educacao.sp.gov.br'];
-        const emailLower = email.trim().toLowerCase();
-        
-        const hasAllowedDomain = allowedDomains.some(domain => emailLower.endsWith(domain)) || 
-                                 emailLower === 'e017590a@educacao.sp.gov.br';
-        
-        if (!hasAllowedDomain) {
-          throw new Error('Apenas emails pré-autorizados podem realizar o cadastro.');
-        }
-
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
