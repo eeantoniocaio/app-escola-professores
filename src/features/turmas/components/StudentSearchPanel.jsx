@@ -63,7 +63,7 @@ export default function StudentSearchPanel({
             {filteredStudents.map(aluno => (
               <div 
                 key={aluno.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 px-4 sm:px-5 bg-gray-50 rounded-[10px] border border-gray-200 transition-all duration-200 hover:-translate-y-px hover:shadow-md gap-3 sm:gap-0"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 px-4 sm:px-5 bg-gray-50 rounded-[10px] border border-gray-200 transition-all duration-200 md:hover:-translate-y-px md:hover:shadow-md gap-3 sm:gap-0"
               >
                 <div className="flex flex-col gap-1">
                   <span className="text-[0.95rem] font-semibold text-gray-900">{aluno.nome}</span>

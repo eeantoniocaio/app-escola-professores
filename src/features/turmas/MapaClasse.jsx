@@ -69,22 +69,13 @@ export default function MapaClasse() {
             return (
               <div
                 key={turma.id}
+                className={`flex justify-between items-center p-6 rounded-[10px] border border-white/10 shadow-sm transition-all duration-200 will-change-transform [backface-visibility:hidden] [transform:translate3d(0,0,0)] ${
+                  hasLink ? 'cursor-pointer md:hover:-translate-y.5 md:hover:shadow-md' : 'cursor-default opacity-65'
+                }`}
                 style={{
-                  backgroundColor: cardColor,
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '1.5rem',
-                  cursor: hasLink ? 'pointer' : 'default',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  transition: 'var(--transition-smooth)',
-                  boxShadow: 'var(--shadow-sm)',
-                  opacity: hasLink ? 1 : 0.65
+                  backgroundColor: cardColor
                 }}
                 onClick={() => hasLink && window.open(turma.link, '_blank', 'noopener')}
-                onMouseOver={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.15)' } }}
-                onMouseOut={e => { if (hasLink) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' } }}
                 title={hasLink ? `Abrir ${turma.nome}` : 'Link não configurado'}
               >
                 <div>

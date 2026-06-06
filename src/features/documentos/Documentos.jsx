@@ -223,7 +223,7 @@ export default function Documentos() {
   };
 
   return (
-    <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
+    <div>
       {/* Header */}
       <div className="dashboard-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -245,6 +245,7 @@ export default function Documentos() {
         {(userRole === 'gestao' || userRole === 'secretaria') && (
           <button 
             onClick={() => setIsNotifyModalOpen(true)}
+            className="transition-all duration-200 md:hover:translate-y-[-1.5px] md:hover:shadow-md"
             style={{
               padding: '0.65rem 1.25rem',
               fontSize: '0.9rem',
@@ -257,11 +258,8 @@ export default function Documentos() {
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              boxShadow: 'var(--shadow-sm)',
-              transition: 'var(--transition-smooth)'
+              boxShadow: 'var(--shadow-sm)'
             }}
-            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1.5px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-            onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
           >
             <Bell size={16} /> Enviar notificação
           </button>
@@ -274,8 +272,7 @@ export default function Documentos() {
         border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: 'var(--radius-lg)',
         padding: '2rem',
-        boxShadow: 'var(--shadow-sm)',
-        animation: 'fadeIn 0.3s ease-out'
+        boxShadow: 'var(--shadow-sm)'
       }}>
         {!accessToken ? (
           /* Estado A: Não Autenticado */
@@ -291,7 +288,7 @@ export default function Documentos() {
               </p>
             </div>
             <button 
-              className="btn" 
+              className="btn transition-all duration-200 md:hover:bg-[#f8f9fa] md:hover:translate-y-[-1px]" 
               onClick={loginGoogle} 
               style={{ 
                 padding: '0.75rem 1.5rem', 
@@ -305,11 +302,8 @@ export default function Documentos() {
                 boxShadow: '0 1px 3px rgba(60,64,67, 0.3), 0 4px 8px 3px rgba(60,64,67, 0.15)',
                 cursor: 'pointer',
                 borderRadius: '24px',
-                fontSize: '0.9rem',
-                transition: 'background-color 0.2s, box-shadow 0.2s, transform 0.2s'
+                fontSize: '0.9rem'
               }}
-              onMouseOver={e => { e.currentTarget.style.backgroundColor = '#f8f9fa'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseOut={e => { e.currentTarget.style.backgroundColor = '#ffffff'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="" style={{ height: '18px' }} />
               Conectar Conta Google
@@ -359,7 +353,7 @@ export default function Documentos() {
                   <button 
                     onClick={handleRefresh}
                     disabled={loading}
-                    className="btn"
+                    className="btn transition-all duration-200 md:hover:bg-white/30"
                     style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
@@ -371,14 +365,12 @@ export default function Documentos() {
                       boxShadow: 'none',
                       cursor: 'pointer'
                     }}
-                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'; }}
-                    onMouseOut={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; }}
                   >
                     <RefreshCw size={14} className={loading ? 'spin-animation' : ''} /> Recarregar
                   </button>
                   <button 
                     onClick={() => window.open(activeFolder.url || `https://drive.google.com/drive/folders/${activeFolder.id}?usp=sharing`, '_blank', 'noopener')}
-                    className="btn"
+                    className="btn transition-all duration-200 md:hover:bg-white/30"
                     style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
@@ -390,8 +382,6 @@ export default function Documentos() {
                       boxShadow: 'none',
                       cursor: 'pointer'
                     }}
-                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'; }}
-                    onMouseOut={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; }}
                   >
                     <ExternalLink size={16} /> Abrir no Drive
                   </button>
@@ -419,9 +409,8 @@ export default function Documentos() {
                     setActiveFolder(rootFolder);
                     setSearchTerm('');
                   }}
-                  style={{ cursor: 'pointer', fontWeight: navStack.length === 0 ? 700 : 500 }}
-                  onMouseOver={e => e.currentTarget.style.textDecoration = 'underline'}
-                  onMouseOut={e => e.currentTarget.style.textDecoration = 'none'}
+                  className="cursor-pointer hover:underline"
+                  style={{ fontWeight: navStack.length === 0 ? 700 : 500 }}
                 >
                   Documentos (Raiz)
                 </span>
@@ -434,12 +423,10 @@ export default function Documentos() {
                         setActiveFolder({ id: folder.id, name: folder.name });
                         setSearchTerm('');
                       }}
+                      className="cursor-pointer hover:underline"
                       style={{ 
-                        cursor: 'pointer', 
                         fontWeight: index === navStack.length - 1 ? 700 : 500 
                       }}
-                      onMouseOver={e => e.currentTarget.style.textDecoration = 'underline'}
-                      onMouseOut={e => e.currentTarget.style.textDecoration = 'none'}
                     >
                       {folder.name}
                     </span>
@@ -577,20 +564,7 @@ export default function Documentos() {
                     <div 
                       key={item.id}
                       onClick={() => handleItemClick(item)}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'space-between', 
-                        padding: '0.85rem 1.25rem', 
-                        background: '#ffffff', 
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'var(--transition-smooth)',
-                        cursor: 'pointer'
-                      }}
-                      onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1.5px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-                      onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                      className="flex items-center justify-between p-[0.85rem_1.25rem] bg-white rounded-[10px] border border-white/10 shadow-sm md:hover:translate-y-[-1.5px] md:hover:shadow-md transition-all duration-200 cursor-pointer"
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden', flex: 1 }}>
                         <div style={{ 

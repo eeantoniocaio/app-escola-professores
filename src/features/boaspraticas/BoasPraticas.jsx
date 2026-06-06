@@ -109,7 +109,7 @@ export default function BoasPraticas() {
 
 
   return (
-    <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+    <div>
       
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -134,16 +134,14 @@ export default function BoasPraticas() {
             setPraticaToEdit(null); 
             setShowFormModal(true); 
           }}
+          className="transition-transform duration-200 md:hover:translate-y-[-2px]"
           style={{
             background: 'linear-gradient(135deg, #0ea5e9, #3b82f6)',
             color: 'white', border: 'none', borderRadius: '12px',
             padding: '0.75rem 1.5rem', fontWeight: 700, fontSize: '0.95rem',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
-            boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
-            transition: 'transform 0.2s'
+            boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)'
           }}
-          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
           <span style={{ fontSize: '1.1rem' }}>+</span> Novo
         </button>
@@ -383,7 +381,7 @@ export default function BoasPraticas() {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
           {filteredPraticas.map(p => {
             const canModify = userRole === 'gestao' || p.professor === userName;
             
@@ -394,34 +392,13 @@ export default function BoasPraticas() {
                   if (e.target.closest('button') || e.target.closest('a')) return;
                   setSelectedPraticaForDetail(p);
                 }}
-                style={{ 
-                  background: 'white', 
-                  borderRadius: '14px', 
-                  padding: '1.5rem', 
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)', 
-                  border: '1px solid #f1f5f9', 
-                  position: 'relative',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  minHeight: '160px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.08)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
-                }}
+                className="bg-white rounded-[14px] p-6 border border-[#f1f5f9] shadow-sm cursor-pointer transition-all duration-200 md:hover:-translate-y-0.5 md:hover:shadow-md flex flex-col justify-between min-h-[160px]"
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{p.serie}</span>
-                      {p.habilidade && <span style={{ background: '#fef08a', color: '#854d0e', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{p.habilidade}</span>}
+                       <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{p.serie}</span>
+                       {p.habilidade && <span style={{ background: '#fef08a', color: '#854d0e', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{p.habilidade}</span>}
                     </div>
 
                     {/* Action Buttons */}
