@@ -121,6 +121,7 @@ function getStudentsAndAttendance(ss, sheetName, dateStr) {
   }
   
   const studentsList = [];
+  let hasMarkings = false;
   
   for (let r = headerIdx + 1; r < values.length; r++) {
     const row = values[r];
@@ -132,8 +133,12 @@ function getStudentsAndAttendance(ss, sheetName, dateStr) {
     
     // Status do aluno na data selecionada
     let rawStatus = "";
-    if (dateColIdx !== -1 && dateColIdx < row.length) {
+    if (dateColIdx !== -1 && dateColIdx < row.length && row[dateColIdx] !== undefined && row[dateColIdx] !== null) {
       rawStatus = String(row[dateColIdx]).trim();
+    }
+    
+    if (rawStatus !== "" && rawStatus.toLowerCase() !== "null" && rawStatus.toLowerCase() !== "undefined") {
+      hasMarkings = true;
     }
     
     // Mapeamento do status: Faltas são 'F', Atestados são 'A', Transferidos são 'T', Presenças são 'C' ou vazio
@@ -153,7 +158,8 @@ function getStudentsAndAttendance(ss, sheetName, dateStr) {
   return responseJson({
     status: "success",
     students: studentsList,
-    dateColumnExists: (dateColIdx !== -1)
+    dateColumnExists: (dateColIdx !== -1),
+    hasMarkings: hasMarkings
   });
 }
 
