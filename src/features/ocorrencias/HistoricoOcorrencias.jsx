@@ -48,6 +48,8 @@ export default function HistoricoOcorrencias() {
   const [selectedOcorrencia, setSelectedOcorrencia] = useState(null)
   const [intervencaoText, setIntervencaoText] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('Em aberto')
+  const [descricaoText, setDescricaoText] = useState('')
+  const [acaoProfessorText, setAcaoProfessorText] = useState('')
   const [savingIntervencao, setSavingIntervencao] = useState(false)
 
   // Modal flow
@@ -294,6 +296,8 @@ export default function HistoricoOcorrencias() {
                       setSelectedOcorrencia(o)
                       setIntervencaoText(o.intervencao_gestao || '')
                       setSelectedStatus(o.status || 'Em aberto')
+                      setDescricaoText(o.descricao || '')
+                      setAcaoProfessorText(o.acao_professor || '')
                     }
                   }}
                   style={{
@@ -431,11 +435,27 @@ export default function HistoricoOcorrencias() {
                     ))}
                   </div>
                 )}
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}><strong>Descrição:</strong> {selectedOcorrencia.descricao}</div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--color-success)' }}><strong>Ação do Prof:</strong> {selectedOcorrencia.acao_professor}</div>
-              </div>
+                </div>
 
               <div>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Descrição da Ocorrência (Professor)</label>
+                <textarea
+                  placeholder="Relato escrito pelo professor..."
+                  value={descricaoText}
+                  onChange={e => setDescricaoText(e.target.value)}
+                  rows={4}
+                  style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)', marginBottom: '1.25rem' }}
+                />
+
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Intervenção Pedagógica (Professor)</label>
+                <textarea
+                  placeholder="Ação pedagógica tomada em sala de aula..."
+                  value={acaoProfessorText}
+                  onChange={e => setAcaoProfessorText(e.target.value)}
+                  rows={3}
+                  style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)', marginBottom: '1.25rem' }}
+                />
+
                 <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Status</label>
                 <select
                   value={selectedStatus}
@@ -469,6 +489,8 @@ export default function HistoricoOcorrencias() {
                 onClick={async () => {
                   setSavingIntervencao(true)
                   await updateOcorrencia(selectedOcorrencia.id, { 
+                    descricao: descricaoText.trim(),
+                    acao_professor: acaoProfessorText.trim(),
                     intervencao_gestao: intervencaoText.trim(), 
                     status: selectedStatus,
                     gestor: userName

@@ -374,11 +374,11 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
                 </button>
               )}
               {currentStep < 3 ? (
-                <button className="btn btn-primary" type="button" onClick={handleNextStep} style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <button key="btn-next" className="btn btn-primary" type="button" onClick={handleNextStep} style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   Próximo <ChevronRight size={18} />
                 </button>
               ) : (
-                <button className="btn btn-primary" type="submit" form="ocorrencia-form" disabled={saving} style={{ padding: '0.75rem 1.25rem', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button key="btn-submit" className="btn btn-primary" type="submit" form="ocorrencia-form" disabled={saving} style={{ padding: '0.75rem 1.25rem', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {saving ? 'Salvando...' : <><Check size={18} /> {ocorrenciaToEdit ? 'Salvar Alterações' : 'Registrar Ocorrência'}</>}
                 </button>
               )}
