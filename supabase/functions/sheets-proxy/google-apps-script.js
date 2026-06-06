@@ -136,10 +136,10 @@ function getStudentsAndAttendance(ss, sheetName, dateStr) {
       rawStatus = String(row[dateColIdx]).trim();
     }
     
-    // Mapeamento do status: Faltas são 'F', Atrasos são 'A', Transferidos são 'T', Presenças são '.' ou vazio
+    // Mapeamento do status: Faltas são 'F', Atestados são 'A', Transferidos são 'T', Presenças são 'C' ou vazio
     let status = "Presente";
     if (rawStatus === "F" || rawStatus === "f") status = "Falta";
-    else if (rawStatus === "A" || rawStatus === "a") status = "Atraso";
+    else if (rawStatus === "A" || rawStatus === "a") status = "Atestado";
     else if (rawStatus === "T" || rawStatus === "t") status = "Transferido";
     
     studentsList.push({
@@ -223,9 +223,9 @@ function saveAttendance(ss, sheetName, dateStr, records) {
     
     if (key in recordMap) {
       const status = recordMap[key];
-      let charStatus = "."; // Padrão: Presente
+      let charStatus = "C"; // Padrão: Presente (C)
       if (status === "Falta") charStatus = "F";
-      else if (status === "Atraso") charStatus = "A";
+      else if (status === "Atestado") charStatus = "A";
       else if (status === "Transferido") charStatus = "T";
       
       sheet.getRange(r + 1, dateColIdx + 1).setValue(charStatus);

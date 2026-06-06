@@ -38,6 +38,18 @@ export const ChamadaProvider = ({ children }) => {
                     ...prev,
                     [key]: data.students
                 }));
+
+                // Se a coluna de data ainda não existir na planilha, inicializa em lote com "C" (Presente) para todos
+                if (data.dateColumnExists === false && data.students.length > 0) {
+                    const defaultRecords = data.students.map(s => ({
+                        ra: s.ra,
+                        dig: s.dig,
+                        status: "Presente"
+                    }));
+                    saveClassAttendanceData(className, date, defaultRecords).catch(err => {
+                        console.error(`Erro ao inicializar chamada com padrão 'C' para ${className} em ${date}:`, err);
+                    });
+                }
             }
         } catch (error) {
             console.error(`Erro ao carregar chamada de ${className} na data ${date}:`, error);

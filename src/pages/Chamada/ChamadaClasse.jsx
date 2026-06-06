@@ -198,9 +198,9 @@ export default function ChamadaClasse() {
                                             F
                                         </button>
 
-                                        {/* Atraso (A) */}
+                                        {/* Atestado (A) */}
                                         <button
-                                            onClick={() => handleStatusChange(student, "Atraso")}
+                                            onClick={() => handleStatusChange(student, "Atestado")}
                                             disabled={isSaving}
                                             style={{
                                                 width: '36px',
@@ -214,11 +214,11 @@ export default function ChamadaClasse() {
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                backgroundColor: currentStatus === "Atraso" ? 'var(--color-warning-bg, #fffbef)' : 'white',
-                                                color: currentStatus === "Atraso" ? 'var(--color-warning, #f59e0b)' : '#94a3b8',
-                                                borderColor: currentStatus === "Atraso" ? 'rgba(245, 158, 11, 0.2)' : '#e2e8f0'
+                                                backgroundColor: currentStatus === "Atestado" ? 'var(--color-warning-bg, #fffbef)' : 'white',
+                                                color: currentStatus === "Atestado" ? 'var(--color-warning, #f59e0b)' : '#94a3b8',
+                                                borderColor: currentStatus === "Atestado" ? 'rgba(245, 158, 11, 0.2)' : '#e2e8f0'
                                             }}
-                                            title="Marcar Atraso"
+                                            title="Marcar Atestado"
                                         >
                                             A
                                         </button>
