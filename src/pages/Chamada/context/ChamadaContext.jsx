@@ -39,8 +39,9 @@ export const ChamadaProvider = ({ children }) => {
                     [key]: data.students
                 }));
 
-                // Se a coluna de data ainda não existir na planilha, inicializa em lote com "C" (Presente) para todos
-                if (data.dateColumnExists === false && data.students.length > 0) {
+                // Se a coluna de data ainda não existir na planilha OU se não houver nenhuma marcação (coluna vazia),
+                // inicializa em lote com "C" (Presente) para todos
+                if ((data.dateColumnExists === false || data.hasMarkings === false) && data.students.length > 0) {
                     const defaultRecords = data.students.map(s => ({
                         ra: s.ra,
                         dig: s.dig,
