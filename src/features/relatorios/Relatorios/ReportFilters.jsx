@@ -24,19 +24,8 @@ export default function ReportFilters({
   const wrapperStyle = { flex: '1 1 180px' };
 
   return (
-    <div className="controls-panel" style={{ 
-      marginBottom: '2rem', 
-      display: 'flex', 
-      flexWrap: 'wrap', 
-      gap: '1.25rem', 
-      alignItems: 'flex-end',
-      background: '#fff',
-      padding: '1.5rem',
-      borderRadius: '12px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-      border: '1px solid var(--border-light)'
-    }}>
-      <div style={wrapperStyle}>
+    <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-4 p-6 bg-white border border-gray-200 rounded-[12px] shadow-sm mb-8">
+      <div className="flex-1 min-w-[140px]">
         <label style={labelStyle}>Professor(a)</label>
         <select className="select-filter" style={{ width: '100%' }} value={filterTeacher} onChange={e => setFilterTeacher(e.target.value)}>
           <option value="todos">Todos</option>
@@ -44,7 +33,7 @@ export default function ReportFilters({
         </select>
       </div>
 
-      <div style={wrapperStyle}>
+      <div className="flex-1 min-w-[140px]">
         <label style={labelStyle}>Tipo</label>
         <select className="select-filter" style={{ width: '100%' }} value={filterTipo} onChange={e => setFilterTipo(e.target.value)}>
           <option value="todos">Todos</option>
@@ -52,12 +41,12 @@ export default function ReportFilters({
         </select>
       </div>
 
-      <div style={wrapperStyle}>
+      <div className="flex-1 min-w-[140px]">
         <label style={labelStyle}>Data do Registro</label>
         <input type="date" className="select-filter" style={{ width: '100%' }} value={filterDate} onChange={e => setFilterDate(e.target.value)} />
       </div>
 
-      <div style={wrapperStyle}>
+      <div className="flex-1 min-w-[140px]">
         <label style={labelStyle}>Evento Vinculado</label>
         <select className="select-filter" style={{ width: '100%' }} value={filterEvent} onChange={e => setFilterEvent(e.target.value)}>
           <option value="todos">Todos</option>
@@ -65,7 +54,7 @@ export default function ReportFilters({
         </select>
       </div>
 
-      <div style={wrapperStyle}>
+      <div className="flex-1 min-w-[140px]">
         <label style={labelStyle}>Solicitante</label>
         <select className="select-filter" style={{ width: '100%' }} value={filterSolicitante} onChange={e => setFilterSolicitante(e.target.value)}>
           <option value="todos">Todos</option>
@@ -73,13 +62,13 @@ export default function ReportFilters({
         </select>
       </div>
 
-      <div style={{ flex: '1 1 140px' }}>
+      <div className="flex-1 min-w-[140px]">
         <label style={labelStyle}>Prazo Limite</label>
         <input type="date" className="select-filter" style={{ width: '100%' }} value={filterPrazoEntrega} onChange={e => setFilterPrazoEntrega(e.target.value)} />
       </div>
 
       {hasActiveFilters && (
-        <button onClick={clearFilters} className="btn btn-secondary" style={{ padding: '0.65rem 1.25rem', height: 'fit-content' }}>
+        <button onClick={clearFilters} className="btn btn-secondary w-full sm:w-auto" style={{ padding: '0.65rem 1.25rem', height: 'fit-content' }}>
           Limpar Filtros
         </button>
       )}

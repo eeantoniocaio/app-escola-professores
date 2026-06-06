@@ -205,10 +205,10 @@ export default function Registros() {
       </div>
 
       {/* Controls Panel (Filters & Add Button) */}
-      <div style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end', justifyContent: 'space-between', backgroundColor: 'var(--bg-card)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flex: 1, alignItems: 'flex-end' }}>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 p-6 bg-white border border-gray-200 rounded-[12px] shadow-sm mb-8">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-4 flex-1">
           {/* Professor filter */}
-          <div style={{ flex: '1 1 180px' }}>
+          <div className="flex-1 min-w-[140px]">
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
               <User size={14} /> Professor(a)
             </label>
@@ -226,7 +226,7 @@ export default function Registros() {
           </div>
 
           {/* Gestor filter */}
-          <div style={{ flex: '1 1 180px' }}>
+          <div className="flex-1 min-w-[140px]">
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
               <Shield size={14} /> Gestor(a)
             </label>
@@ -244,7 +244,7 @@ export default function Registros() {
           </div>
 
           {/* Date filter */}
-          <div style={{ flex: '1 1 150px' }}>
+          <div className="flex-1 min-w-[140px]">
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
               <Calendar size={14} /> Data
             </label>
@@ -258,7 +258,7 @@ export default function Registros() {
           </div>
 
           {/* Tipo filter */}
-          <div style={{ flex: '1 1 180px' }}>
+          <div className="flex-1 min-w-[140px]">
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
               <Tag size={14} /> Tipo
             </label>
@@ -278,7 +278,7 @@ export default function Registros() {
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="btn btn-secondary"
+              className="btn btn-secondary w-full sm:w-auto"
               style={{ padding: '0.6rem 1rem', height: 'fit-content' }}
             >
               Limpar Filtros
@@ -286,8 +286,8 @@ export default function Registros() {
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="btn btn-primary" onClick={openAddModal} style={{ padding: '0.75rem 1.25rem', fontSize: '0.95rem' }}>
+        <div className="w-full md:w-auto flex justify-end">
+          <button className="btn btn-primary w-full md:w-auto" onClick={openAddModal} style={{ padding: '0.75rem 1.25rem', fontSize: '0.95rem' }}>
             <PlusCircle size={18} /> Novo Registro
           </button>
         </div>

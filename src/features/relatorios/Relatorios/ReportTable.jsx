@@ -21,7 +21,7 @@ export default function ReportTable({ rows }) {
 
   return (
     <div style={{ overflowX: 'auto', background: '#fff', borderRadius: '12px', padding: '0.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid var(--border-light)' }} className="print-area">
-      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      <table style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
           <tr>
             <th style={thStyle}>Professor(a)</th>

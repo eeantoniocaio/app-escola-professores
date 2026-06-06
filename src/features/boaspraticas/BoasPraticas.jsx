@@ -395,15 +395,32 @@ export default function BoasPraticas() {
                 className="bg-white rounded-[14px] p-6 border border-[#f1f5f9] shadow-sm cursor-pointer transition-all duration-200 md:hover:-translate-y-0.5 md:hover:shadow-md flex flex-col justify-between min-h-[160px]"
               >
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                       <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{p.serie}</span>
-                       {p.habilidade && <span style={{ background: '#fef08a', color: '#854d0e', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600 }}>{p.habilidade}</span>}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                       <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', padding: '0.2rem 0.7rem', fontSize: '0.75rem', fontWeight: 600, flexShrink: 0 }}>{p.serie}</span>
+                       {p.habilidade && (
+                         <span 
+                           style={{ 
+                             background: '#fef08a', 
+                             color: '#854d0e', 
+                             borderRadius: '12px', 
+                             padding: '0.25rem 0.75rem', 
+                             fontSize: '0.75rem', 
+                             fontWeight: 600,
+                             display: 'inline-block',
+                             maxWidth: '100%',
+                             wordBreak: 'break-word',
+                             whiteSpace: 'normal'
+                           }}
+                         >
+                           {p.habilidade}
+                         </span>
+                       )}
                     </div>
 
                     {/* Action Buttons */}
                     {canModify && (
-                      <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.4rem', flexShrink: 0 }}>
+                      <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleEditPratica(p); }}
                           style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
