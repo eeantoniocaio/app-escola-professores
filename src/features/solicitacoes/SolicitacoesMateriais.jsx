@@ -17,10 +17,16 @@ export default function SolicitacoesMateriais() {
 
   // States for Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [reqNome, setReqNome] = useState('');
+  const [reqNome, setReqNome] = useState(userName || '');
   const [reqData, setReqData] = useState(new Date().toISOString().split('T')[0]);
   const [reqTipo, setReqTipo] = useState('Materiais');
   const [reqPrioridade, setReqPrioridade] = useState('dá pra esperar');
+
+  useEffect(() => {
+    if (userName) {
+      setReqNome(userName);
+    }
+  }, [userName]);
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,7 +98,7 @@ export default function SolicitacoesMateriais() {
 
       showToast('Solicitação cadastrada com sucesso!', 'success');
       setIsModalOpen(false);
-      setReqNome('');
+      setReqNome(userName || '');
       setReqData(new Date().toISOString().split('T')[0]);
       setReqTipo('Materiais');
       setReqPrioridade('dá pra esperar');
@@ -546,14 +552,14 @@ export default function SolicitacoesMateriais() {
               <div className="modal-body-scroll">
                 <div className="form-grid">
                   <div className="form-input-group">
-                    <label htmlFor="req-nome">Nome da Solicitação / Item *</label>
+                    <label htmlFor="req-nome">Nome *</label>
                     <input 
                       type="text" 
                       id="req-nome" 
                       value={reqNome} 
-                      onChange={(e) => setReqNome(e.target.value)}
-                      placeholder="Ex: Papel Sulfite A4, Conserto da Fechadura"
                       className="form-text-input"
+                      disabled
+                      readOnly
                       required
                     />
                   </div>
