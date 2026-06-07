@@ -66,7 +66,7 @@ export default function Home() {
           <span>Acervo</span>
         </button>
 
-        <button className="dashboard-action-card" onClick={() => showToast('Em desenvolvimento', 'info')}>
+        <button className="dashboard-action-card" onClick={() => navigate('/solicitacoes-materiais')}>
           <ClipboardList />
           <span>Solicitação de materiais ou serviços</span>
         </button>
