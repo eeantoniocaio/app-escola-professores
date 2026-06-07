@@ -11,7 +11,13 @@ export default function SolicitacoesMateriais() {
   const { userRole, userName } = useAuth();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('painel'); // 'painel' | 'solicitacoes'
+  const [activeTab, setActiveTab] = useState(userRole === 'gestao' ? 'painel' : 'solicitacoes'); // 'painel' | 'solicitacoes'
+
+  useEffect(() => {
+    if (userRole && userRole !== 'gestao') {
+      setActiveTab('solicitacoes');
+    }
+  }, [userRole]);
   const [loading, setLoading] = useState(true);
   const [solicitacoes, setSolicitacoes] = useState([]);
 
@@ -220,12 +226,14 @@ export default function SolicitacoesMateriais() {
 
       {/* Tabs bar */}
       <div className="tab-container">
-        <button 
-          onClick={() => { setActiveTab('painel'); }}
-          className={`tab-button ${activeTab === 'painel' ? 'active' : ''}`}
-        >
-          Painel
-        </button>
+        {userRole === 'gestao' && (
+          <button 
+            onClick={() => { setActiveTab('painel'); }}
+            className={`tab-button ${activeTab === 'painel' ? 'active' : ''}`}
+          >
+            Painel
+          </button>
+        )}
         <button 
           onClick={() => { setActiveTab('solicitacoes'); }}
           className={`tab-button ${activeTab === 'solicitacoes' ? 'active' : ''}`}
