@@ -21,6 +21,7 @@ export default function SolicitacoesMateriais() {
   const [reqData, setReqData] = useState(new Date().toISOString().split('T')[0]);
   const [reqTipo, setReqTipo] = useState('Materiais');
   const [reqPrioridade, setReqPrioridade] = useState('dá pra esperar');
+  const [reqDescricao, setReqDescricao] = useState('');
 
   useEffect(() => {
     if (userName) {
@@ -75,7 +76,7 @@ export default function SolicitacoesMateriais() {
   // Handle Save Request
   const handleSaveRequest = async (e) => {
     e.preventDefault();
-    if (!reqNome.trim() || !reqData || !reqTipo || !reqPrioridade) {
+    if (!reqNome.trim() || !reqData || !reqTipo || !reqPrioridade || !reqDescricao.trim()) {
       showToast('Preencha todos os campos obrigatórios', 'error');
       return;
     }
@@ -85,6 +86,7 @@ export default function SolicitacoesMateriais() {
       data: reqData,
       tipo: reqTipo,
       prioridade: reqPrioridade,
+      descricao: reqDescricao.trim(),
       status: 'Pendente',
       solicitante: userName || 'Usuário Autenticado'
     };
@@ -102,6 +104,7 @@ export default function SolicitacoesMateriais() {
       setReqData(new Date().toISOString().split('T')[0]);
       setReqTipo('Materiais');
       setReqPrioridade('dá pra esperar');
+      setReqDescricao('');
       fetchSolicitacoes();
     } catch (err) {
       console.error(err);
@@ -465,7 +468,14 @@ export default function SolicitacoesMateriais() {
 
                     return (
                       <tr key={item.id}>
-                        <td style={{ fontWeight: 700 }}>{item.nome}</td>
+                        <td style={{ maxWidth: '250px' }}>
+                          <div style={{ fontWeight: 700 }}>{item.nome}</div>
+                          {item.descricao && (
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.descricao}>
+                              {item.descricao}
+                            </div>
+                          )}
+                        </td>
                         <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                         <td>{item.solicitante}</td>
                         <td>
@@ -560,6 +570,19 @@ export default function SolicitacoesMateriais() {
                       className="form-text-input"
                       disabled
                       readOnly
+                      required
+                    />
+                  </div>
+
+                  <div className="form-input-group">
+                    <label htmlFor="req-descricao">Descrição *</label>
+                    <textarea 
+                      id="req-descricao" 
+                      value={reqDescricao} 
+                      onChange={(e) => setReqDescricao(e.target.value)}
+                      placeholder="Descreva detalhadamente os materiais ou serviços solicitados..."
+                      className="form-textarea-input"
+                      rows={3}
                       required
                     />
                   </div>
