@@ -198,9 +198,9 @@ export default function SolicitacoesMateriais() {
   const donutData = useMemo(() => {
     const total = stats.urgente + stats.esperar + stats.longoPrazo || 1;
     return [
-      { name: 'Urgente', value: stats.urgente, percentage: Math.round((stats.urgente / total) * 100), color: '#DC2626' },
-      { name: 'Dá pra esperar', value: stats.esperar, percentage: Math.round((stats.esperar / total) * 100), color: '#D97706' },
-      { name: 'Longo prazo', value: stats.longoPrazo, percentage: Math.round((stats.longoPrazo / total) * 100), color: '#2563EB' }
+      { name: 'Urgente', value: stats.urgente, percentage: Math.round((stats.urgente / total) * 100), color: '#FF4B4B' },
+      { name: 'Dá pra esperar', value: stats.esperar, percentage: Math.round((stats.esperar / total) * 100), color: '#FF9600' },
+      { name: 'Longo prazo', value: stats.longoPrazo, percentage: Math.round((stats.longoPrazo / total) * 100), color: '#89E219' }
     ];
   }, [stats]);
 
@@ -621,17 +621,41 @@ export default function SolicitacoesMateriais() {
                   </div>
 
                   <div className="form-input-group">
-                    <label htmlFor="req-prioridade">Prioridade *</label>
-                    <select 
-                      id="req-prioridade" 
-                      value={reqPrioridade} 
-                      onChange={(e) => setReqPrioridade(e.target.value)}
-                      className="form-select-input"
-                    >
-                      <option value="urgente">urgente</option>
-                      <option value="dá pra esperar">dá pra esperar</option>
-                      <option value="longo prazo">longo prazo</option>
-                    </select>
+                    <label>Prioridade *</label>
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem' }}>
+                      {[
+                        { value: 'urgente', label: 'urgente', color: '#FF4B4B', bg: '#FFF1F1' },
+                        { value: 'dá pra esperar', label: 'dá pra esperar', color: '#FF9600', bg: '#FFF9F0' },
+                        { value: 'longo prazo', label: 'longo prazo', color: '#89E219', bg: '#F8FFF0' }
+                      ].map((item) => {
+                        const isSelected = reqPrioridade === item.value;
+                        return (
+                          <button
+                            key={item.value}
+                            type="button"
+                            onClick={() => setReqPrioridade(item.value)}
+                            style={{
+                              flex: 1,
+                              padding: '0.65rem 0.5rem',
+                              borderRadius: 'var(--radius-md)',
+                              border: isSelected ? `2px solid ${item.color}` : '1px solid var(--border-light)',
+                              backgroundColor: isSelected ? item.bg : 'var(--bg-card)',
+                              color: isSelected ? item.color : 'var(--text-muted)',
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.02em',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              textAlign: 'center',
+                              boxShadow: isSelected ? 'var(--shadow-sm)' : 'none'
+                            }}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>

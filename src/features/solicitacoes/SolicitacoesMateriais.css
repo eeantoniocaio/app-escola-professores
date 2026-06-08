@@ -117,18 +117,21 @@
 }
 
 .prioridade-urgente {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger);
+  background-color: #FFF1F1;
+  color: #FF4B4B;
+  border: 1px solid #FFC1C1;
 }
 
 .prioridade-esperar {
-  background-color: var(--color-warning-bg);
-  color: var(--color-warning);
+  background-color: #FFF9F0;
+  color: #FF9600;
+  border: 1px solid #FFE4BF;
 }
 
 .prioridade-longo {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
+  background-color: #F8FFF0;
+  color: #89E219;
+  border: 1px solid #E2FCD0;
 }
 
 .tipo-badge {
