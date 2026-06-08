@@ -6,6 +6,36 @@ import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import './PerfilTurma.css';
 
+const coordenadoresMap = {
+  '6ºA': 'DJAIRO APARECIDO ARNANDES',
+  '6ºB': 'VALENTINA TOBIAS DA SILVA',
+  '6ºC': 'LUCIANA CONSTANTINO ATELLA BARBOSA DA SILVA',
+  '7ºA': 'SIMONE PINHEIRO DOS SANTOS HORTA ALDIGHIERI MORAES',
+  '7ºB': 'BRUNO RODRIGUES PEREIRA',
+  '7ºC': 'ANA CLAUDIA SARTORELLI FELIPE',
+  '7ºD': 'GABRIELA DE SOUSA SUMAN',
+  '8ºA': 'HELAINE CRISTINA MARQUES DE OLIVEIRA',
+  '8ºB': 'JULIA NOGUEIRA NASCIMENTO',
+  '8ºC': 'MARIA NEIDE DE OLIVEIRA MOLINARI',
+  '9ºA': 'SANDRA REGINA SIMIONATTO',
+  '9ºB': 'ELI MOMESSO',
+  '9ºC': 'JULIA MANCINI',
+  '9ºD': 'DANIELA KLEINFELDER CANELLA',
+  '1ºA': 'RITA DE CASSIA OLIVEIRA SIMOES',
+  '1ºB': 'ELAINE CRISTINA DOS SANTOS SILVA',
+  '1ºC': 'GRAZIELA BIZON',
+  '2ºA': 'ANGELA CRISTINA LEONELLO MARTINS',
+  '2ºB': 'IVANILDA FINELLI',
+  '3ºA': 'JESSICA TORRETTI DA COSTA',
+  '3ºB': 'PAULA JULIANA DE ASSIS CALIL ITO'
+};
+
+const getTurmaKey = (serie, turma) => {
+  if (!serie || !turma) return '';
+  const num = serie.split(' ')[0]; // e.g. "6º"
+  return `${num}${turma}`;
+};
+
 export default function PerfilTurma() {
   const navigate = useNavigate();
   const { userRole, userName } = useAuth();
@@ -18,7 +48,7 @@ export default function PerfilTurma() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reqSerie, setReqSerie] = useState('6º Ano');
   const [reqTurma, setReqTurma] = useState('A');
-  const [reqProfessor, setReqProfessor] = useState(userName || '');
+  const [reqProfessor, setReqProfessor] = useState('');
   const [reqPontos, setReqPontos] = useState('');
   const [reqAcoes, setReqAcoes] = useState('');
 
@@ -31,12 +61,44 @@ export default function PerfilTurma() {
   const [selectedPerfil, setSelectedPerfil] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  // Sync profile professor name when loaded
+  // Series and Class options
+  const seriesOptions = ['1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano', '1º E.M.', '2º E.M.', '3º E.M.'];
+  const turmasOptions = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+  // Default series and class to coordinator's class on opening modal
   useEffect(() => {
-    if (userName) {
-      setReqProfessor(userName);
+    if (isModalOpen && userRole === 'professor' && userName) {
+      const coordinatedClass = Object.keys(coordenadoresMap).find(
+        key => coordenadoresMap[key].toLowerCase() === userName.toLowerCase()
+      );
+      if (coordinatedClass) {
+        const num = coordinatedClass.slice(0, 2); // e.g. "6º" or "1º"
+        const letter = coordinatedClass.slice(2); // e.g. "B"
+        const matchedSerie = seriesOptions.find(opt => opt.startsWith(num));
+        if (matchedSerie) {
+          setReqSerie(matchedSerie);
+        }
+        setReqTurma(letter);
+      }
     }
-  }, [userName]);
+  }, [isModalOpen, userRole, userName]);
+
+  // Automatically select the coordinator professor when class changes
+  useEffect(() => {
+    if (isModalOpen) {
+      const key = getTurmaKey(reqSerie, reqTurma);
+      const coord = coordenadoresMap[key] || '';
+      setReqProfessor(coord);
+    }
+  }, [reqSerie, reqTurma, isModalOpen]);
+
+  // Check if current user is authorized to save
+  const isAuthorized = useMemo(() => {
+    if (userRole === 'gestao') return true;
+    const key = getTurmaKey(reqSerie, reqTurma);
+    const coordinator = coordenadoresMap[key];
+    return userName && coordinator && coordinator.toLowerCase() === userName.toLowerCase();
+  }, [userRole, reqSerie, reqTurma, userName]);
 
   const fetchPerfis = async () => {
     setLoading(true);
@@ -81,6 +143,16 @@ export default function PerfilTurma() {
     if (!reqSerie || !reqTurma || !reqProfessor.trim() || !reqPontos.trim() || !reqAcoes.trim()) {
       showToast('Preencha todos os campos obrigatórios', 'error');
       return;
+    }
+
+    // Double-check authorization
+    if (userRole !== 'gestao') {
+      const key = getTurmaKey(reqSerie, reqTurma);
+      const coordinator = coordenadoresMap[key];
+      if (!userName || !coordinator || coordinator.toLowerCase() !== userName.toLowerCase()) {
+        showToast('Você não tem autorização para preencher o perfil desta turma.', 'error');
+        return;
+      }
     }
 
     const payload = {
@@ -142,9 +214,7 @@ export default function PerfilTurma() {
     });
   }, [perfis, searchQuery, filterSerie, filterTurma]);
 
-  // Series and Class options
-  const seriesOptions = ['1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano', '1º E.M.', '2º E.M.', '3º E.M.'];
-  const turmasOptions = ['A', 'B', 'C', 'D', 'E', 'F'];
+
 
   return (
     <div className="perfil-turma-container">
@@ -311,6 +381,12 @@ export default function PerfilTurma() {
                     />
                   </div>
 
+                  {!isAuthorized && (
+                    <div className="form-group-full" style={{ padding: '0.75rem 1rem', backgroundColor: '#FDF2F2', color: '#DE350B', borderRadius: 'var(--radius-md)', fontSize: '0.88rem', fontWeight: 600, border: '1px solid #F8B4B4', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>⚠️ Apenas o(a) professor(a) coordenador(a) <strong>{coordenadoresMap[getTurmaKey(reqSerie, reqTurma)] || 'responsável'}</strong> tem autorização para preencher o perfil desta turma.</span>
+                    </div>
+                  )}
+
                   <div className="form-input-group form-group-full">
                     <label htmlFor="req-pontos">Pontos importantes perfil da sala *</label>
                     <textarea 
@@ -364,7 +440,15 @@ export default function PerfilTurma() {
                 <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  disabled={!isAuthorized}
+                  style={{ 
+                    opacity: isAuthorized ? 1 : 0.6, 
+                    cursor: isAuthorized ? 'pointer' : 'not-allowed' 
+                  }}
+                >
                   Gravar Perfil
                 </button>
               </div>
