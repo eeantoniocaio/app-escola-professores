@@ -92,15 +92,15 @@ export default function Eventos() {
                     boxShadow: 'var(--shadow-sm)',
                     transition: 'var(--transition-smooth)',
                     opacity: ev.finalizado ? 0.85 : 1,
-                    cursor: 'pointer',
+                    cursor: userRole === 'professor' ? 'default' : 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between'
                   }}
-                  onClick={(e) => handleCardClick(e, ev)}
-                  onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
-                  title="Clique para ver detalhes"
+                  onClick={userRole === 'professor' ? null : (e) => handleCardClick(e, ev)}
+                  onMouseOver={(e) => { if (userRole !== 'professor') { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; } }}
+                  onMouseOut={(e) => { if (userRole !== 'professor') { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; } }}
+                  title={userRole === 'professor' ? '' : 'Clique para ver detalhes'}
                 >
                   <div style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
