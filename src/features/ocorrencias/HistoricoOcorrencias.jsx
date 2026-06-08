@@ -51,6 +51,7 @@ export default function HistoricoOcorrencias() {
   const [descricaoText, setDescricaoText] = useState('')
   const [acaoProfessorText, setAcaoProfessorText] = useState('')
   const [savingIntervencao, setSavingIntervencao] = useState(false)
+  const [isEditingIntervencao, setIsEditingIntervencao] = useState(false)
 
   // Modal flow
   const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
@@ -298,6 +299,7 @@ export default function HistoricoOcorrencias() {
                       setSelectedStatus(o.status || 'Em aberto')
                       setDescricaoText(o.descricao || '')
                       setAcaoProfessorText(o.acao_professor || '')
+                      setIsEditingIntervencao(false)
                     }
                   }}
                   style={{
@@ -373,7 +375,18 @@ export default function HistoricoOcorrencias() {
                     <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                       <button
                         className="btn-icon edit"
-                        onClick={() => handleEditOcorrencia(o)}
+                        onClick={() => {
+                          if (isGestao) {
+                            setSelectedOcorrencia(o)
+                            setIntervencaoText(o.intervencao_gestao || '')
+                            setSelectedStatus(o.status || 'Em aberto')
+                            setDescricaoText(o.descricao || '')
+                            setAcaoProfessorText(o.acao_professor || '')
+                            setIsEditingIntervencao(true)
+                          } else {
+                            handleEditOcorrencia(o)
+                          }
+                        }}
                         title="Editar"
                         style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', padding: '0.5rem', transition: 'var(--transition-fast)' }}
                       >
@@ -409,9 +422,21 @@ export default function HistoricoOcorrencias() {
             <div className="modal-header" style={{ padding: '1.5rem 2rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid var(--border-light)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--color-primary)' }}>
                 <Shield size={24} />
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-main)' }}>Intervenção da Gestão</h3>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-main)' }}>{isEditingIntervencao ? 'Intervenção da Gestão (Edição)' : 'Intervenção da Gestão'}</h3>
               </div>
-              <button className="btn-icon" onClick={() => setSelectedOcorrencia(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={24} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {!isEditingIntervencao && (
+                  <button 
+                    className="btn-icon" 
+                    onClick={() => setIsEditingIntervencao(true)} 
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)' }}
+                    title="Editar Intervenção"
+                  >
+                    <Pencil size={20} />
+                  </button>
+                )}
+                <button className="btn-icon" onClick={() => setSelectedOcorrencia(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={24} /></button>
+              </div>
             </div>
             
             <div className="modal-body" style={{ overflowY: 'auto', padding: '1.5rem 2rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -439,68 +464,100 @@ export default function HistoricoOcorrencias() {
 
               <div>
                 <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Descrição da Ocorrência (Professor)</label>
-                <textarea
-                  placeholder="Relato escrito pelo professor..."
-                  value={descricaoText}
-                  onChange={e => setDescricaoText(e.target.value)}
-                  rows={4}
-                  style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)', marginBottom: '1.25rem' }}
-                />
+                {isEditingIntervencao ? (
+                  <textarea
+                    placeholder="Relato escrito pelo professor..."
+                    value={descricaoText}
+                    onChange={e => setDescricaoText(e.target.value)}
+                    rows={4}
+                    style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)', marginBottom: '1.25rem' }}
+                  />
+                ) : (
+                  <div style={{ minHeight: '40px', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', backgroundColor: 'var(--bg-secondary)', marginBottom: '1.25rem', whiteSpace: 'pre-wrap' }}>
+                    {descricaoText || 'Nenhuma descrição fornecida.'}
+                  </div>
+                )}
 
                 <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Intervenção Pedagógica (Professor)</label>
-                <textarea
-                  placeholder="Ação pedagógica tomada em sala de aula..."
-                  value={acaoProfessorText}
-                  onChange={e => setAcaoProfessorText(e.target.value)}
-                  rows={3}
-                  style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)', marginBottom: '1.25rem' }}
-                />
+                {isEditingIntervencao ? (
+                  <textarea
+                    placeholder="Ação pedagógica tomada em sala de aula..."
+                    value={acaoProfessorText}
+                    onChange={e => setAcaoProfessorText(e.target.value)}
+                    rows={3}
+                    style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)', marginBottom: '1.25rem' }}
+                  />
+                ) : (
+                  <div style={{ minHeight: '40px', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', backgroundColor: 'var(--bg-secondary)', marginBottom: '1.25rem', whiteSpace: 'pre-wrap' }}>
+                    {acaoProfessorText || 'Nenhuma intervenção registrada.'}
+                  </div>
+                )}
 
                 <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Status</label>
-                <select
-                  value={selectedStatus}
-                  onChange={e => setSelectedStatus(e.target.value)}
-                  style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', marginBottom: '1.25rem', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)' }}
-                >
-                  <option value="Em aberto">Em aberto</option>
-                  <option value="Em andamento">Em andamento</option>
-                  <option value="Concluída">Concluída</option>
-                </select>
+                {isEditingIntervencao ? (
+                  <select
+                    value={selectedStatus}
+                    onChange={e => setSelectedStatus(e.target.value)}
+                    style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', marginBottom: '1.25rem', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)' }}
+                  >
+                    <option value="Em aberto">Em aberto</option>
+                    <option value="Em andamento">Em andamento</option>
+                    <option value="Concluída">Concluída</option>
+                  </select>
+                ) : (
+                  <div style={{ minHeight: '40px', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', backgroundColor: 'var(--bg-secondary)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700 }}>{selectedStatus}</span>
+                  </div>
+                )}
 
                 <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Intervenção da Gestão</label>
-                <textarea
-                  placeholder="Descreva as ações ou observações da gestão sobre esta ocorrência..."
-                  value={intervencaoText}
-                  onChange={e => setIntervencaoText(e.target.value)}
-                  rows={5}
-                  style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)' }}
-                />
+                {isEditingIntervencao ? (
+                  <textarea
+                    placeholder="Descreva as ações ou observações da gestão sobre esta ocorrência..."
+                    value={intervencaoText}
+                    onChange={e => setIntervencaoText(e.target.value)}
+                    rows={5}
+                    style={{ width: '100%', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', backgroundColor: 'var(--bg-card)' }}
+                  />
+                ) : (
+                  <div style={{ minHeight: '60px', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.95rem', backgroundColor: 'var(--bg-secondary)', whiteSpace: 'pre-wrap' }}>
+                    {intervencaoText || 'Nenhuma intervenção registrada.'}
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="modal-footer" style={{ padding: '1.25rem 2rem', display: 'flex', gap: '0.75rem', flexShrink: 0, borderTop: '1px solid var(--border-light)', backgroundColor: 'var(--bg-secondary)', borderBottomLeftRadius: 'var(--radius-md)', borderBottomRightRadius: 'var(--radius-md)' }}>
-              <button className="btn btn-secondary" type="button" onClick={() => setSelectedOcorrencia(null)} style={{ flex: 1, padding: '0.75rem' }}>
-                Cancelar
-              </button>
-              <button 
-                className="btn btn-primary"
-                type="button" 
-                disabled={savingIntervencao}
-                onClick={async () => {
-                  setSavingIntervencao(true)
-                  await updateOcorrencia(selectedOcorrencia.id, { 
-                    descricao: descricaoText.trim(),
-                    acao_professor: acaoProfessorText.trim(),
-                    intervencao_gestao: intervencaoText.trim(), 
-                    status: selectedStatus,
-                    gestor: userName
-                  })
-                  setSavingIntervencao(false)
-                  setSelectedOcorrencia(null)
-                }}
-                style={{ flex: 2, padding: '0.75rem', opacity: savingIntervencao ? 0.7 : 1, display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                {savingIntervencao ? 'Salvando...' : <><Check size={18} /> Salvar Intervenção</>}
-              </button>
+              {isEditingIntervencao ? (
+                <>
+                  <button className="btn btn-secondary" type="button" onClick={() => setSelectedOcorrencia(null)} style={{ flex: 1, padding: '0.75rem' }}>
+                    Cancelar
+                  </button>
+                  <button 
+                    className="btn btn-primary"
+                    type="button" 
+                    disabled={savingIntervencao}
+                    onClick={async () => {
+                      setSavingIntervencao(true)
+                      await updateOcorrencia(selectedOcorrencia.id, { 
+                        descricao: descricaoText.trim(),
+                        acao_professor: acaoProfessorText.trim(),
+                        intervencao_gestao: intervencaoText.trim(), 
+                        status: selectedStatus,
+                        gestor: userName
+                      })
+                      setSavingIntervencao(false)
+                      setSelectedOcorrencia(null)
+                    }}
+                    style={{ flex: 2, padding: '0.75rem', opacity: savingIntervencao ? 0.7 : 1, display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                    {savingIntervencao ? 'Salvando...' : <><Check size={18} /> Salvar Intervenção</>}
+                  </button>
+                </>
+              ) : (
+                <button className="btn btn-secondary" type="button" onClick={() => setSelectedOcorrencia(null)} style={{ flex: 1, padding: '0.75rem' }}>
+                  Fechar
+                </button>
+              )}
             </div>
           </div>
         </div>
