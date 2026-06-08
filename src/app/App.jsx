@@ -22,6 +22,7 @@ const BoasPraticas = React.lazy(() => import('../features/boaspraticas/BoasPrati
 const Documentos = React.lazy(() => import('../features/documentos/Documentos'));
 const Equipamentos = React.lazy(() => import('../features/equipamentos/Equipamentos'));
 const SolicitacoesMateriais = React.lazy(() => import('../features/solicitacoes/SolicitacoesMateriais'));
+const PerfilTurma = React.lazy(() => import('../features/turmas/PerfilTurma'));
 const ChamadaLayout = React.lazy(() => import('../pages/Chamada/ChamadaLayout'));
 const ChamadaHome = React.lazy(() => import('../pages/Chamada/ChamadaHome'));
 const ChamadaClasse = React.lazy(() => import('../pages/Chamada/ChamadaClasse'));
@@ -62,6 +63,7 @@ function AppRoutes() {
             </Route>
             <Route path="equipamentos" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'gestao' || userRole === 'professor') ? <Equipamentos /> : <Navigate to="/turmas" replace />} />
             <Route path="solicitacoes-materiais" element={<SolicitacoesMateriais />} />
+            <Route path="perfil-turma" element={(userRole === 'gestao' || userRole === 'professor') ? <PerfilTurma /> : <Navigate to="/" replace />} />
             <Route path="relatorios" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Relatorios />} />
             <Route path="boas-praticas" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <BoasPraticas />} />
           </Route>

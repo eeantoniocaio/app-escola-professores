@@ -72,7 +72,7 @@ export default function Home() {
         </button>
 
         {(userRole === 'gestao' || userRole === 'professor') && (
-          <button className="dashboard-action-card" onClick={() => showToast('Funcionalidade em desenvolvimento', 'info')}>
+          <button className="dashboard-action-card" onClick={() => navigate('/perfil-turma')}>
             <UserCheck />
             <span>Perfil da Turma</span>
           </button>
