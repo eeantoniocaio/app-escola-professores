@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 
-export default function EventDetailModal({ event, records, professores, onClose, onSave }) {
+export default function EventDetailModal({ event, records, professores, onClose, onSave, userRole }) {
   // Memoize expensive computations so they don't rerun on every re-render
   const eventRecords = useMemo(() => records.filter(r => r.eventId === event.id), [records, event.id])
   const recordTeachers = useMemo(() => eventRecords.map(r => r.teacher), [eventRecords])
@@ -113,84 +113,117 @@ export default function EventDetailModal({ event, records, professores, onClose,
           </div>
 
           {/* Late Delivery Multi-select */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontFamily: 'Outfit',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              color: 'var(--text-main)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              marginBottom: '0.65rem'
-            }}>
-              ⚠️ Entregou fora do prazo
-            </label>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
-              Selecione os professores que cumpriram este evento com atraso.
-            </p>
+          {userRole !== 'professor' ? (
+            <div>
+              <label style={{
+                display: 'block',
+                fontFamily: 'Outfit',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                color: 'var(--text-main)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                marginBottom: '0.65rem'
+              }}>
+                ⚠️ Entregou fora do prazo
+              </label>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                Selecione os professores que cumpriram este evento com atraso.
+              </p>
 
-            <div className="teacher-checklist">
-              {teacherOptions.map(teacher => {
-                const isSelected = lateSet.has(teacher)
-                return (
-                  <div
-                    key={teacher}
-                    className={`teacher-check-item ${isSelected ? 'selected' : ''}`}
-                    onClick={() => toggleTeacher(teacher)}
-                    role="checkbox"
-                    aria-checked={isSelected}
-                    tabIndex={0}
-                    onKeyDown={e => { if (e.key === ' ') { e.preventDefault(); toggleTeacher(teacher) } }}
-                  >
-                    <div className={`teacher-checkbox ${isSelected ? 'checked' : ''}`}>
+              <div className="teacher-checklist">
+                {teacherOptions.map(teacher => {
+                  const isSelected = lateSet.has(teacher)
+                  return (
+                    <div
+                      key={teacher}
+                      className={`teacher-check-item ${isSelected ? 'selected' : ''}`}
+                      onClick={() => toggleTeacher(teacher)}
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      tabIndex={0}
+                      onKeyDown={e => { if (e.key === ' ') { e.preventDefault(); toggleTeacher(teacher) } }}
+                    >
+                      <div className={`teacher-checkbox ${isSelected ? 'checked' : ''}`}>
+                        {isSelected && (
+                          <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="2 7 5.5 10.5 12 3" />
+                          </svg>
+                        )}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>
+                          {teacher}
+                        </span>
+                      </div>
                       {isSelected && (
-                        <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="2 7 5.5 10.5 12 3" />
-                        </svg>
+                        <span style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '20px',
+                          background: 'var(--pastel-pink)',
+                          color: 'var(--pastel-pink-dark)',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          Fora do prazo
+                        </span>
                       )}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                        {teacher}
-                      </span>
-                    </div>
-                    {isSelected && (
-                      <span style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '20px',
-                        background: 'var(--pastel-pink)',
-                        color: 'var(--pastel-pink-dark)',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        Fora do prazo
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-
-            {lateSet.size > 0 && (
-              <div style={{
-                marginTop: '0.75rem',
-                padding: '0.6rem 0.85rem',
-                borderRadius: 'var(--radius-sm)',
-                background: 'var(--pastel-pink)',
-                color: 'var(--pastel-pink-dark)',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem'
-              }}>
-                <span>⚠️</span>
-                <span>{lateSet.size} professor{lateSet.size !== 1 ? 'es' : ''} marcado{lateSet.size !== 1 ? 's' : ''} com atraso</span>
+                  )
+                })}
               </div>
-            )}
-          </div>
+
+              {lateSet.size > 0 && (
+                <div style={{
+                  marginTop: '0.75rem',
+                  padding: '0.6rem 0.85rem',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--pastel-pink)',
+                  color: 'var(--pastel-pink-dark)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}>
+                  <span>⚠️</span>
+                  <span>{lateSet.size} professor{lateSet.size !== 1 ? 'es' : ''} marcado{lateSet.size !== 1 ? 's' : ''} com atraso</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            event.entregouForaDoPrazo && event.entregouForaDoPrazo.length > 0 && (
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontFamily: 'Outfit',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  color: 'var(--text-main)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  marginBottom: '0.65rem'
+                }}>
+                  ⚠️ Entregaram fora do prazo
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {event.entregouForaDoPrazo.map(teacher => (
+                    <span key={teacher} style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '20px',
+                      background: 'var(--pastel-pink)',
+                      color: 'var(--pastel-pink-dark)'
+                    }}>
+                      {teacher}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )
+          )}
         </div>
 
         {/* Fixed Footer */}
@@ -202,12 +235,20 @@ export default function EventDetailModal({ event, records, professores, onClose,
           gap: '0.75rem',
           justifyContent: 'flex-end'
         }}>
-          <button className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }}>
-            Cancelar
-          </button>
-          <button className="btn btn-primary" onClick={handleSave} style={{ flex: 1, backgroundColor: 'var(--pastel-blue)', color: 'var(--pastel-blue-dark)' }}>
-            Salvar
-          </button>
+          {userRole === 'professor' ? (
+            <button className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }}>
+              Fechar
+            </button>
+          ) : (
+            <>
+              <button className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }}>
+                Cancelar
+              </button>
+              <button className="btn btn-primary" onClick={handleSave} style={{ flex: 1, backgroundColor: 'var(--pastel-blue)', color: 'var(--pastel-blue-dark)' }}>
+                Salvar
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

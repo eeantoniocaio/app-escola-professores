@@ -27,10 +27,6 @@ export default function Home() {
               <PlusCircle />
               <span>Novo Evento</span>
             </button>
-            <button className="dashboard-action-card" onClick={() => navigate('/eventos')}>
-              <Calendar />
-              <span>Eventos</span>
-            </button>
             <button className="dashboard-action-card" onClick={() => navigate('/registros')}>
               <BookOpen />
               <span>Registros</span>
@@ -44,6 +40,13 @@ export default function Home() {
               <span>Chamada</span>
             </button>
           </>
+        )}
+
+        {(userRole === 'gestao' || userRole === 'professor') && (
+          <button className="dashboard-action-card" onClick={() => navigate('/eventos')}>
+            <Calendar />
+            <span>Eventos</span>
+          </button>
         )}
 
         <button className="dashboard-action-card" onClick={() => navigate('/turmas')}>

@@ -6,11 +6,13 @@ import { PlusCircle, Calendar, AlertCircle, CheckCircle2, Circle, Pencil, Trash2
 import { useEventos } from './hooks/useEventos';
 import { useRegistros } from '../registros/hooks/useRegistros';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
+import { useAuth } from '../../app/providers/AuthProvider';
 
 export default function Eventos() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
+  const { userRole } = useAuth();
   
   const { events, deleteEvent, updateEvent, addEvent, toggleEventFinalizado, loading } = useEventos();
   const { records } = useRegistros();
@@ -62,9 +64,11 @@ export default function Eventos() {
           <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Gestão de Eventos</h2>
         </div>
 
-        <button className="btn btn-primary" onClick={() => navigate('/eventos/novo')}>
-          <PlusCircle size={18} /> Novo Evento
-        </button>
+        {userRole !== 'professor' && (
+          <button className="btn btn-primary" onClick={() => navigate('/eventos/novo')}>
+            <PlusCircle size={18} /> Novo Evento
+          </button>
+        )}
       </div>
 
       <div className="eventos-layout">
@@ -115,14 +119,16 @@ export default function Eventos() {
                           </span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/eventos/editar/${ev.id}`); }} title="Editar Evento" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}>
-                          <Pencil size={18} />
-                        </button>
-                        <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id); }} title="Excluir Evento" style={{ background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.25rem' }}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
+                      {userRole !== 'professor' && (
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/eventos/editar/${ev.id}`); }} title="Editar Evento" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}>
+                            <Pencil size={18} />
+                          </button>
+                          <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id); }} title="Excluir Evento" style={{ background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.25rem' }}>
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <h3 style={{ fontSize: '1.15rem', color: 'var(--text-main)', marginBottom: '0.5rem', lineHeight: 1.3 }}>{ev.evento}</h3>
                   </div>
@@ -134,21 +140,23 @@ export default function Eventos() {
                       <div style={{ color: 'var(--color-danger)', fontWeight: 600 }}><strong>Prazo de Entrega:</strong> {safeFormatDate(ev.dataEntrega)}</div>
                     </div>
 
-                    <button
-                      className="btn"
-                      style={{
-                        width: '100%',
-                        marginTop: '1rem',
-                        backgroundColor: ev.finalizado ? 'var(--color-success-bg)' : '#FFFFFF',
-                        color: ev.finalizado ? 'var(--color-success)' : 'var(--text-muted)',
-                        border: `1px solid ${ev.finalizado ? 'var(--color-success)' : 'var(--border-light)'}`,
-                      }}
-                      onClick={(e) => { e.stopPropagation(); toggleEventFinalizado(ev.id); }}
-                      title={ev.finalizado ? 'Reabrir Evento' : 'Marcar como Finalizado'}
-                    >
-                      {ev.finalizado ? <CheckCircle2 size={16} /> : <Circle size={16} />}
-                      {ev.finalizado ? 'Finalizado' : 'Marcar como Finalizado'}
-                    </button>
+                    {userRole !== 'professor' && (
+                      <button
+                        className="btn"
+                        style={{
+                          width: '100%',
+                          marginTop: '1rem',
+                          backgroundColor: ev.finalizado ? 'var(--color-success-bg)' : '#FFFFFF',
+                          color: ev.finalizado ? 'var(--color-success)' : 'var(--text-muted)',
+                          border: `1px solid ${ev.finalizado ? 'var(--color-success)' : 'var(--border-light)'}`,
+                        }}
+                        onClick={(e) => { e.stopPropagation(); toggleEventFinalizado(ev.id); }}
+                        title={ev.finalizado ? 'Reabrir Evento' : 'Marcar como Finalizado'}
+                      >
+                        {ev.finalizado ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                        {ev.finalizado ? 'Finalizado' : 'Marcar como Finalizado'}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -167,6 +175,7 @@ export default function Eventos() {
             updateEvent(updatedEvent);
             setSelectedEvent(null);
           }}
+          userRole={userRole}
         />
       )}
 
