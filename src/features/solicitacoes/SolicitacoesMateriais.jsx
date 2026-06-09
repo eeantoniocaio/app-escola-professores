@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, PlusCircle, Search, Trash2, ArrowLeft, Filter, AlertTriangle, CheckCircle, Clock, Archive, Download, FileText } from 'lucide-react';
+import { ClipboardList, PlusCircle, Search, Trash2, ArrowLeft, Filter, AlertTriangle, CheckCircle, CheckCircle2, Clock, Archive, Download, FileText, X } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
@@ -546,13 +546,22 @@ export default function SolicitacoesMateriais() {
       {activeTab === 'solicitacoes' && (
         <>
           {/* Status Sub-Tabs */}
-          <div className="status-tabs-row" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
+          <div className="status-tabs-row" style={{
+            display: 'flex',
+            gap: '0.75rem',
+            overflowX: 'auto',
+            paddingBottom: '0.75rem',
+            marginBottom: '1.5rem',
+            borderBottom: '1px solid var(--border-light)',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}>
             {[
-              { id: 'Todos', label: 'Todas', color: 'var(--color-primary)', bg: 'var(--color-primary-light)' },
-              { id: 'Pendente', label: 'Pendentes', color: 'var(--color-warning)', bg: 'var(--color-warning-bg)' },
-              { id: 'Em andamento', label: 'Em andamento', color: 'var(--color-primary)', bg: 'var(--color-primary-light)' },
-              { id: 'Atendido', label: 'Atendidas', color: 'var(--color-success)', bg: 'var(--color-success-bg)' },
-              { id: 'Cancelado', label: 'Canceladas', color: '#6B7280', bg: '#F3F4F6' }
+              { id: 'Todos', label: 'Todas', color: '#3b82f6', bgGradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', icon: <ClipboardList size={16} /> },
+              { id: 'Pendente', label: 'Pendentes', color: 'var(--color-danger)', bgGradient: 'linear-gradient(135deg, #ef4444, #b91c1c)', icon: <AlertTriangle size={16} /> },
+              { id: 'Em andamento', label: 'Em andamento', color: 'var(--color-warning)', bgGradient: 'linear-gradient(135deg, #f59e0b, #d97706)', icon: <Clock size={16} /> },
+              { id: 'Atendido', label: 'Atendidas', color: 'var(--color-success)', bgGradient: 'linear-gradient(135deg, #10b981, #047857)', icon: <CheckCircle2 size={16} /> },
+              { id: 'Cancelado', label: 'Canceladas', color: '#6b7280', bgGradient: 'linear-gradient(135deg, #9ca3af, #4b5563)', icon: <X size={16} /> }
             ].map(tab => {
               // Calculate dynamic counts based on current search & other filters
               const count = solicitacoes.filter(item => {
@@ -570,32 +579,38 @@ export default function SolicitacoesMateriais() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveStatusTab(tab.id)}
-                  className={`status-tab-btn status-tab-${tab.id.toLowerCase().replace(' ', '-')} ${isActive ? 'active' : ''}`}
                   style={{
-                    padding: '0.5rem 1rem',
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
+                    background: isActive ? tab.bgGradient : 'var(--bg-card)',
+                    color: isActive ? 'white' : 'var(--text-main)',
+                    border: isActive ? 'none' : '1px solid var(--border-light)',
+                    padding: '0.55rem 1.25rem',
+                    borderRadius: '30px',
                     fontWeight: 600,
                     fontSize: '0.88rem',
-                    color: isActive ? tab.color : 'var(--text-muted)',
-                    borderBottom: isActive ? `2px solid ${tab.color}` : '2px solid transparent',
-                    transition: 'all 0.2s ease',
-                    marginBottom: '-0.56rem',
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.35rem'
-                  }}
-                >
-                  <span>{tab.label}</span>
-                  <span style={{ 
-                    fontSize: '0.75rem', 
-                    fontWeight: 700,
-                    backgroundColor: isActive ? tab.bg : 'var(--bg-secondary)', 
-                    color: isActive ? tab.color : 'var(--text-muted)',
-                    padding: '0.1rem 0.45rem', 
-                    borderRadius: '10px',
+                    gap: '0.5rem',
+                    whiteSpace: 'nowrap',
+                    boxShadow: isActive ? `0 4px 10px ${tab.color}33` : 'none',
                     transition: 'all 0.2s ease'
+                  }}
+                  onMouseOver={e => { if(!isActive) e.currentTarget.style.backgroundColor = 'var(--bg-secondary)' }}
+                  onMouseOut={e => { if(!isActive) e.currentTarget.style.backgroundColor = 'var(--bg-card)' }}
+                >
+                  <span style={{ display: 'flex', color: isActive ? 'white' : tab.color }}>
+                    {tab.icon}
+                  </span>
+                  {tab.label}
+                  <span style={{
+                    background: isActive ? 'rgba(255, 255, 255, 0.25)' : 'var(--bg-secondary)',
+                    color: isActive ? 'white' : 'var(--text-muted)',
+                    fontSize: '0.72rem',
+                    padding: '0.1rem 0.4rem',
+                    borderRadius: '20px',
+                    fontWeight: 700,
+                    border: isActive ? 'none' : '1px solid var(--border-light)',
+                    marginLeft: '0.2rem'
                   }}>
                     {count}
                   </span>
