@@ -64,7 +64,7 @@ export default function Home() {
           <span>Documentos</span>
         </button>
 
-        <button className="dashboard-action-card" onClick={() => showToast('Funcionalidade em desenvolvimento', 'info')}>
+        <button className="dashboard-action-card" onClick={() => navigate('/acervo')}>
           <Library />
           <span>Acervo</span>
         </button>
