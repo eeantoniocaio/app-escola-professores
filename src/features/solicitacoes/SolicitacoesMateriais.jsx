@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, PlusCircle, Search, Trash2, ArrowLeft, Filter, AlertTriangle, CheckCircle, Clock, Archive } from 'lucide-react';
+import { ClipboardList, PlusCircle, Search, Trash2, ArrowLeft, Filter, AlertTriangle, CheckCircle, Clock, Archive, Download, FileText } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
+import { jsPDF } from 'jspdf';
 import './SolicitacoesMateriais.css';
 
 export default function SolicitacoesMateriais() {
@@ -39,7 +40,7 @@ export default function SolicitacoesMateriais() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTipo, setFilterTipo] = useState('');
   const [filterPrioridade, setFilterPrioridade] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [activeStatusTab, setActiveStatusTab] = useState('Todos'); // 'Todos' | 'Pendente' | 'Em andamento' | 'Atendido' | 'Cancelado'
 
   // Fetch data
   const fetchSolicitacoes = async () => {
@@ -161,11 +162,11 @@ export default function SolicitacoesMateriais() {
                             item.solicitante.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesTipo = filterTipo ? item.tipo === filterTipo : true;
       const matchesPrioridade = filterPrioridade ? item.prioridade === filterPrioridade : true;
-      const matchesStatus = filterStatus ? item.status === filterStatus : true;
+      const matchesStatus = activeStatusTab === 'Todos' ? true : item.status === activeStatusTab;
 
       return matchesSearch && matchesTipo && matchesPrioridade && matchesStatus;
     });
-  }, [solicitacoes, searchQuery, filterTipo, filterPrioridade, filterStatus]);
+  }, [solicitacoes, searchQuery, filterTipo, filterPrioridade, activeStatusTab]);
 
   // Dashboard Stats Calculations
   const stats = useMemo(() => {
@@ -204,6 +205,113 @@ export default function SolicitacoesMateriais() {
     ];
   }, [stats]);
 
+  const handleExportCSV = () => {
+    const BOM = '\uFEFF';
+    const headers = ['Nome', 'Descrição', 'Data Solicitação', 'Solicitante', 'Tipo', 'Prioridade', 'Status'];
+    const rows = filteredSolicitacoes.map(item => [
+      item.nome,
+      item.descricao || '',
+      new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR'),
+      item.solicitante,
+      item.tipo,
+      item.prioridade,
+      item.status
+    ]);
+    
+    const csvContent = BOM + [headers.join(';'), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(';'))].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `relatorio_solicitacoes_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('Relatório de Solicitações de Materiais ou Serviços', 14, 20);
+    
+    // Info
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`, 14, 27);
+    doc.text(`Filtros: Tipo: ${filterTipo || 'Todos'} | Prioridade: ${filterPrioridade || 'Todas'} | Status: ${activeStatusTab}`, 14, 32);
+    
+    // Header line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 35, 196, 35);
+    
+    // Table Headers
+    let y = 42;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Nome / Descrição', 14, y);
+    doc.text('Data', 90, y);
+    doc.text('Solicitante', 112, y);
+    doc.text('Tipo', 145, y);
+    doc.text('Prioridade', 165, y);
+    doc.text('Status', 183, y);
+    
+    doc.line(14, y + 2, 196, y + 2);
+    y += 8;
+    
+    // Rows
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    
+    filteredSolicitacoes.forEach((item) => {
+      if (y > 275) {
+        doc.addPage();
+        y = 20;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('Nome / Descrição', 14, y);
+        doc.text('Data', 90, y);
+        doc.text('Solicitante', 112, y);
+        doc.text('Tipo', 145, y);
+        doc.text('Prioridade', 165, y);
+        doc.text('Status', 183, y);
+        doc.line(14, y + 2, 196, y + 2);
+        y += 8;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+      }
+      
+      const rawNome = item.nome + (item.descricao ? ` - ${item.descricao}` : '');
+      const nomeLines = doc.splitTextToSize(rawNome, 72);
+      
+      const dataStr = new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR');
+      const solicitanteStr = item.solicitante;
+      const tipoStr = item.tipo;
+      const prioridadeStr = item.prioridade;
+      const statusStr = item.status;
+      
+      const rowHeight = Math.max(nomeLines.length * 4, 6);
+      
+      doc.text(nomeLines, 14, y);
+      doc.text(dataStr, 90, y);
+      doc.text(solicitanteStr, 112, y);
+      doc.text(tipoStr, 145, y);
+      doc.text(prioridadeStr, 165, y);
+      doc.text(statusStr, 183, y);
+      
+      doc.setDrawColor(240, 240, 240);
+      doc.line(14, y + rowHeight - 2, 196, y + rowHeight - 2);
+      
+      y += rowHeight;
+    });
+    
+    doc.save('relatorio_solicitacoes.pdf');
+  };
+
   return (
     <div className="solicitacoes-container">
       {/* Header section */}
@@ -219,9 +327,17 @@ export default function SolicitacoesMateriais() {
           </div>
         </div>
 
-        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-          <PlusCircle size={16} /> Nova Solicitação
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button className="btn btn-secondary" onClick={handleExportCSV} title="Exportar para Excel/CSV">
+            <Download size={16} /> Exportar CSV
+          </button>
+          <button className="btn btn-secondary" onClick={handleExportPDF} title="Exportar para PDF">
+            <FileText size={16} /> Exportar PDF
+          </button>
+          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+            <PlusCircle size={16} /> Nova Solicitação
+          </button>
+        </div>
       </div>
 
       {/* Tabs bar */}
@@ -396,6 +512,63 @@ export default function SolicitacoesMateriais() {
       {/* --- SOLICITAÇÕES (LISTA) TAB --- */}
       {activeTab === 'solicitacoes' && (
         <>
+          {/* Status Sub-Tabs */}
+          <div className="status-tabs-row" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
+            {[
+              { id: 'Todos', label: 'Todas' },
+              { id: 'Pendente', label: 'Pendentes' },
+              { id: 'Em andamento', label: 'Em andamento' },
+              { id: 'Atendido', label: 'Atendidas' },
+              { id: 'Cancelado', label: 'Canceladas' }
+            ].map(tab => {
+              // Calculate dynamic counts based on current search & other filters
+              const count = solicitacoes.filter(item => {
+                const matchesSearch = item.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                      item.solicitante.toLowerCase().includes(searchQuery.toLowerCase());
+                const matchesTipo = filterTipo ? item.tipo === filterTipo : true;
+                const matchesPrioridade = filterPrioridade ? item.prioridade === filterPrioridade : true;
+                const matchesStatus = tab.id === 'Todos' ? true : item.status === tab.id;
+                return matchesSearch && matchesTipo && matchesPrioridade && matchesStatus;
+              }).length;
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveStatusTab(tab.id)}
+                  className={`status-tab-btn ${activeStatusTab === tab.id ? 'active' : ''}`}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '0.88rem',
+                    color: activeStatusTab === tab.id ? 'var(--color-primary)' : 'var(--text-muted)',
+                    borderBottom: activeStatusTab === tab.id ? '2px solid var(--color-primary)' : '2px solid transparent',
+                    transition: 'all 0.2s ease',
+                    marginBottom: '-0.56rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <span>{tab.label}</span>
+                  <span style={{ 
+                    fontSize: '0.75rem', 
+                    fontWeight: 700,
+                    backgroundColor: activeStatusTab === tab.id ? 'var(--color-primary-light)' : 'var(--bg-secondary)', 
+                    color: activeStatusTab === tab.id ? 'var(--color-primary)' : 'var(--text-muted)',
+                    padding: '0.1rem 0.45rem', 
+                    borderRadius: '10px',
+                    transition: 'all 0.2s ease'
+                  }}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
           {/* Controls row */}
           <div className="search-bar-row">
             <div className="search-input-wrapper">
@@ -431,19 +604,6 @@ export default function SolicitacoesMateriais() {
                 <option value="urgente">Urgente</option>
                 <option value="dá pra esperar">Dá pra esperar</option>
                 <option value="longo prazo">Longo prazo</option>
-              </select>
-
-              <select 
-                value={filterStatus} 
-                onChange={(e) => setFilterStatus(e.target.value)} 
-                className="form-select-input"
-                style={{ width: 'auto', minWidth: '140px' }}
-              >
-                <option value="">Status (Todos)</option>
-                <option value="Pendente">Pendente</option>
-                <option value="Em andamento">Em andamento</option>
-                <option value="Atendido">Atendido</option>
-                <option value="Cancelado">Cancelado</option>
               </select>
             </div>
           </div>

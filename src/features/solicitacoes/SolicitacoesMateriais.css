@@ -570,3 +570,25 @@
   cursor: pointer;
   background-color: white;
 }
+
+/* Status Sub-Tabs */
+.status-tab-btn {
+  opacity: 0.85;
+  transition: all 0.2s ease-in-out;
+}
+
+.status-tab-btn:hover {
+  opacity: 1;
+  color: var(--color-primary) !important;
+  background-color: rgba(37, 99, 235, 0.04) !important;
+}
+
+.status-tab-btn.active {
+  opacity: 1;
+}
+
+.status-tab-btn:hover span:last-child {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+}
+
