@@ -575,20 +575,56 @@
 .status-tab-btn {
   opacity: 0.85;
   transition: all 0.2s ease-in-out;
-}
-
-.status-tab-btn:hover {
-  opacity: 1;
-  color: var(--color-primary) !important;
-  background-color: rgba(37, 99, 235, 0.04) !important;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
 .status-tab-btn.active {
   opacity: 1;
 }
 
-.status-tab-btn:hover span:last-child {
-  background-color: var(--color-primary-light) !important;
+/* Status-specific Hovers */
+.status-tab-btn.status-tab-todos:hover {
+  opacity: 1;
   color: var(--color-primary) !important;
+  background-color: var(--color-primary-light) !important;
+}
+.status-tab-btn.status-tab-todos:hover span:last-child {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+.status-tab-btn.status-tab-pendente:hover {
+  opacity: 1;
+  color: var(--color-warning) !important;
+  background-color: var(--color-warning-bg) !important;
+}
+.status-tab-btn.status-tab-pendente:hover span:last-child {
+  background-color: rgba(217, 119, 6, 0.2) !important;
+}
+
+.status-tab-btn.status-tab-em-andamento:hover {
+  opacity: 1;
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-light) !important;
+}
+.status-tab-btn.status-tab-em-andamento:hover span:last-child {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+.status-tab-btn.status-tab-atendido:hover {
+  opacity: 1;
+  color: var(--color-success) !important;
+  background-color: var(--color-success-bg) !important;
+}
+.status-tab-btn.status-tab-atendido:hover span:last-child {
+  background-color: rgba(22, 163, 74, 0.2) !important;
+}
+
+.status-tab-btn.status-tab-cancelado:hover {
+  opacity: 1;
+  color: #6B7280 !important;
+  background-color: #F3F4F6 !important;
+}
+.status-tab-btn.status-tab-cancelado:hover span:last-child {
+  background-color: #E5E7EB !important;
 }
 

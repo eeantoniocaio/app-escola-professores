@@ -515,11 +515,11 @@ export default function SolicitacoesMateriais() {
           {/* Status Sub-Tabs */}
           <div className="status-tabs-row" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
             {[
-              { id: 'Todos', label: 'Todas' },
-              { id: 'Pendente', label: 'Pendentes' },
-              { id: 'Em andamento', label: 'Em andamento' },
-              { id: 'Atendido', label: 'Atendidas' },
-              { id: 'Cancelado', label: 'Canceladas' }
+              { id: 'Todos', label: 'Todas', color: 'var(--color-primary)', bg: 'var(--color-primary-light)' },
+              { id: 'Pendente', label: 'Pendentes', color: 'var(--color-warning)', bg: 'var(--color-warning-bg)' },
+              { id: 'Em andamento', label: 'Em andamento', color: 'var(--color-primary)', bg: 'var(--color-primary-light)' },
+              { id: 'Atendido', label: 'Atendidas', color: 'var(--color-success)', bg: 'var(--color-success-bg)' },
+              { id: 'Cancelado', label: 'Canceladas', color: '#6B7280', bg: '#F3F4F6' }
             ].map(tab => {
               // Calculate dynamic counts based on current search & other filters
               const count = solicitacoes.filter(item => {
@@ -531,11 +531,13 @@ export default function SolicitacoesMateriais() {
                 return matchesSearch && matchesTipo && matchesPrioridade && matchesStatus;
               }).length;
 
+              const isActive = activeStatusTab === tab.id;
+
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveStatusTab(tab.id)}
-                  className={`status-tab-btn ${activeStatusTab === tab.id ? 'active' : ''}`}
+                  className={`status-tab-btn status-tab-${tab.id.toLowerCase().replace(' ', '-')} ${isActive ? 'active' : ''}`}
                   style={{
                     padding: '0.5rem 1rem',
                     border: 'none',
@@ -543,8 +545,8 @@ export default function SolicitacoesMateriais() {
                     cursor: 'pointer',
                     fontWeight: 600,
                     fontSize: '0.88rem',
-                    color: activeStatusTab === tab.id ? 'var(--color-primary)' : 'var(--text-muted)',
-                    borderBottom: activeStatusTab === tab.id ? '2px solid var(--color-primary)' : '2px solid transparent',
+                    color: isActive ? tab.color : 'var(--text-muted)',
+                    borderBottom: isActive ? `2px solid ${tab.color}` : '2px solid transparent',
                     transition: 'all 0.2s ease',
                     marginBottom: '-0.56rem',
                     display: 'flex',
@@ -556,8 +558,8 @@ export default function SolicitacoesMateriais() {
                   <span style={{ 
                     fontSize: '0.75rem', 
                     fontWeight: 700,
-                    backgroundColor: activeStatusTab === tab.id ? 'var(--color-primary-light)' : 'var(--bg-secondary)', 
-                    color: activeStatusTab === tab.id ? 'var(--color-primary)' : 'var(--text-muted)',
+                    backgroundColor: isActive ? tab.bg : 'var(--bg-secondary)', 
+                    color: isActive ? tab.color : 'var(--text-muted)',
                     padding: '0.1rem 0.45rem', 
                     borderRadius: '10px',
                     transition: 'all 0.2s ease'
