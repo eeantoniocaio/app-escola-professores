@@ -162,7 +162,7 @@ export default function HistoricoOcorrencias() {
           <button 
             className="btn btn-primary"
             onClick={() => exportOcorrenciasPDF(filtered, { filterProf, filterDisciplina, filterTurma, filterAluno, filterData })} 
-            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--color-primary-dark)' }}
+            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--color-primary)' }}
           >
             <FileText size={16} /> Gerar PDF
           </button>
