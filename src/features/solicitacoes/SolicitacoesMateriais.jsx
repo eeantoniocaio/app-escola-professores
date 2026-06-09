@@ -30,6 +30,11 @@ export default function SolicitacoesMateriais() {
   const [reqPrioridade, setReqPrioridade] = useState('dá pra esperar');
   const [reqDescricao, setReqDescricao] = useState('');
 
+  // States for Details & Devolutiva Modal
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedSolicitacao, setSelectedSolicitacao] = useState(null);
+  const [reqDevolutiva, setReqDevolutiva] = useState('');
+
   useEffect(() => {
     if (userName) {
       setReqNome(userName);
@@ -79,6 +84,34 @@ export default function SolicitacoesMateriais() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const handleRowClick = (e, item) => {
+    if (e.target.closest('button') || e.target.closest('select')) return;
+    setSelectedSolicitacao(item);
+    setReqDevolutiva(item.devolutiva || '');
+    setIsDetailModalOpen(true);
+  };
+
+  const handleSaveDevolutiva = async (e) => {
+    e.preventDefault();
+    if (!selectedSolicitacao) return;
+
+    try {
+      const { error } = await supabase
+        .from('solicitacoes_materiais_servicos')
+        .update({ devolutiva: reqDevolutiva.trim() })
+        .eq('id', selectedSolicitacao.id);
+
+      if (error) throw error;
+
+      showToast('Devolutiva gravada com sucesso!', 'success');
+      setIsDetailModalOpen(false);
+      fetchSolicitacoes();
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao salvar devolutiva', 'error');
+    }
+  };
 
   // Handle Save Request
   const handleSaveRequest = async (e) => {
@@ -637,7 +670,7 @@ export default function SolicitacoesMateriais() {
                     const canDelete = userRole === 'gestao' || isOwner;
 
                     return (
-                      <tr key={item.id}>
+                      <tr key={item.id} onClick={(e) => handleRowClick(e, item)} style={{ cursor: 'pointer' }}>
                         <td style={{ maxWidth: '250px' }}>
                           <div style={{ fontWeight: 700 }}>{item.nome}</div>
                           {item.descricao && (
@@ -828,6 +861,86 @@ export default function SolicitacoesMateriais() {
                 </button>
                 <button type="submit" className="btn btn-primary">
                   Enviar Solicitação
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- DETAIL & DEVOLUTIVA MODAL --- */}
+      {isDetailModalOpen && selectedSolicitacao && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '600px' }}>
+            <div className="modal-header">
+              <h3>Detalhes da Solicitação</h3>
+              <button 
+                onClick={() => setIsDetailModalOpen(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveDevolutiva}>
+              <div className="modal-body-scroll">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', backgroundColor: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Solicitação</label>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '0.15rem' }}>{selectedSolicitacao.nome}</div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Solicitante</label>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 500, marginTop: '0.15rem' }}>{selectedSolicitacao.solicitante}</div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Data Solicitação</label>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 500, marginTop: '0.15rem' }}>{new Date(selectedSolicitacao.data + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tipo / Prioridade</label>
+                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem', alignItems: 'center' }}>
+                      <span className={`tipo-badge ${selectedSolicitacao.tipo === 'Materiais' ? 'tipo-materiais' : 'tipo-servicos'}`} style={{ fontSize: '0.7rem' }}>
+                        {selectedSolicitacao.tipo}
+                      </span>
+                      <span className={`prioridade-badge ${
+                        selectedSolicitacao.prioridade === 'urgente' 
+                          ? 'prioridade-urgente' 
+                          : selectedSolicitacao.prioridade === 'dá pra esperar' 
+                          ? 'prioridade-esperar' 
+                          : 'prioridade-longo'
+                      }`} style={{ fontSize: '0.7rem' }}>
+                        {selectedSolicitacao.prioridade}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Descrição</label>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginTop: '0.25rem', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                      {selectedSolicitacao.descricao}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-input-group">
+                  <label htmlFor="req-devolutiva" style={{ fontWeight: 700 }}>Devolutivas / Observações</label>
+                  <textarea 
+                    id="req-devolutiva" 
+                    value={reqDevolutiva} 
+                    onChange={(e) => setReqDevolutiva(e.target.value)}
+                    placeholder="Registre a resposta, feedback ou observações sobre esta solicitação..."
+                    className="form-textarea-input"
+                    rows={4}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setIsDetailModalOpen(false)}>
+                  Fechar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Gravar Devolutiva
                 </button>
               </div>
             </form>
