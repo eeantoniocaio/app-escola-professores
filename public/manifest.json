@@ -1,0 +1,24 @@
+{
+  "name": "Portal de Evidências — E.E. Antônio Caio",
+  "short_name": "Portal Evidências",
+  "description": "Aplicativo para professores da E.E. Antônio Caio registrarem evidências, ocorrências, chamadas e solicitações.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
