@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FolderOpen, Folder, FileText, FileSpreadsheet, Image, File, 
   ArrowLeft, ExternalLink, Search, X, ChevronRight, AlertTriangle,
-  RefreshCw, LogOut, Bell
+  RefreshCw, LogOut, Bell, Share2
 } from 'lucide-react';
 import { useGoogleAuth } from '../../app/providers/GoogleAuthProvider';
 import { useAuth } from '../../app/providers/AuthProvider';
@@ -190,6 +190,36 @@ export default function Documentos() {
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleShareDocument = async (item) => {
+    const itemUrl = item.url || `https://drive.google.com/drive/folders/${item.id}?usp=sharing`;
+    const shareText = `*Compartilhamento de Documento - Portal de Evidências*\n\n` +
+                      `*Nome:* ${item.name}\n` +
+                      `*Tipo:* ${item.isFolder ? 'Pasta' : 'Arquivo'}\n` +
+                      `*Link:* ${itemUrl}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: item.name,
+          text: shareText,
+          url: itemUrl
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Erro ao compartilhar:', err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(itemUrl);
+        showToast('Link do documento copiado para a área de transferência!', 'success');
+      } catch (err) {
+        console.error('Erro ao copiar:', err);
+        showToast('Erro ao copiar link', 'error');
+      }
+    }
   };
 
   const handleSendNotification = async (e) => {
@@ -593,7 +623,28 @@ export default function Documentos() {
                       </div>
 
                       {/* Ação à direita */}
-                      <div style={{ marginLeft: '1rem', flexShrink: 0 }}>
+                      <div style={{ marginLeft: '1rem', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShareDocument(item);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '50%',
+                            border: '1px solid #e2e8f0',
+                            background: '#f8fafc',
+                            color: '#64748b',
+                            cursor: 'pointer'
+                          }}
+                          title="Compartilhar Link"
+                        >
+                          <Share2 size={14} />
+                        </button>
                         {item.isFolder ? (
                           <div style={{ 
                             width: '28px', 
