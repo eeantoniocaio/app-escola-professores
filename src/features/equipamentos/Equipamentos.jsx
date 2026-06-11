@@ -198,6 +198,15 @@ export default function Equipamentos() {
   };
 
   const handleDeleteHelpRequest = async (id, skipConfirm = false) => {
+    const requestToDelete = helpRequests.find(r => r.id === id);
+    const isOwner = requestToDelete && userRole === 'professor' && requestToDelete.professor === userName;
+    const isGestao = userRole === 'gestao';
+
+    if (!isGestao && !isOwner) {
+      showToast('Você não tem permissão para excluir esta solicitação', 'error');
+      return false;
+    }
+
     if (!skipConfirm && !window.confirm('Tem certeza que deseja excluir esta solicitação?')) return false;
     try {
       const { error } = await supabase
@@ -959,9 +968,9 @@ export default function Equipamentos() {
                     </p>
                   </div>
                   
-                  {canEdit && (
+                  {(canEdit || (userRole === 'professor' && req.professor === userName)) && (
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      {req.status === 'Pendente' && (
+                      {req.status === 'Pendente' && canEdit && (
                         <button 
                           className="btn btn-success" 
                           onClick={(e) => {
@@ -973,16 +982,18 @@ export default function Equipamentos() {
                           Marcar como Resolvido
                         </button>
                       )}
-                      <button 
-                        className="btn-icon delete" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteHelpRequest(req.id);
-                        }}
-                        title="Excluir Solicitação"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {(userRole === 'gestao' || (userRole === 'professor' && req.professor === userName)) && (
+                        <button 
+                          className="btn-icon delete" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteHelpRequest(req.id);
+                          }}
+                          title="Excluir Solicitação"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1467,9 +1478,9 @@ export default function Equipamentos() {
                 Fechar
               </button>
               
-              {canEdit && (
+              {(canEdit || (userRole === 'professor' && selectedHelpRequest.professor === userName)) && (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {selectedHelpRequest.status === 'Pendente' && (
+                  {selectedHelpRequest.status === 'Pendente' && canEdit && (
                     <button 
                       type="button" 
                       className="btn btn-success" 
@@ -1482,17 +1493,19 @@ export default function Equipamentos() {
                       Marcar como Resolvido
                     </button>
                   )}
-                  <button 
-                    type="button" 
-                    className="btn btn-danger" 
-                    onClick={async () => {
-                      const deleted = await handleDeleteHelpRequest(selectedHelpRequest.id);
-                      if (deleted) setIsHelpDetailsModalOpen(false);
-                    }}
-                    style={{ backgroundColor: 'var(--color-danger)', color: 'white', border: 'none' }}
-                  >
-                    Excluir
-                  </button>
+                  {(userRole === 'gestao' || (userRole === 'professor' && selectedHelpRequest.professor === userName)) && (
+                    <button 
+                      type="button" 
+                      className="btn btn-danger" 
+                      onClick={async () => {
+                        const deleted = await handleDeleteHelpRequest(selectedHelpRequest.id);
+                        if (deleted) setIsHelpDetailsModalOpen(false);
+                      }}
+                      style={{ backgroundColor: 'var(--color-danger)', color: 'white', border: 'none' }}
+                    >
+                      Excluir
+                    </button>
+                  )}
                 </div>
               )}
             </div>
