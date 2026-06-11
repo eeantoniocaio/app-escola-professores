@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell } from 'lucide-react';
+import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell, Download, FileText } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
@@ -221,6 +222,180 @@ export default function Equipamentos() {
       console.error(err);
       showToast('Erro ao excluir solicitação', 'error');
       return false;
+    }
+  };
+
+  // --- REPORT EXPORTS (CSV / PDF) ---
+  const handleExportCSV = () => {
+    const BOM = '\uFEFF';
+    let headers = [];
+    let rows = [];
+    let filename = '';
+
+    if (activeTab === 'solicitacoes') {
+      headers = ['Professor', 'Data', 'Sala', 'Descrição', 'Status', 'Comentários do Técnico'];
+      rows = helpRequests.map(req => [
+        req.professor,
+        new Date(req.data + 'T00:00:00').toLocaleDateString('pt-BR'),
+        req.sala,
+        req.descricao,
+        req.status,
+        req.comentarios || ''
+      ]);
+      filename = `solicitacoes_ajuda_${new Date().toISOString().split('T')[0]}.csv`;
+    } else {
+      headers = ['Tipo', 'Nº Patrimônio (Escola)', 'Nº Série', 'Local / Sala', 'Condição', 'Observações'];
+      rows = filteredDispositivos.map(device => [
+        device.tipo,
+        device.numero_escola || 'Não definido',
+        device.numero_serie || 'Não definido',
+        roomNameMap[device.sala_id] || 'Sem Sala',
+        device.condicao,
+        device.observacoes || ''
+      ]);
+      filename = `inventario_equipamentos_${new Date().toISOString().split('T')[0]}.csv`;
+    }
+
+    const csvContent = BOM + [headers.join(';'), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(';'))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const isHelp = activeTab === 'solicitacoes';
+    
+    // Title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text(isHelp ? 'Relatório de Solicitações de Ajuda' : 'Relatório de Inventário de Equipamentos', 14, 20);
+    
+    // Info
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`, 14, 27);
+    
+    if (isHelp) {
+      doc.text(`Total de registros: ${helpRequests.length}`, 14, 32);
+    } else {
+      const condFilter = filterCondicao ? `Condição: ${filterCondicao}` : 'Condição: Todas';
+      const salaFilter = filterSala ? `Sala: ${roomNameMap[filterSala] || ''}` : 'Sala: Todas';
+      doc.text(`Filtros: ${condFilter} | ${salaFilter} | Busca: ${searchQuery || 'Nenhuma'}`, 14, 32);
+    }
+    
+    // Header line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 35, 196, 35);
+    
+    let y = 42;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    
+    if (isHelp) {
+      doc.text('Professor', 14, y);
+      doc.text('Data', 60, y);
+      doc.text('Sala', 80, y);
+      doc.text('Descrição', 105, y);
+      doc.text('Status', 180, y);
+      
+      doc.line(14, y + 2, 196, y + 2);
+      y += 8;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      
+      helpRequests.forEach((req) => {
+        if (y > 275) {
+          doc.addPage();
+          y = 20;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.text('Professor', 14, y);
+          doc.text('Data', 60, y);
+          doc.text('Sala', 80, y);
+          doc.text('Descrição', 105, y);
+          doc.text('Status', 180, y);
+          doc.line(14, y + 2, 196, y + 2);
+          y += 8;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+        }
+        
+        const profStr = doc.splitTextToSize(req.professor, 44);
+        const dataStr = new Date(req.data + 'T00:00:00').toLocaleDateString('pt-BR');
+        const salaStr = req.sala;
+        const descStr = doc.splitTextToSize(req.descricao + (req.comentarios ? `\nObs: ${req.comentarios}` : ''), 72);
+        const statusStr = req.status;
+        
+        const rowHeight = Math.max(profStr.length * 4, descStr.length * 4, 6);
+        
+        doc.text(profStr, 14, y);
+        doc.text(dataStr, 60, y);
+        doc.text(salaStr, 80, y);
+        doc.text(descStr, 105, y);
+        doc.text(statusStr, 180, y);
+        
+        doc.setDrawColor(240, 240, 240);
+        doc.line(14, y + rowHeight - 2, 196, y + rowHeight - 2);
+        y += rowHeight;
+      });
+      doc.save(`solicitacoes_ajuda_${new Date().toISOString().split('T')[0]}.pdf`);
+    } else {
+      doc.text('Tipo', 14, y);
+      doc.text('Patrimônio', 60, y);
+      doc.text('Nº Série', 95, y);
+      doc.text('Sala', 135, y);
+      doc.text('Condição', 170, y);
+      
+      doc.line(14, y + 2, 196, y + 2);
+      y += 8;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      
+      filteredDispositivos.forEach((dev) => {
+        if (y > 275) {
+          doc.addPage();
+          y = 20;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.text('Tipo', 14, y);
+          doc.text('Patrimônio', 60, y);
+          doc.text('Nº Série', 95, y);
+          doc.text('Sala', 135, y);
+          doc.text('Condição', 170, y);
+          doc.line(14, y + 2, 196, y + 2);
+          y += 8;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+        }
+        
+        const tipoStr = doc.splitTextToSize(dev.tipo, 44);
+        const patStr = dev.numero_escola || 'Não def.';
+        const serieStr = dev.numero_serie || 'Não def.';
+        const salaStr = roomNameMap[dev.sala_id] || 'Sem Sala';
+        const condStr = dev.condicao;
+        
+        const rowHeight = Math.max(tipoStr.length * 4, 6);
+        
+        doc.text(tipoStr, 14, y);
+        doc.text(patStr, 60, y);
+        doc.text(serieStr, 95, y);
+        doc.text(salaStr, 135, y);
+        doc.text(condStr, 170, y);
+        
+        doc.setDrawColor(240, 240, 240);
+        doc.line(14, y + rowHeight - 2, 196, y + rowHeight - 2);
+        y += rowHeight;
+      });
+      doc.save(`inventario_equipamentos_${new Date().toISOString().split('T')[0]}.pdf`);
     }
   };
 
@@ -534,17 +709,34 @@ export default function Equipamentos() {
           </div>
         </div>
 
-        {/* Botão de Solicitar Ajuda ao Técnico */}
-        <button 
-          className="btn-help" 
-          onClick={() => {
-            setHelpProfessor((userRole !== 'gestao' && userName) ? userName : '');
-            setHelpData(new Date().toISOString().split('T')[0]);
-            setIsHelpModalOpen(true);
-          }}
-        >
-          Solicitar Ajuda
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button 
+            className="btn btn-secondary"
+            onClick={handleExportCSV} 
+            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
+          >
+            <Download size={16} /> Exportar CSV
+          </button>
+          <button 
+            className="btn btn-primary"
+            onClick={handleExportPDF} 
+            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, backgroundColor: 'var(--color-primary)' }}
+          >
+            <FileText size={16} /> Gerar PDF
+          </button>
+          
+          <button 
+            className="btn-help" 
+            onClick={() => {
+              setHelpProfessor((userRole !== 'gestao' && userName) ? userName : '');
+              setHelpData(new Date().toISOString().split('T')[0]);
+              setIsHelpModalOpen(true);
+            }}
+            style={{ margin: 0 }}
+          >
+            Solicitar Ajuda
+          </button>
+        </div>
       </div>
 
       {/* Tab bar principal (Dashboard vs Salas vs Tabela Completa vs Solicitações) */}
