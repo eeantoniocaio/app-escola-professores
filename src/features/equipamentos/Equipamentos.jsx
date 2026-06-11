@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell, Download, FileText } from 'lucide-react';
+import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell, Download, FileText, Share2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
@@ -396,6 +396,38 @@ export default function Equipamentos() {
         y += rowHeight;
       });
       doc.save(`inventario_equipamentos_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+  };
+
+  const handleShareHelpRequest = async (req) => {
+    const dataStr = new Date(req.data + 'T00:00:00').toLocaleDateString('pt-BR');
+    const text = `*Solicitação de Ajuda - Controle de Equipamentos*\n\n` +
+                 `*Professor(a):* ${req.professor}\n` +
+                 `*Data:* ${dataStr}\n` +
+                 `*Sala/Local:* ${req.sala}\n` +
+                 `*Descrição:* ${req.descricao}\n` +
+                 `*Status:* ${req.status}` +
+                 (req.comentarios ? `\n*Retorno Técnico:* ${req.comentarios}` : '');
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Solicitação de Ajuda',
+          text: text
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Erro ao compartilhar:', err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Copiado para a área de transferência!', 'success');
+      } catch (err) {
+        console.error('Erro ao copiar:', err);
+        showToast('Erro ao copiar conteúdo', 'error');
+      }
     }
   };
 
@@ -1164,34 +1196,43 @@ export default function Equipamentos() {
                     </p>
                   </div>
                   
-                  {(canEdit || (userRole === 'professor' && req.professor === userName)) && (
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      {req.status === 'Pendente' && canEdit && (
-                        <button 
-                          className="btn btn-success" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUpdateHelpStatus(req.id, 'Resolvido');
-                          }}
-                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', backgroundColor: 'var(--color-success)', color: 'white', border: 'none' }}
-                        >
-                          Marcar como Resolvido
-                        </button>
-                      )}
-                      {(userRole === 'gestao' || (userRole === 'professor' && req.professor === userName)) && (
-                        <button 
-                          className="btn-icon delete" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteHelpRequest(req.id);
-                          }}
-                          title="Excluir Solicitação"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button 
+                      className="btn-icon" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShareHelpRequest(req);
+                      }}
+                      title="Compartilhar Solicitação"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      <Share2 size={16} />
+                    </button>
+                    {req.status === 'Pendente' && canEdit && (
+                      <button 
+                        className="btn btn-success" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpdateHelpStatus(req.id, 'Resolvido');
+                        }}
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', backgroundColor: 'var(--color-success)', color: 'white', border: 'none' }}
+                      >
+                        Marcar como Resolvido
+                      </button>
+                    )}
+                    {(userRole === 'gestao' || (userRole === 'professor' && req.professor === userName)) && (
+                      <button 
+                        className="btn-icon delete" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteHelpRequest(req.id);
+                        }}
+                        title="Excluir Solicitação"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1670,6 +1711,15 @@ export default function Equipamentos() {
             </div>
 
             <div className="modal-footer-actions">
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => handleShareHelpRequest(selectedHelpRequest)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginRight: 'auto' }}
+              >
+                <Share2 size={16} /> Compartilhar
+              </button>
+
               <button type="button" className="btn btn-secondary" onClick={() => setIsHelpDetailsModalOpen(false)}>
                 Fechar
               </button>
