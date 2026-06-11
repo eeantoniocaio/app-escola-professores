@@ -710,20 +710,24 @@ export default function Equipamentos() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <button 
-            className="btn btn-secondary"
-            onClick={handleExportCSV} 
-            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
-          >
-            <Download size={16} /> Exportar CSV
-          </button>
-          <button 
-            className="btn btn-primary"
-            onClick={handleExportPDF} 
-            style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, backgroundColor: 'var(--color-primary)' }}
-          >
-            <FileText size={16} /> Gerar PDF
-          </button>
+          {canEdit && (
+            <>
+              <button 
+                className="btn btn-secondary"
+                onClick={handleExportCSV} 
+                style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
+              >
+                <Download size={16} /> Exportar CSV
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handleExportPDF} 
+                style={{ padding: '0.55rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, backgroundColor: 'var(--color-primary)' }}
+              >
+                <FileText size={16} /> Gerar PDF
+              </button>
+            </>
+          )}
           
           <button 
             className="btn-help" 
