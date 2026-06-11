@@ -409,6 +409,14 @@ export default function Equipamentos() {
                  `*Status:* ${req.status}` +
                  (req.comentarios ? `\n*Retorno Técnico:* ${req.comentarios}` : '');
 
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Copiado para a área de transferência!', 'success');
+    } catch (err) {
+      console.error('Erro ao copiar:', err);
+      showToast('Erro ao copiar para a área de transferência', 'error');
+    }
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -419,14 +427,6 @@ export default function Equipamentos() {
         if (err.name !== 'AbortError') {
           console.error('Erro ao compartilhar:', err);
         }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast('Copiado para a área de transferência!', 'success');
-      } catch (err) {
-        console.error('Erro ao copiar:', err);
-        showToast('Erro ao copiar conteúdo', 'error');
       }
     }
   };

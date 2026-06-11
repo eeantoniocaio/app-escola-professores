@@ -199,6 +199,14 @@ export default function Documentos() {
                       `*Tipo:* ${item.isFolder ? 'Pasta' : 'Arquivo'}\n` +
                       `*Link:* ${itemUrl}`;
 
+    try {
+      await navigator.clipboard.writeText(itemUrl);
+      showToast('Link do documento copiado para a área de transferência!', 'success');
+    } catch (err) {
+      console.error('Erro ao copiar:', err);
+      showToast('Erro ao copiar link', 'error');
+    }
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -210,14 +218,6 @@ export default function Documentos() {
         if (err.name !== 'AbortError') {
           console.error('Erro ao compartilhar:', err);
         }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(itemUrl);
-        showToast('Link do documento copiado para a área de transferência!', 'success');
-      } catch (err) {
-        console.error('Erro ao copiar:', err);
-        showToast('Erro ao copiar link', 'error');
       }
     }
   };
