@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { Share2 } from 'lucide-react'
+import { useToast } from '../../app/providers/ToastProvider'
 
 export default function EventDetailModal({ event, records, professores, onClose, onSave, userRole }) {
+  const { showToast } = useToast();
   // Memoize expensive computations so they don't rerun on every re-render
   const eventRecords = useMemo(() => records.filter(r => r.eventId === event.id), [records, event.id])
   const recordTeachers = useMemo(() => eventRecords.map(r => r.teacher), [eventRecords])
@@ -37,6 +40,48 @@ export default function EventDetailModal({ event, records, professores, onClose,
     onSave({ ...event, entregouForaDoPrazo: [...lateSet] })
     onClose()
   }, [event, lateSet, onSave, onClose])
+
+  const safeFormatDate = (dateStr) => {
+    if (!dateStr) return 'Não informada';
+    try {
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return 'Data Inválida';
+      return d.toLocaleDateString('pt-BR');
+    } catch(e) {
+      return 'Data Inválida';
+    }
+  };
+
+  const handleShareEvent = async () => {
+    const text = `*Gestão de Eventos - Portal de Evidências*\n\n` +
+                 `*Evento:* ${event.evento}\n` +
+                 `*Tipo:* ${event.tipo}\n` +
+                 `*Solicitante:* ${event.quemSolicitou}\n` +
+                 `*Solicitado em:* ${safeFormatDate(event.dataSolicitacao)}\n` +
+                 `*Prazo de Entrega:* ${safeFormatDate(event.dataEntrega)}\n` +
+                 `*Status:* ${event.finalizado ? 'Finalizado' : 'Em andamento'}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Detalhamento do Evento',
+          text: text
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Erro ao compartilhar:', err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Informações do evento copiadas para a área de transferência!', 'success');
+      } catch (err) {
+        console.error('Erro ao copiar:', err);
+        showToast('Erro ao copiar informações do evento', 'error');
+      }
+    }
+  };
 
   const getTypeBadgeClass = (tipo) => {
     switch (tipo) {
@@ -233,18 +278,28 @@ export default function EventDetailModal({ event, records, professores, onClose,
           borderTop: '1px solid var(--border-light)',
           display: 'flex',
           gap: '0.75rem',
+          alignItems: 'center',
           justifyContent: 'flex-end'
         }}>
+          <button 
+            type="button" 
+            className="btn btn-secondary" 
+            onClick={handleShareEvent}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginRight: 'auto', flex: '0 1 auto' }}
+          >
+            <Share2 size={16} /> Compartilhar
+          </button>
+
           {userRole === 'professor' ? (
-            <button className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }}>
+            <button className="btn btn-secondary" onClick={onClose} style={{ flex: '1 1 auto', maxWidth: '120px' }}>
               Fechar
             </button>
           ) : (
             <>
-              <button className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }}>
+              <button className="btn btn-secondary" onClick={onClose} style={{ flex: '1 1 auto', maxWidth: '120px' }}>
                 Cancelar
               </button>
-              <button className="btn btn-primary" onClick={handleSave} style={{ flex: 1, backgroundColor: 'var(--pastel-blue)', color: 'var(--pastel-blue-dark)' }}>
+              <button className="btn btn-primary" onClick={handleSave} style={{ flex: '1 1 auto', maxWidth: '120px', backgroundColor: 'var(--pastel-blue)', color: 'var(--pastel-blue-dark)' }}>
                 Salvar
               </button>
             </>

@@ -2,17 +2,19 @@ import React, { useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import EventDetailModal from './EventDetailModal';
 import EventModal from './EventModal';
-import { PlusCircle, Calendar, AlertCircle, CheckCircle2, Circle, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { PlusCircle, Calendar, AlertCircle, CheckCircle2, Circle, Pencil, Trash2, ArrowLeft, Share2 } from 'lucide-react';
 import { useEventos } from './hooks/useEventos';
 import { useRegistros } from '../registros/hooks/useRegistros';
 import { useGlobalData } from '../../app/providers/GlobalDataProvider';
 import { useAuth } from '../../app/providers/AuthProvider';
+import { useToast } from '../../app/providers/ToastProvider';
 
 export default function Eventos() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
   const { userRole } = useAuth();
+  const { showToast } = useToast();
   
   const { events, deleteEvent, updateEvent, addEvent, toggleEventFinalizado, loading } = useEventos();
   const { records } = useRegistros();
@@ -47,6 +49,37 @@ export default function Eventos() {
       return d.toLocaleDateString('pt-BR');
     } catch(e) {
       return 'Data Inválida';
+    }
+  };
+
+  const handleShareEvent = async (ev) => {
+    const text = `*Gestão de Eventos - Portal de Evidências*\n\n` +
+                 `*Evento:* ${ev.evento}\n` +
+                 `*Tipo:* ${ev.tipo}\n` +
+                 `*Solicitante:* ${ev.quemSolicitou}\n` +
+                 `*Solicitado em:* ${safeFormatDate(ev.dataSolicitacao)}\n` +
+                 `*Prazo de Entrega:* ${safeFormatDate(ev.dataEntrega)}\n` +
+                 `*Status:* ${ev.finalizado ? 'Finalizado' : 'Em andamento'}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Detalhamento do Evento',
+          text: text
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Erro ao compartilhar:', err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Informações do evento copiadas para a área de transferência!', 'success');
+      } catch (err) {
+        console.error('Erro ao copiar:', err);
+        showToast('Erro ao copiar informações do evento', 'error');
+      }
     }
   };
 
@@ -119,16 +152,21 @@ export default function Eventos() {
                           </span>
                         )}
                       </div>
-                      {userRole !== 'professor' && (
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/eventos/editar/${ev.id}`); }} title="Editar Evento" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}>
-                            <Pencil size={18} />
-                          </button>
-                          <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id); }} title="Excluir Evento" style={{ background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.25rem' }}>
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <button className="btn-icon" onClick={(e) => { e.stopPropagation(); handleShareEvent(ev); }} title="Compartilhar Evento" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}>
+                          <Share2 size={18} />
+                        </button>
+                        {userRole !== 'professor' && (
+                          <>
+                            <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/eventos/editar/${ev.id}`); }} title="Editar Evento" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}>
+                              <Pencil size={18} />
+                            </button>
+                            <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id); }} title="Excluir Evento" style={{ background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.25rem' }}>
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <h3 style={{ fontSize: '1.15rem', color: 'var(--text-main)', marginBottom: '0.5rem', lineHeight: 1.3 }}>{ev.evento}</h3>
                   </div>
