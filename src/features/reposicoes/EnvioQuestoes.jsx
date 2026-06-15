@@ -39,7 +39,7 @@ export default function EnvioQuestoes() {
   const { showToast } = useToast();
   const { userRole, userName, authLoading } = useAuth();
   const { questoes, addQuestao, deleteQuestao, updateQuestao } = useQuestoes();
-  const { professores } = useGlobalData();
+  const { professores, disciplinas } = useGlobalData();
   const [showModal, setShowModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [questaoToEdit, setQuestaoToEdit] = useState(null);
@@ -151,7 +151,6 @@ export default function EnvioQuestoes() {
       if (!form.professor.trim()) e.professor = 'Campo obrigatório';
       if (!form.disciplina.trim()) e.disciplina = 'Campo obrigatório';
       if (!form.serie) e.serie = 'Campo obrigatório';
-      if (!form.turma) e.turma = 'Campo obrigatório';
       if (!form.data) e.data = 'Campo obrigatório';
       if (!form.habilidade?.trim()) e.habilidade = 'Campo obrigatório';
     } else if (step === 2) {
@@ -237,12 +236,11 @@ export default function EnvioQuestoes() {
       }
     }
 
-    const combinedTurma = getCombinedTurmaName(form.serie, form.turma);
     const questionData = {
       professor: form.professor.trim(),
       disciplina: form.disciplina.trim(),
       serie: form.serie,
-      turma: combinedTurma,
+      turma: form.serie,
       data: form.data,
       habilidade: form.habilidade.trim(),
       enunciado: form.enunciado.trim(),
@@ -840,7 +838,16 @@ export default function EnvioQuestoes() {
                     {/* Disciplina */}
                     <div>
                       <label style={labelStyle}>Disciplina <span style={{ color: '#ef4444' }}>*</span></label>
-                      <input type="text" placeholder="Ex: Matemática" value={form.disciplina} onChange={e => setForm(p => ({ ...p, disciplina: e.target.value }))} style={inputStyle('disciplina')} />
+                      <select 
+                        value={form.disciplina} 
+                        onChange={e => setForm(p => ({ ...p, disciplina: e.target.value }))} 
+                        style={inputStyle('disciplina')}
+                      >
+                        <option value="">Selecione...</option>
+                        {disciplinas && disciplinas.map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
                       {errors.disciplina && <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{errors.disciplina}</span>}
                     </div>
 
@@ -852,7 +859,7 @@ export default function EnvioQuestoes() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>
                     {/* Série */}
                     <div>
                       <label style={labelStyle}>Série <span style={{ color: '#ef4444' }}>*</span></label>
@@ -863,18 +870,6 @@ export default function EnvioQuestoes() {
                         ))}
                       </select>
                       {errors.serie && <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{errors.serie}</span>}
-                    </div>
-
-                    {/* Turma */}
-                    <div>
-                      <label style={labelStyle}>Turma <span style={{ color: '#ef4444' }}>*</span></label>
-                      <select value={form.turma} onChange={e => setForm(p => ({ ...p, turma: e.target.value }))} style={inputStyle('turma')}>
-                        <option value="">Selecione...</option>
-                        {['A', 'B', 'C', 'D', 'E'].map(t => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
-                      {errors.turma && <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem', display: 'block' }}>{errors.turma}</span>}
                     </div>
                   </div>
 
