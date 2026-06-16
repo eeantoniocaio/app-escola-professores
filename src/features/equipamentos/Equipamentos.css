@@ -814,3 +814,41 @@
   box-shadow: var(--shadow-md);
   border-color: var(--color-primary);
 }
+
+/* ── RESPONSIVIDADE E CORREÇÃO DE MODAIS EM CELULARES ── */
+@media (max-width: 576px) {
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+  
+  .modal-content {
+    max-width: 100% !important;
+    margin: 0;
+    max-height: 95vh;
+  }
+
+  .modal-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .modal-header h3 {
+    font-size: 1.15rem;
+  }
+
+  .modal-body-scroll {
+    padding: 1rem 1.25rem;
+  }
+
+  .modal-footer-actions {
+    padding: 0.75rem 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .modal-footer-actions button {
+    flex: 1;
+    min-width: 100px;
+    font-size: 0.85rem;
+  }
+}
+
