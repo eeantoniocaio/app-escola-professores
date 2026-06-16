@@ -115,20 +115,26 @@ export default function Equipamentos() {
   const [selectedHelpRequest, setSelectedHelpRequest] = useState(null);
   const [isHelpDetailsModalOpen, setIsHelpDetailsModalOpen] = useState(false);
 
+  // Histórico de Empréstimos
+  const [historicoEmprestimos, setHistoricoEmprestimos] = useState([]);
+
   // Carregar dados iniciais
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [salasRes, dispRes] = await Promise.all([
+      const [salasRes, dispRes, histRes] = await Promise.all([
         supabase.from('salas').select('*').order('nome'),
-        supabase.from('dispositivos').select('*').order('tipo')
+        supabase.from('dispositivos').select('*').order('tipo'),
+        supabase.from('historico_emprestimos').select('*').order('data_emprestimo', { ascending: false })
       ]);
 
       if (salasRes.error) throw salasRes.error;
       if (dispRes.error) throw dispRes.error;
+      if (histRes.error) throw histRes.error;
 
       setSalas(salasRes.data || []);
       setDispositivos(dispRes.data || []);
+      setHistoricoEmprestimos(histRes.data || []);
 
       // Se a sala selecionada foi atualizada, atualizar a referência na UI
       if (selectedRoom) {
@@ -969,12 +975,28 @@ export default function Equipamentos() {
     };
 
     try {
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('dispositivos')
         .update(payload)
         .eq('id', loanDevice.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Inserir registro no histórico de empréstimos
+      const { error: historyError } = await supabase
+        .from('historico_emprestimos')
+        .insert([{
+          dispositivo_id: loanDevice.id,
+          professor: loanProfessor,
+          data_emprestimo: new Date(loanDate + 'T12:00:00'),
+          tipo_dispositivo: loanDevice.tipo,
+          patrimonio: loanDevice.numero_escola || null
+        }]);
+
+      if (historyError) {
+        console.error('Erro ao salvar no histórico:', historyError);
+      }
+
       showToast('Empréstimo registrado com sucesso!');
       setIsLoanModalOpen(false);
       fetchData();
@@ -994,12 +1016,44 @@ export default function Equipamentos() {
     };
 
     try {
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('dispositivos')
         .update(payload)
         .eq('id', loanDevice.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Atualizar a data de devolução no histórico de empréstimo ativo mais recente
+      // Procuramos o registro onde data_devolucao é null para esse dispositivo
+      const { data: activeLoans, error: selectError } = await supabase
+        .from('historico_emprestimos')
+        .select('id')
+        .eq('dispositivo_id', loanDevice.id)
+        .is('data_devolucao', null)
+        .order('data_emprestimo', { ascending: false })
+        .limit(1);
+
+      if (!selectError && activeLoans && activeLoans.length > 0) {
+        const { error: historyError } = await supabase
+          .from('historico_emprestimos')
+          .update({ data_devolucao: new Date() })
+          .eq('id', activeLoans[0].id);
+
+        if (historyError) {
+          console.error('Erro ao atualizar devolução no histórico:', historyError);
+        }
+      } else {
+        // Fallback caso não ache um registro aberto: insere um registro completo já devolvido
+        await supabase.from('historico_emprestimos').insert([{
+          dispositivo_id: loanDevice.id,
+          professor: loanDevice.professor_emprestimo || 'Não identificado',
+          data_emprestimo: loanDevice.data_emprestimo || new Date(),
+          data_devolucao: new Date(),
+          tipo_dispositivo: loanDevice.tipo,
+          patrimonio: loanDevice.numero_escola || null
+        }]);
+      }
+
       showToast('Devolução registrada com sucesso!');
       setIsLoanModalOpen(false);
       fetchData();
@@ -1635,6 +1689,53 @@ export default function Equipamentos() {
               ))}
             </div>
           )}
+          {/* Tabela de Histórico de Empréstimos */}
+          <div style={{ marginTop: '2rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <FileText size={20} color="var(--color-primary)" /> Histórico de Empréstimos Registrados
+            </h3>
+
+            {historicoEmprestimos.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'var(--bg-card)', border: '1px dashed var(--border-light)', borderRadius: 'var(--radius-md)', color: 'var(--text-muted)' }}>
+                Nenhum empréstimo registrado anteriormente.
+              </div>
+            ) : (
+              <div className="table-container">
+                <table className="equipamentos-table">
+                  <thead>
+                    <tr>
+                      <th>Equipamento</th>
+                      <th>Patrimônio</th>
+                      <th>Professor(a)</th>
+                      <th>Data do Empréstimo</th>
+                      <th>Status / Data de Devolução</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historicoEmprestimos.map((hist) => (
+                      <tr key={hist.id}>
+                        <td style={{ fontWeight: 600 }}>{hist.tipo_dispositivo}</td>
+                        <td>{hist.patrimonio || <span style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>Não definido</span>}</td>
+                        <td style={{ fontWeight: 500 }}>{hist.professor}</td>
+                        <td>{new Date(hist.data_emprestimo).toLocaleString('pt-BR')}</td>
+                        <td>
+                          {hist.data_devolucao ? (
+                            <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>
+                              Devolvido em {new Date(hist.data_devolucao).toLocaleString('pt-BR')}
+                            </span>
+                          ) : (
+                            <span style={{ color: '#ff9800', fontWeight: 700 }}>
+                              Pendente (Em uso)
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
