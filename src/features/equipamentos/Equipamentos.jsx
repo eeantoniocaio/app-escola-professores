@@ -58,6 +58,7 @@ export default function Equipamentos() {
   const [deviceSalaId, setDeviceSalaId] = useState('');
   const [deviceCondicao, setDeviceCondicao] = useState('Funcional');
   const [deviceObs, setDeviceObs] = useState('');
+  const [deviceDisponivelEmprestimo, setDeviceDisponivelEmprestimo] = useState(false);
 
   // Modal de QR Code do Dispositivo
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
@@ -782,6 +783,13 @@ export default function Equipamentos() {
       .sort((a, b) => a.tipo.localeCompare(b.tipo));
   }, [dispositivos, selectedRoom]);
 
+  // Dispositivos que estão habilitados para empréstimo
+  const loanableDevices = useMemo(() => {
+    return dispositivos
+      .filter(d => d.disponivel_emprestimo)
+      .sort((a, b) => a.tipo.localeCompare(b.tipo));
+  }, [dispositivos]);
+
 
 
   // ── AÇÕES DE SALAS (CRUD) ──
@@ -860,6 +868,7 @@ export default function Equipamentos() {
     setDeviceSalaId(selectedRoom ? selectedRoom.id : '');
     setDeviceCondicao('Funcional');
     setDeviceObs('');
+    setDeviceDisponivelEmprestimo(false);
     setIsDeviceModalOpen(true);
   };
 
@@ -871,6 +880,7 @@ export default function Equipamentos() {
     setDeviceSalaId(device.sala_id || '');
     setDeviceCondicao(device.condicao);
     setDeviceObs(device.observacoes || '');
+    setDeviceDisponivelEmprestimo(device.disponivel_emprestimo || false);
     setIsDeviceModalOpen(true);
   };
 
@@ -888,7 +898,8 @@ export default function Equipamentos() {
       numero_serie: deviceNumSerie.trim() || null,
       sala_id: deviceSalaId || null,
       condicao: deviceCondicao,
-      observacoes: deviceObs.trim() || null
+      observacoes: deviceObs.trim() || null,
+      disponivel_emprestimo: deviceDisponivelEmprestimo
     };
 
     try {
@@ -1016,6 +1027,12 @@ export default function Equipamentos() {
           className={`tab-button ${activeTab === 'dispositivos' ? 'active' : ''}`}
         >
           Todos os Dispositivos
+        </button>
+        <button 
+          onClick={() => { setActiveTab('emprestimos'); setSearchQuery(''); }}
+          className={`tab-button ${activeTab === 'emprestimos' ? 'active' : ''}`}
+        >
+          Empréstimos
         </button>
         {(userRole === 'tecnico' || userRole === 'gestao' || userRole === 'professor') && (
           <button 
@@ -1428,6 +1445,86 @@ export default function Equipamentos() {
         </div>
       )}
 
+      {/* ── TAB EMPRÉSTIMOS ── */}
+      {activeTab === 'emprestimos' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="search-bar-row">
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Dispositivos Disponíveis para Empréstimo</h3>
+          </div>
+
+          {loanableDevices.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-card)', border: '1px dashed var(--border-light)', borderRadius: 'var(--radius-lg)' }}>
+              <Wrench size={48} style={{ color: 'var(--text-light)', marginBottom: '1rem' }} />
+              <p style={{ fontSize: '1.05rem', fontWeight: 600, margin: 0, color: 'var(--text-muted)' }}>Nenhum dispositivo habilitado para empréstimo</p>
+            </div>
+          ) : (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+              gap: '1rem' 
+            }}>
+              {loanableDevices.map(device => (
+                <div 
+                  key={device.id}
+                  style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    justifyContent: 'space-between', 
+                    padding: '1.25rem', 
+                    background: '#ffffff', 
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-light)',
+                    boxShadow: 'var(--shadow-sm)',
+                    transition: 'var(--transition-smooth)',
+                    gap: '1rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)' }}>{device.tipo}</span>
+                      {renderCondicaoBadge(device.condicao)}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      <span><b>Patrimônio:</b> {device.numero_escola || 'N/D'}</span>
+                      <span><b>Nº Série:</b> {device.numero_serie || 'N/D'}</span>
+                      <span><b>Localização:</b> <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{roomNameMap[device.sala_id] || 'Sem sala'}</span></span>
+                    </div>
+                  </div>
+
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    borderTop: '1px solid var(--border-light)',
+                    paddingTop: '0.75rem',
+                    marginTop: 'auto'
+                  }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontFamily: 'monospace' }}>
+                      ID: {device.id.substring(0, 8)}
+                    </span>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button className="btn-icon" onClick={() => openQrModal(device)} title="Ver QR Code">
+                        <QrCode size={14} />
+                      </button>
+                      {canEdit && (
+                        <>
+                          <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
+                            <Edit2 size={14} />
+                          </button>
+                          <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
+                            <Trash2 size={14} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── TAB SOLICITAÇÕES DE AJUDA ── */}
       {activeTab === 'solicitacoes' && (userRole === 'tecnico' || userRole === 'gestao' || userRole === 'professor') && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -1815,6 +1912,19 @@ export default function Equipamentos() {
                       placeholder="Observações de reparos, especificações ou detalhes físicos..."
                       className="form-textarea-input"
                     />
+                  </div>
+
+                  <div className="form-input-group form-group-full" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <input 
+                      type="checkbox" 
+                      id="disponivel_emprestimo"
+                      checked={deviceDisponivelEmprestimo}
+                      onChange={(e) => setDeviceDisponivelEmprestimo(e.target.checked)}
+                      style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                    />
+                    <label htmlFor="disponivel_emprestimo" style={{ cursor: 'pointer', margin: 0, userSelect: 'none', fontWeight: 600 }}>
+                      Disponível para empréstimo
+                    </label>
                   </div>
                 </div>
               </div>
