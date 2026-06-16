@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell, Download, FileText, Share2, QrCode } from 'lucide-react';
+import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell, Download, FileText, Share2, QrCode, Printer } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
@@ -66,6 +66,31 @@ export default function Equipamentos() {
   const openQrModal = (device) => {
     setQrDevice(device);
     setIsQrModalOpen(true);
+  };
+
+  // Estado e funções para controle de seleção de dispositivos (para impressão em lote)
+  const [selectedDeviceIds, setSelectedDeviceIds] = useState([]);
+
+  const toggleSelectDevice = (id) => {
+    setSelectedDeviceIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (devicesList) => {
+    const visibleIds = devicesList.map(d => d.id);
+    const allVisibleSelected = visibleIds.every(id => selectedDeviceIds.includes(id));
+
+    if (allVisibleSelected) {
+      // Deselecionar apenas os que estão visíveis
+      setSelectedDeviceIds(prev => prev.filter(id => !visibleIds.includes(id)));
+    } else {
+      // Selecionar todos os que estão visíveis
+      setSelectedDeviceIds(prev => {
+        const union = new Set([...prev, ...visibleIds]);
+        return Array.from(union);
+      });
+    }
   };
 
   // Modal de Detalhes da Sala (Floating)
@@ -501,6 +526,98 @@ export default function Equipamentos() {
       </html>
     `);
     printWindow.document.close();
+  };
+
+  const handleGenerateLabelsPdf = async (devicesToPrint) => {
+    if (devicesToPrint.length === 0) return;
+    
+    showToast('Carregando imagens e gerando PDF...', 'info');
+    
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const loadQrImage = (url) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = url;
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+      });
+    };
+
+    const labelWidth = 85;
+    const labelHeight = 50;
+    const marginX = 15;
+    const marginY = 15;
+    const gapX = 10;
+    const gapY = 10;
+
+    let col = 0;
+    let row = 0;
+
+    for (let i = 0; i < devicesToPrint.length; i++) {
+      const device = devicesToPrint[i];
+      
+      if (i > 0 && i % 10 === 0) {
+        doc.addPage();
+        col = 0;
+        row = 0;
+      } else if (i > 0) {
+        col = i % 2;
+        row = Math.floor((i % 10) / 2);
+      }
+
+      const x = marginX + col * (labelWidth + gapX);
+      const y = marginY + row * (labelHeight + gapY);
+
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineDashPattern([2, 2], 0);
+      doc.rect(x, y, labelWidth, labelHeight);
+      doc.setLineDashPattern([], 0);
+
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+        window.location.origin + window.location.pathname + '?search=' + device.id
+      )}`;
+      
+      const qrImg = await loadQrImage(qrUrl);
+      if (qrImg) {
+        doc.addImage(qrImg, 'PNG', x + 5, y + 10, 30, 30);
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text('[Erro QR]', x + 10, y + 25);
+      }
+
+      doc.setTextColor(51, 51, 51);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      const tipoText = doc.splitTextToSize(device.tipo, 42);
+      doc.text(tipoText, x + 38, y + 12);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text(`Patrimônio: ${device.numero_escola || 'N/D'}`, x + 38, y + 22);
+
+      const numSerie = device.numero_serie ? (device.numero_serie.length > 20 ? device.numero_serie.substring(0, 18) + '...' : device.numero_serie) : 'N/D';
+      doc.text(`Nº Série: ${numSerie}`, x + 38, y + 27);
+
+      const roomName = roomNameMap[device.sala_id] || 'Sem sala';
+      const roomText = roomName.length > 20 ? roomName.substring(0, 18) + '...' : roomName;
+      doc.text(`Local: ${roomText}`, x + 38, y + 32);
+
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.setTextColor(153, 153, 153);
+      doc.text(`ID: ${device.id.substring(0, 13)}...`, x + 38, y + 42);
+    }
+
+    doc.save(`etiquetas_equipamentos_${new Date().toISOString().split('T')[0]}.pdf`);
+    showToast('PDF de etiquetas gerado com sucesso!', 'success');
   };
 
   const handleShareHelpRequest = async (req) => {
@@ -1202,6 +1319,46 @@ export default function Equipamentos() {
             </div>
           </div>
 
+          {/* Barra de Ações em Lote */}
+          {selectedDeviceIds.length > 0 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.75rem 1.25rem',
+              background: 'var(--color-primary-light, #e6f0fa)',
+              border: '1px solid var(--color-primary, #2B70C9)',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1rem',
+              color: 'var(--text-main)',
+              flexWrap: 'wrap',
+              gap: '0.5rem'
+            }}>
+              <div style={{ fontWeight: 600 }}>
+                {selectedDeviceIds.length} {selectedDeviceIds.length === 1 ? 'dispositivo selecionado' : 'dispositivos selecionados'}
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setSelectedDeviceIds([])}
+                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', margin: 0 }}
+                >
+                  Limpar Seleção
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    const devicesToPrint = dispositivos.filter(d => selectedDeviceIds.includes(d.id));
+                    handleGenerateLabelsPdf(devicesToPrint);
+                  }}
+                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', margin: 0, backgroundColor: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                >
+                  <Printer size={14} /> Gerar PDF de Etiquetas
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Tabela de Dispositivos */}
           {filteredDispositivos.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-card)', border: '1px dashed var(--border-light)', borderRadius: 'var(--radius-lg)' }}>
@@ -1213,6 +1370,14 @@ export default function Equipamentos() {
               <table className="equipamentos-table">
                 <thead>
                   <tr>
+                    <th style={{ width: '40px', textAlign: 'center' }}>
+                      <input 
+                        type="checkbox"
+                        checked={filteredDispositivos.length > 0 && filteredDispositivos.every(d => selectedDeviceIds.includes(d.id))}
+                        onChange={() => toggleSelectAll(filteredDispositivos)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </th>
                     <th>Tipo</th>
                     <th>Nº Patrimônio (Escola)</th>
                     <th>Nº Série</th>
@@ -1224,6 +1389,14 @@ export default function Equipamentos() {
                 <tbody>
                   {filteredDispositivos.map(device => (
                     <tr key={device.id}>
+                      <td style={{ textAlign: 'center' }}>
+                        <input 
+                          type="checkbox"
+                          checked={selectedDeviceIds.includes(device.id)}
+                          onChange={() => toggleSelectDevice(device.id)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </td>
                       <td style={{ fontWeight: 600 }}>{device.tipo}</td>
                       <td>{device.numero_escola || <span style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>Não definido</span>}</td>
                       <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{device.numero_serie || <span style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>Não definido</span>}</td>
@@ -1410,17 +1583,42 @@ export default function Equipamentos() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {canEdit && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
-                      <button 
-                        className="btn btn-primary" 
-                        onClick={openCreateDeviceModal}
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                      >
-                        <Plus size={14} /> Vincular Equipamento
-                      </button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input 
+                        type="checkbox"
+                        checked={selectedRoomDevices.length > 0 && selectedRoomDevices.every(d => selectedDeviceIds.includes(d.id))}
+                        onChange={() => toggleSelectAll(selectedRoomDevices)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Selecionar Todos</span>
                     </div>
-                  )}
+                    
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {selectedRoomDevices.some(d => selectedDeviceIds.includes(d.id)) && (
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => {
+                            const devicesToPrint = selectedRoomDevices.filter(d => selectedDeviceIds.includes(d.id));
+                            handleGenerateLabelsPdf(devicesToPrint);
+                          }}
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', backgroundColor: '#28a745', border: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem', margin: 0 }}
+                        >
+                          <Printer size={12} /> Imprimir Etiquetas ({selectedRoomDevices.filter(d => selectedDeviceIds.includes(d.id)).length})
+                        </button>
+                      )}
+                      {canEdit && (
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={openCreateDeviceModal}
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', margin: 0 }}
+                        >
+                          <Plus size={14} /> Vincular Equipamento
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   {selectedRoomDevices.map((device, index) => (
                     <div 
                       key={device.id}
@@ -1437,6 +1635,12 @@ export default function Equipamentos() {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <input 
+                          type="checkbox"
+                          checked={selectedDeviceIds.includes(device.id)}
+                          onChange={() => toggleSelectDevice(device.id)}
+                          style={{ cursor: 'pointer', marginRight: '0.25rem' }}
+                        />
                         <span style={{ fontWeight: 800, color: '#2B70C9', fontSize: '0.85rem', minWidth: '24px' }}>
                           {String(index + 1).padStart(2, '0')}
                         </span>
