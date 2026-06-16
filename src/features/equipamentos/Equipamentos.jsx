@@ -69,6 +69,19 @@ export default function Equipamentos() {
     setIsQrModalOpen(true);
   };
 
+  // Modal de Ação de Empréstimo / Devolução
+  const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
+  const [loanDevice, setLoanDevice] = useState(null);
+  const [loanProfessor, setLoanProfessor] = useState('');
+  const [loanDate, setLoanDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const openLoanModal = (device) => {
+    setLoanDevice(device);
+    setLoanProfessor('');
+    setLoanDate(new Date().toISOString().split('T')[0]);
+    setIsLoanModalOpen(true);
+  };
+
   // Estado e funções para controle de seleção de dispositivos (para impressão em lote)
   const [selectedDeviceIds, setSelectedDeviceIds] = useState([]);
 
@@ -166,7 +179,11 @@ export default function Equipamentos() {
       if (searchParam) {
         const foundDevice = dispositivos.find(d => d.id.toLowerCase() === searchParam.toLowerCase());
         if (foundDevice) {
-          openQrModal(foundDevice);
+          if (foundDevice.disponivel_emprestimo) {
+            openLoanModal(foundDevice);
+          } else {
+            openQrModal(foundDevice);
+          }
         }
       }
     }
@@ -937,6 +954,61 @@ export default function Equipamentos() {
     }
   };
 
+  const handleBorrowDevice = async (e) => {
+    e.preventDefault();
+    if (!loanDevice) return;
+    if (!loanProfessor.trim()) {
+      showToast('Selecione o professor', 'error');
+      return;
+    }
+
+    const payload = {
+      emprestado: true,
+      professor_emprestimo: loanProfessor,
+      data_emprestimo: new Date(loanDate + 'T12:00:00')
+    };
+
+    try {
+      const { error } = await supabase
+        .from('dispositivos')
+        .update(payload)
+        .eq('id', loanDevice.id);
+
+      if (error) throw error;
+      showToast('Empréstimo registrado com sucesso!');
+      setIsLoanModalOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao registrar empréstimo', 'error');
+    }
+  };
+
+  const handleReturnDevice = async () => {
+    if (!loanDevice) return;
+
+    const payload = {
+      emprestado: false,
+      professor_emprestimo: null,
+      data_emprestimo: null
+    };
+
+    try {
+      const { error } = await supabase
+        .from('dispositivos')
+        .update(payload)
+        .eq('id', loanDevice.id);
+
+      if (error) throw error;
+      showToast('Devolução registrada com sucesso!');
+      setIsLoanModalOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao registrar devolução', 'error');
+    }
+  };
+
 
 
   // Helper para renderizar badges de condição
@@ -1482,12 +1554,36 @@ export default function Equipamentos() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)' }}>{device.tipo}</span>
-                      {renderCondicaoBadge(device.condicao)}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                        {renderCondicaoBadge(device.condicao)}
+                        {device.emprestado ? (
+                          <span className="condicao-badge condicao-danificado" style={{ backgroundColor: '#ff9800', color: 'white' }}>
+                            Emprestado
+                          </span>
+                        ) : (
+                          <span className="condicao-badge condicao-funcional">
+                            Disponível
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                       <span><b>Patrimônio:</b> {device.numero_escola || 'N/D'}</span>
                       <span><b>Nº Série:</b> {device.numero_serie || 'N/D'}</span>
                       <span><b>Localização:</b> <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{roomNameMap[device.sala_id] || 'Sem sala'}</span></span>
+                      {device.emprestado && (
+                        <div style={{ 
+                          marginTop: '0.5rem', 
+                          padding: '0.5rem', 
+                          background: 'var(--bg-secondary)', 
+                          borderRadius: 'var(--radius-sm)', 
+                          borderLeft: '4px solid #ff9800',
+                          fontSize: '0.8rem' 
+                        }}>
+                          <div><b>Retirado por:</b> {device.professor_emprestimo}</div>
+                          <div><b>Data:</b> {device.data_emprestimo ? new Date(device.data_emprestimo).toLocaleDateString('pt-BR') : 'N/D'}</div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1499,10 +1595,27 @@ export default function Equipamentos() {
                     paddingTop: '0.75rem',
                     marginTop: 'auto'
                   }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontFamily: 'monospace' }}>
-                      ID: {device.id.substring(0, 8)}
-                    </span>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontFamily: 'monospace' }}>
+                        ID: {device.id.substring(0, 8)}
+                      </span>
+                      <button 
+                        className="btn"
+                        onClick={() => openLoanModal(device)}
+                        style={{ 
+                          padding: '0.25rem 0.5rem', 
+                          fontSize: '0.75rem', 
+                          margin: 0, 
+                          backgroundColor: device.emprestado ? 'var(--color-danger)' : 'var(--color-primary)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 'var(--radius-sm)'
+                        }}
+                      >
+                        {device.emprestado ? 'Devolver' : 'Emprestar'}
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
                       <button className="btn-icon" onClick={() => openQrModal(device)} title="Ver QR Code">
                         <QrCode size={14} />
                       </button>
@@ -2188,58 +2301,105 @@ export default function Equipamentos() {
         </div>
       )}
 
-      {/* ── MODAL: EXIBIR QR CODE DO EQUIPAMENTO ── */}
-      {isQrModalOpen && qrDevice && (
-        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsQrModalOpen(false); }}>
-          <div className="modal-content" style={{ maxWidth: '400px' }}>
+      {/* ── MODAL: REGISTRAR EMPRÉSTIMO / DEVOLUÇÃO ── */}
+      {isLoanModalOpen && loanDevice && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsLoanModalOpen(false); }}>
+          <div className="modal-content" style={{ maxWidth: '450px' }}>
             <div className="modal-header">
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <QrCode size={20} color="var(--color-primary)" /> QR Code do Equipamento
+                <Printer size={20} color="var(--color-primary)" /> 
+                {loanDevice.emprestado ? 'Registrar Devolução' : 'Registrar Empréstimo'}
               </h3>
-              <button className="btn-icon" onClick={() => setIsQrModalOpen(false)}>
+              <button className="btn-icon" onClick={() => setIsLoanModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
             
-            <div className="modal-body-scroll" style={{ textAlign: 'center', padding: '2rem 1.5rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
-                <div style={{ 
-                  background: '#fff', 
-                  padding: '1rem', 
-                  borderRadius: 'var(--radius-md)', 
-                  boxShadow: 'var(--shadow-md)',
-                  border: '1px solid var(--border-light)',
-                  display: 'inline-block'
-                }}>
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      window.location.origin + window.location.pathname + '?search=' + qrDevice.id
-                    )}`} 
-                    alt="QR Code" 
-                    style={{ width: '200px', height: '200px', display: 'block' }}
-                  />
-                </div>
-                
-                <div style={{ width: '100%' }}>
-                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 700 }}>{qrDevice.tipo}</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                    <span><b>ID Único:</b> <span style={{ fontFamily: 'monospace' }}>{qrDevice.id}</span></span>
-                    {qrDevice.numero_escola && <span><b>Patrimônio:</b> {qrDevice.numero_escola}</span>}
-                    {qrDevice.numero_serie && <span><b>Nº Série:</b> {qrDevice.numero_serie}</span>}
-                    <span><b>Local:</b> {roomNameMap[qrDevice.sala_id] || 'Sem sala'}</span>
+            {!loanDevice.emprestado ? (
+              // Form de Empréstimo
+              <form onSubmit={handleBorrowDevice}>
+                <div className="modal-body-scroll">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                      <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', fontWeight: 700 }}>{loanDevice.tipo}</h4>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Patrimônio: {loanDevice.numero_escola || 'N/D'} • Local: {roomNameMap[loanDevice.sala_id] || 'Sem sala'}
+                      </span>
+                    </div>
+
+                    <div className="form-input-group">
+                      <label>Professor(a) que está retirando <span style={{ color: 'var(--color-danger)' }}>*</span></label>
+                      <select
+                        value={loanProfessor}
+                        onChange={(e) => setLoanProfessor(e.target.value)}
+                        className="form-select-input"
+                        required
+                      >
+                        <option value="">Selecione o(a) Professor(a)...</option>
+                        {professores.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-input-group">
+                      <label>Data de Retirada <span style={{ color: 'var(--color-danger)' }}>*</span></label>
+                      <input 
+                        type="date" 
+                        value={loanDate}
+                        onChange={(e) => setLoanDate(e.target.value)}
+                        className="form-text-input"
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="modal-footer-actions" style={{ justifyContent: 'space-between' }}>
-              <button className="btn btn-secondary" onClick={() => setIsQrModalOpen(false)}>
-                Fechar
-              </button>
-              <button className="btn btn-primary" onClick={() => handlePrintQrCode(qrDevice)}>
-                Imprimir Etiqueta
-              </button>
-            </div>
+                <div className="modal-footer-actions">
+                  <button type="button" className="btn btn-secondary" onClick={() => setIsLoanModalOpen(false)}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--color-primary)' }}>
+                    Confirmar Empréstimo
+                  </button>
+                </div>
+              </form>
+            ) : (
+              // Form de Devolução
+              <div>
+                <div className="modal-body-scroll">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                      <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', fontWeight: 700 }}>{loanDevice.tipo}</h4>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Patrimônio: {loanDevice.numero_escola || 'N/D'} • Local: {roomNameMap[loanDevice.sala_id] || 'Sem sala'}
+                      </span>
+                    </div>
+
+                    <div style={{ background: '#fff9e6', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid #ffeeba', color: '#856404' }}>
+                      <p style={{ margin: '0 0 0.5rem 0', fontWeight: 700 }}>Este equipamento já está emprestado:</p>
+                      <div style={{ fontSize: '0.9rem' }}>
+                        <div><b>Emprestado para:</b> {loanDevice.professor_emprestimo}</div>
+                        <div><b>Data de retirada:</b> {loanDevice.data_emprestimo ? new Date(loanDevice.data_emprestimo).toLocaleDateString('pt-BR') : 'N/D'}</div>
+                      </div>
+                    </div>
+                    
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                      Confirmar que o equipamento foi devolvido para a escola? O status será alterado para <b>Disponível</b>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="modal-footer-actions">
+                  <button type="button" className="btn btn-secondary" onClick={() => setIsLoanModalOpen(false)}>
+                    Cancelar
+                  </button>
+                  <button type="button" className="btn btn-success" onClick={handleReturnDevice} style={{ backgroundColor: 'var(--color-success)', color: 'white', border: 'none' }}>
+                    Confirmar Devolução
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
