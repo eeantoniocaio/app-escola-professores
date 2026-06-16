@@ -190,6 +190,8 @@ export default function Equipamentos() {
           } else {
             openQrModal(foundDevice);
           }
+          // Limpa o parâmetro da URL para não reabrir o modal em renderizações ou atualizações posteriores
+          navigate(location.pathname, { replace: true });
         }
       }
     }
