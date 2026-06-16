@@ -818,37 +818,42 @@
 /* ── RESPONSIVIDADE E CORREÇÃO DE MODAIS EM CELULARES ── */
 @media (max-width: 576px) {
   .modal-overlay {
-    padding: 0.5rem;
+    padding: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   
   .modal-content {
+    width: 100% !important;
     max-width: 100% !important;
-    margin: 0;
-    max-height: 95vh;
+    margin: 0 !important;
+    max-height: 95vh !important;
+    border-radius: var(--radius-md) !important;
   }
 
   .modal-header {
-    padding: 1rem 1.25rem;
+    padding: 1rem 1.25rem !important;
   }
 
   .modal-header h3 {
-    font-size: 1.15rem;
+    font-size: 1.15rem !important;
   }
 
   .modal-body-scroll {
-    padding: 1rem 1.25rem;
+    padding: 1rem 1.25rem !important;
   }
 
   .modal-footer-actions {
-    padding: 0.75rem 1.25rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    padding: 0.75rem 1.25rem !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
   }
 
   .modal-footer-actions button {
-    flex: 1;
-    min-width: 100px;
-    font-size: 0.85rem;
+    flex: 1 !important;
+    min-width: 100px !important;
+    font-size: 0.85rem !important;
   }
 }
 
