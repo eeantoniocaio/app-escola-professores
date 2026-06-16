@@ -2301,6 +2301,62 @@ export default function Equipamentos() {
         </div>
       )}
 
+      {/* ── MODAL: EXIBIR QR CODE DO EQUIPAMENTO ── */}
+      {isQrModalOpen && qrDevice && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsQrModalOpen(false); }}>
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <QrCode size={20} color="var(--color-primary)" /> QR Code do Equipamento
+              </h3>
+              <button className="btn-icon" onClick={() => setIsQrModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="modal-body-scroll" style={{ textAlign: 'center', padding: '2rem 1.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
+                <div style={{ 
+                  background: '#fff', 
+                  padding: '1rem', 
+                  borderRadius: 'var(--radius-md)', 
+                  boxShadow: 'var(--shadow-md)',
+                  border: '1px solid var(--border-light)',
+                  display: 'inline-block'
+                }}>
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                      window.location.origin + window.location.pathname + '?search=' + qrDevice.id
+                    )}`} 
+                    alt="QR Code" 
+                    style={{ width: '200px', height: '200px', display: 'block' }}
+                  />
+                </div>
+                
+                <div style={{ width: '100%' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 700 }}>{qrDevice.tipo}</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                    <span><b>ID Único:</b> <span style={{ fontFamily: 'monospace' }}>{qrDevice.id}</span></span>
+                    {qrDevice.numero_escola && <span><b>Patrimônio:</b> {qrDevice.numero_escola}</span>}
+                    {qrDevice.numero_serie && <span><b>Nº Série:</b> {qrDevice.numero_serie}</span>}
+                    <span><b>Local:</b> {roomNameMap[qrDevice.sala_id] || 'Sem sala'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer-actions" style={{ justifyContent: 'space-between' }}>
+              <button className="btn btn-secondary" onClick={() => setIsQrModalOpen(false)}>
+                Fechar
+              </button>
+              <button className="btn btn-primary" onClick={() => handlePrintQrCode(qrDevice)}>
+                Imprimir Etiqueta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── MODAL: REGISTRAR EMPRÉSTIMO / DEVOLUÇÃO ── */}
       {isLoanModalOpen && loanDevice && (
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsLoanModalOpen(false); }}>
