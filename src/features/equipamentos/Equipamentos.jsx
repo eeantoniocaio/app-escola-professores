@@ -132,6 +132,20 @@ export default function Equipamentos() {
     }
   }, [location]);
 
+  // Abrir o modal da etiqueta (QR Code) diretamente em primeiro plano ao escanear
+  useEffect(() => {
+    if (dispositivos.length > 0) {
+      const params = new URLSearchParams(location.search);
+      const searchParam = params.get('search') || params.get('device') || params.get('id');
+      if (searchParam) {
+        const foundDevice = dispositivos.find(d => d.id.toLowerCase() === searchParam.toLowerCase());
+        if (foundDevice) {
+          openQrModal(foundDevice);
+        }
+      }
+    }
+  }, [dispositivos, location.search]);
+
   const fetchHelpRequests = async () => {
     setLoadingHelp(true);
     try {
