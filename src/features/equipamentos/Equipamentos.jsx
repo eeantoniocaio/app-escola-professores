@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell, Download, FileText, Share2 } from 'lucide-react';
+import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell, Download, FileText, Share2, QrCode } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
@@ -59,6 +59,15 @@ export default function Equipamentos() {
   const [deviceCondicao, setDeviceCondicao] = useState('Funcional');
   const [deviceObs, setDeviceObs] = useState('');
 
+  // Modal de QR Code do Dispositivo
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [qrDevice, setQrDevice] = useState(null);
+
+  const openQrModal = (device) => {
+    setQrDevice(device);
+    setIsQrModalOpen(true);
+  };
+
   // Modal de Detalhes da Sala (Floating)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -113,6 +122,13 @@ export default function Equipamentos() {
     const tab = params.get('tab');
     if (tab && ['dashboard', 'salas', 'dispositivos', 'solicitacoes'].includes(tab)) {
       setActiveTab(tab);
+    }
+
+    // Sincronizar busca por ID do QR Code
+    const searchParam = params.get('search') || params.get('device') || params.get('id');
+    if (searchParam) {
+      setSearchQuery(searchParam);
+      setActiveTab('dispositivos');
     }
   }, [location]);
 
@@ -399,6 +415,80 @@ export default function Equipamentos() {
     }
   };
 
+  const handlePrintQrCode = (device) => {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+      window.location.origin + window.location.pathname + '?search=' + device.id
+    )}`;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Imprimir QR Code - ${device.tipo}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              text-align: center;
+              padding: 20px;
+              color: #333;
+            }
+            .tag-container {
+              border: 2px dashed #333;
+              padding: 15px;
+              display: inline-block;
+              border-radius: 10px;
+              background: #fff;
+              max-width: 250px;
+            }
+            .qr-image {
+              width: 150px;
+              height: 150px;
+              margin-bottom: 10px;
+            }
+            .title {
+              font-size: 16px;
+              font-weight: bold;
+              margin: 5px 0;
+              text-transform: uppercase;
+            }
+            .detail {
+              font-size: 12px;
+              margin: 3px 0;
+              color: #555;
+            }
+            .footer-tag {
+              font-size: 10px;
+              color: #999;
+              margin-top: 8px;
+              font-family: monospace;
+            }
+            @media print {
+              body { padding: 0; }
+              .tag-container { border: 2px solid #000; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="tag-container">
+            <img class="qr-image" src="${qrUrl}" alt="QR Code" />
+            <div class="title">${device.tipo}</div>
+            ${device.numero_escola ? `<div class="detail">Patrimônio: <b>${device.numero_escola}</b></div>` : ''}
+            ${device.numero_serie ? `<div class="detail">Série: <b>${device.numero_serie}</b></div>` : ''}
+            <div class="detail">Local: ${roomNameMap[device.sala_id] || 'Sem sala'}</div>
+            <div class="footer-tag">${device.id.substring(0, 8)}</div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() { window.close(); };
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const handleShareHelpRequest = async (req) => {
     const dataStr = new Date(req.data + 'T00:00:00').toLocaleDateString('pt-BR');
     const text = `*Solicitação de Ajuda - Controle de Equipamentos*\n\n` +
@@ -534,6 +624,7 @@ export default function Equipamentos() {
     const query = searchQuery.toLowerCase().trim();
     if (query) {
       result = result.filter(d => 
+        d.id.toLowerCase().includes(query) ||
         d.tipo.toLowerCase().includes(query) ||
         (d.numero_escola && d.numero_escola.toLowerCase().includes(query)) ||
         (d.numero_serie && d.numero_serie.toLowerCase().includes(query)) ||
@@ -1113,7 +1204,7 @@ export default function Equipamentos() {
                     <th>Nº Série</th>
                     <th>Local / Sala</th>
                     <th>Condição</th>
-                    {canEdit && <th style={{ textAlign: 'center' }}>Ações</th>}
+                    <th style={{ textAlign: 'center' }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1124,18 +1215,23 @@ export default function Equipamentos() {
                       <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{device.numero_serie || <span style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>Não definido</span>}</td>
                       <td>{roomNameMap[device.sala_id] || <span style={{ color: 'var(--color-danger)', fontStyle: 'italic', fontWeight: 500 }}>Sem Sala</span>}</td>
                       <td>{renderCondicaoBadge(device.condicao)}</td>
-                      {canEdit && (
-                        <td style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
-                            <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
-                              <Edit2 size={14} />
-                            </button>
-                            <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      )}
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
+                          <button className="btn-icon" onClick={() => openQrModal(device)} title="Ver QR Code">
+                            <QrCode size={14} />
+                          </button>
+                          {canEdit && (
+                            <>
+                              <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
+                                <Edit2 size={14} />
+                              </button>
+                              <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1340,16 +1436,21 @@ export default function Equipamentos() {
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         {renderCondicaoBadge(device.condicao)}
-                        {canEdit && (
-                          <div style={{ display: 'flex', gap: '0.25rem' }}>
-                            <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
-                              <Edit2 size={12} />
-                            </button>
-                            <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        )}
+                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                          <button className="btn-icon" onClick={() => openQrModal(device)} title="Ver QR Code">
+                            <QrCode size={12} />
+                          </button>
+                          {canEdit && (
+                            <>
+                              <button className="btn-icon" onClick={() => openEditDeviceModal(device)} title="Editar Equipamento">
+                                <Edit2 size={12} />
+                              </button>
+                              <button className="btn-icon delete" onClick={() => handleDeleteDevice(device.id)} title="Remover Equipamento">
+                                <Trash2 size={12} />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1754,6 +1855,62 @@ export default function Equipamentos() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: EXIBIR QR CODE DO EQUIPAMENTO ── */}
+      {isQrModalOpen && qrDevice && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsQrModalOpen(false); }}>
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <QrCode size={20} color="var(--color-primary)" /> QR Code do Equipamento
+              </h3>
+              <button className="btn-icon" onClick={() => setIsQrModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="modal-body-scroll" style={{ textAlign: 'center', padding: '2rem 1.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
+                <div style={{ 
+                  background: '#fff', 
+                  padding: '1rem', 
+                  borderRadius: 'var(--radius-md)', 
+                  boxShadow: 'var(--shadow-md)',
+                  border: '1px solid var(--border-light)',
+                  display: 'inline-block'
+                }}>
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                      window.location.origin + window.location.pathname + '?search=' + qrDevice.id
+                    )}`} 
+                    alt="QR Code" 
+                    style={{ width: '200px', height: '200px', display: 'block' }}
+                  />
+                </div>
+                
+                <div style={{ width: '100%' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 700 }}>{qrDevice.tipo}</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                    <span><b>ID Único:</b> <span style={{ fontFamily: 'monospace' }}>{qrDevice.id}</span></span>
+                    {qrDevice.numero_escola && <span><b>Patrimônio:</b> {qrDevice.numero_escola}</span>}
+                    {qrDevice.numero_serie && <span><b>Nº Série:</b> {qrDevice.numero_serie}</span>}
+                    <span><b>Local:</b> {roomNameMap[qrDevice.sala_id] || 'Sem sala'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer-actions" style={{ justifyContent: 'space-between' }}>
+              <button className="btn btn-secondary" onClick={() => setIsQrModalOpen(false)}>
+                Fechar
+              </button>
+              <button className="btn btn-primary" onClick={() => handlePrintQrCode(qrDevice)}>
+                Imprimir Etiqueta
+              </button>
             </div>
           </div>
         </div>
