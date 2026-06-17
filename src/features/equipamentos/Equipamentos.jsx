@@ -962,6 +962,21 @@ export default function Equipamentos() {
     }
   };
 
+  const handleDeleteHistorico = async (id) => {
+    if (!canEdit) return;
+    if (!window.confirm('Tem certeza que deseja excluir este registro do histórico?')) return;
+
+    try {
+      const { error } = await supabase.from('historico_emprestimos').delete().eq('id', id);
+      if (error) throw error;
+      showToast('Registro do histórico excluído com sucesso!');
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao excluir registro do histórico', 'error');
+    }
+  };
+
   const handleBorrowDevice = async (e) => {
     e.preventDefault();
     if (!loanDevice) return;
@@ -1711,6 +1726,7 @@ export default function Equipamentos() {
                       <th>Professor(a)</th>
                       <th>Data do Empréstimo</th>
                       <th>Status / Data de Devolução</th>
+                      {canEdit && <th style={{ textAlign: 'center' }}>Ações</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -1731,6 +1747,17 @@ export default function Equipamentos() {
                             </span>
                           )}
                         </td>
+                        {canEdit && (
+                          <td style={{ textAlign: 'center' }}>
+                            <button 
+                              className="btn-icon delete" 
+                              onClick={() => handleDeleteHistorico(hist.id)} 
+                              title="Excluir Registro"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
