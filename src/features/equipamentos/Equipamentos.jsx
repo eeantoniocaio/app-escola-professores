@@ -231,8 +231,8 @@ export default function Equipamentos() {
   }, []);
 
   // Carregar dados iniciais
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [salasRes, dispRes, histRes] = await Promise.all([
         supabase.from('salas').select('*').order('nome'),
@@ -259,7 +259,7 @@ export default function Equipamentos() {
       console.error('Erro ao carregar dados de equipamentos:', err);
       showToast('Erro ao carregar dados', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -1192,7 +1192,7 @@ export default function Equipamentos() {
 
       showToast(`"${device.tipo}" devolvido com sucesso!`, 'success');
       setContinuousReturnInput('');
-      fetchData(); // Atualiza em segundo plano
+      fetchData(true); // Atualiza em segundo plano (silencioso para não fechar a câmera)
     } catch (err) {
       console.error(err);
       showToast('Erro ao processar devolução', 'error');
