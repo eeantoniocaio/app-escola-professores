@@ -118,6 +118,11 @@ export default function Equipamentos() {
   // Histórico de Empréstimos
   const [historicoEmprestimos, setHistoricoEmprestimos] = useState([]);
 
+  // Estados para Devolução em Lote
+  const [isBatchReturnModalOpen, setIsBatchReturnModalOpen] = useState(false);
+  const [batchReturnInput, setBatchReturnInput] = useState('');
+  const [batchReturnList, setBatchReturnList] = useState([]);
+
   // Carregar dados iniciais
   const fetchData = async () => {
     setLoading(true);
@@ -977,6 +982,105 @@ export default function Equipamentos() {
     }
   };
 
+  const handleBatchReturnScan = (val) => {
+    if (!val.trim()) return;
+
+    let deviceId = val.trim();
+    try {
+      if (deviceId.startsWith('http://') || deviceId.startsWith('https://')) {
+        const urlObj = new URL(deviceId);
+        deviceId = urlObj.searchParams.get('search') || urlObj.searchParams.get('device') || urlObj.searchParams.get('id') || deviceId;
+      }
+    } catch (e) {
+      // Ignore URL parsing errors
+    }
+
+    const device = dispositivos.find(d => 
+      d.id.toLowerCase() === deviceId.toLowerCase() || 
+      (d.numero_escola && d.numero_escola.toLowerCase() === deviceId.toLowerCase())
+    );
+    
+    if (!device) {
+      showToast('Dispositivo não encontrado pelo ID ou Patrimônio inserido', 'error');
+      setBatchReturnInput('');
+      return;
+    }
+
+    if (!device.emprestado) {
+      showToast(`O dispositivo "${device.tipo}" já está disponível (não está emprestado)`, 'warning');
+      setBatchReturnInput('');
+      return;
+    }
+
+    if (batchReturnList.some(item => item.id === device.id)) {
+      showToast(`O dispositivo "${device.tipo}" já está na lista de devolução`, 'info');
+      setBatchReturnInput('');
+      return;
+    }
+
+    setBatchReturnList(prev => [...prev, device]);
+    showToast(`"${device.tipo}" adicionado à lista de devolução!`, 'success');
+    setBatchReturnInput('');
+  };
+
+  const handleBatchInputSubmit = (e) => {
+    e.preventDefault();
+    handleBatchReturnScan(batchReturnInput);
+  };
+
+  const handleConfirmBatchReturn = async () => {
+    if (batchReturnList.length === 0) return;
+    setLoading(true);
+    try {
+      for (const dev of batchReturnList) {
+        const payload = {
+          emprestado: false,
+          professor_emprestimo: null,
+          data_emprestimo: null
+        };
+
+        await supabase
+          .from('dispositivos')
+          .update(payload)
+          .eq('id', dev.id);
+
+        const { data: activeLoans, error: selectError } = await supabase
+          .from('historico_emprestimos')
+          .select('id')
+          .eq('dispositivo_id', dev.id)
+          .is('data_devolucao', null)
+          .order('data_emprestimo', { ascending: false })
+          .limit(1);
+
+        if (!selectError && activeLoans && activeLoans.length > 0) {
+          await supabase
+            .from('historico_emprestimos')
+            .update({ data_devolucao: new Date() })
+            .eq('id', activeLoans[0].id);
+        } else {
+          await supabase.from('historico_emprestimos').insert([{
+            dispositivo_id: dev.id,
+            professor: dev.professor_emprestimo || 'Não identificado',
+            data_emprestimo: dev.data_emprestimo || new Date(),
+            data_devolucao: new Date(),
+            tipo_dispositivo: dev.tipo,
+            patrimonio: dev.numero_escola || null
+          }]);
+        }
+      }
+
+      showToast(`${batchReturnList.length} devoluções registradas com sucesso!`, 'success');
+      setBatchReturnList([]);
+      setIsBatchReturnModalOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao processar devolução em lote', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBorrowDevice = async (e) => {
     e.preventDefault();
     if (!loanDevice) return;
@@ -1591,8 +1695,18 @@ export default function Equipamentos() {
       {/* ── TAB EMPRÉSTIMOS ── */}
       {activeTab === 'emprestimos' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="search-bar-row">
+          <div className="search-bar-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Dispositivos Disponíveis para Empréstimo</h3>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => {
+                setBatchReturnList([]);
+                setIsBatchReturnModalOpen(true);
+              }}
+              style={{ backgroundColor: '#ff9800', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
+            >
+              <CheckSquare size={16} /> Devolução em Lote
+            </button>
           </div>
 
           {loanableDevices.length === 0 ? (
@@ -2586,6 +2700,123 @@ export default function Equipamentos() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* ── MODAL: DEVOLUÇÃO EM LOTE ── */}
+      {isBatchReturnModalOpen && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsBatchReturnModalOpen(false); }}>
+          <div className="modal-content" style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CheckSquare size={20} color="#ff9800" /> Devolução em Lote
+              </h3>
+              <button className="btn-icon" onClick={() => setIsBatchReturnModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body-scroll">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                  Escaneie ou digite os códigos/patrimônios dos dispositivos emprestados. Eles serão adicionados à fila e devolvidos de uma só vez.
+                </p>
+
+                <form onSubmit={handleBatchInputSubmit}>
+                  <div className="form-input-group">
+                    <label>Escanear QR Code ou Digitar Patrimônio / ID</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        value={batchReturnInput}
+                        onChange={(e) => setBatchReturnInput(e.target.value)}
+                        placeholder="Clique aqui e escaneie ou digite..."
+                        className="form-text-input"
+                        autoFocus
+                      />
+                      <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--color-primary)', margin: 0 }}>
+                        Adicionar
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                <div style={{ marginTop: '0.5rem' }}>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>
+                    Fila de Devolução ({batchReturnList.length})
+                  </h4>
+
+                  {batchReturnList.length === 0 ? (
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '2rem 1rem', 
+                      background: 'var(--bg-secondary)', 
+                      borderRadius: 'var(--radius-md)', 
+                      border: '1px dashed var(--border-light)', 
+                      color: 'var(--text-muted)',
+                      fontSize: '0.85rem'
+                    }}>
+                      Nenhum equipamento na fila. Comece a escanear!
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                      {batchReturnList.map(dev => (
+                        <div 
+                          key={dev.id}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '0.6rem 1rem',
+                            background: '#fff',
+                            border: '1px solid var(--border-light)',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{dev.tipo}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              Patrimônio: {dev.numero_escola || 'N/D'} • Retirado por: {dev.professor_emprestimo}
+                            </div>
+                          </div>
+                          <button 
+                            type="button" 
+                            className="btn-icon delete" 
+                            onClick={() => setBatchReturnList(prev => prev.filter(item => item.id !== dev.id))}
+                            title="Remover da fila"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer-actions">
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setBatchReturnList([]);
+                  setIsBatchReturnModalOpen(false);
+                }}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-success" 
+                onClick={handleConfirmBatchReturn} 
+                disabled={batchReturnList.length === 0}
+                style={{ backgroundColor: 'var(--color-success)', color: 'white', border: 'none', opacity: batchReturnList.length === 0 ? 0.6 : 1 }}
+              >
+                Devolver todos ({batchReturnList.length})
+              </button>
+            </div>
           </div>
         </div>
       )}
