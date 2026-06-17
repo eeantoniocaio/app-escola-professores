@@ -173,12 +173,6 @@ export default function Equipamentos() {
     setIsCameraActive(false);
   };
 
-  const closeBatchReturnModal = async () => {
-    await stopCamera();
-    setBatchReturnList([]);
-    setIsBatchReturnModalOpen(false);
-  };
-
   useEffect(() => {
     return () => {
       if (qrScannerRef.current) {
