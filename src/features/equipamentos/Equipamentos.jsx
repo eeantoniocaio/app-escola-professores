@@ -129,6 +129,11 @@ export default function Equipamentos() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
 
+  const continuousReturnScanRef = useRef(null);
+  useEffect(() => {
+    continuousReturnScanRef.current = handleContinuousReturnScan;
+  });
+
   const startCamera = async () => {
     setIsCameraActive(true);
     setTimeout(async () => {
@@ -180,7 +185,9 @@ export default function Equipamentos() {
             }
           },
           (decodedText) => {
-            handleContinuousReturnScan(decodedText);
+            if (continuousReturnScanRef.current) {
+              continuousReturnScanRef.current(decodedText);
+            }
           },
           (errorMessage) => {
             // Silence scan warnings
@@ -1143,6 +1150,8 @@ export default function Equipamentos() {
       if (!activeLoans || activeLoans.length === 0) {
         showToast(`Erro: Nenhum empréstimo ativo registrado no histórico para "${device.tipo}". Não é possível devolver.`, 'error');
         setContinuousReturnInput('');
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
         return;
       }
 
