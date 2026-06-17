@@ -1084,10 +1084,9 @@ export default function Equipamentos() {
     scannedIdsRef.current.add(device.id);
 
     setBatchReturnList(prev => {
-      if (prev.some(item => item.id === device.id)) {
-        return prev;
-      }
-      return [...prev, device];
+      // Remove any existing copy to ensure absolute uniqueness in the state array
+      const filtered = prev.filter(item => item.id !== device.id);
+      return [...filtered, device];
     });
     
     showToast(`"${device.tipo}" adicionado à lista de devolução!`, 'success');
@@ -1111,7 +1110,17 @@ export default function Equipamentos() {
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
+      // Garantia absoluta de unicidade de IDs na fila antes de executar as queries
+      const uniqueDevices = [];
+      const seenIds = new Set();
       for (const dev of batchReturnList) {
+        if (!seenIds.has(dev.id)) {
+          seenIds.add(dev.id);
+          uniqueDevices.push(dev);
+        }
+      }
+
+      for (const dev of uniqueDevices) {
         const payload = {
           emprestado: false,
           professor_emprestimo: null,
