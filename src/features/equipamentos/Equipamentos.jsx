@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell, Download, FileText, Share2, QrCode, Printer, CheckSquare } from 'lucide-react';
+import { Wrench, Search, Plus, Edit2, Trash2, Users, FolderOpen, X, ArrowLeft, Activity, AlertTriangle, Bell, Download, FileText, Share2, QrCode, Printer, CheckSquare, Camera } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
@@ -122,6 +123,66 @@ export default function Equipamentos() {
   const [isBatchReturnModalOpen, setIsBatchReturnModalOpen] = useState(false);
   const [batchReturnInput, setBatchReturnInput] = useState('');
   const [batchReturnList, setBatchReturnList] = useState([]);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const qrScannerRef = useRef(null);
+
+  const startCamera = async () => {
+    setIsCameraActive(true);
+    setTimeout(async () => {
+      try {
+        const html5QrCode = new Html5Qrcode("qr-reader");
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: (width, height) => {
+              const minDim = Math.min(width, height);
+              const qrboxSize = Math.floor(minDim * 0.7);
+              return { width: qrboxSize, height: qrboxSize };
+            }
+          },
+          (decodedText) => {
+            handleBatchReturnScan(decodedText);
+          },
+          (errorMessage) => {
+            // Silence scan warnings
+          }
+        );
+        qrScannerRef.current = html5QrCode;
+      } catch (err) {
+        console.error("Erro ao iniciar câmera:", err);
+        showToast("Não foi possível acessar a câmera. Verifique as permissões.", "error");
+        setIsCameraActive(false);
+      }
+    }, 200);
+  };
+
+  const stopCamera = async () => {
+    if (qrScannerRef.current) {
+      try {
+        await qrScannerRef.current.stop();
+      } catch (err) {
+        console.error("Erro ao parar câmera:", err);
+      } finally {
+        qrScannerRef.current = null;
+      }
+    }
+    setIsCameraActive(false);
+  };
+
+  const closeBatchReturnModal = async () => {
+    await stopCamera();
+    setBatchReturnList([]);
+    setIsBatchReturnModalOpen(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (qrScannerRef.current) {
+        qrScannerRef.current.stop().catch(err => console.error(err));
+      }
+    };
+  }, []);
 
   // Carregar dados iniciais
   const fetchData = async () => {
@@ -2705,13 +2766,13 @@ export default function Equipamentos() {
       )}
       {/* ── MODAL: DEVOLUÇÃO EM LOTE ── */}
       {isBatchReturnModalOpen && (
-        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsBatchReturnModalOpen(false); }}>
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeBatchReturnModal(); }}>
           <div className="modal-content" style={{ maxWidth: '550px' }}>
             <div className="modal-header">
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <CheckSquare size={20} color="#ff9800" /> Devolução em Lote
               </h3>
-              <button className="btn-icon" onClick={() => setIsBatchReturnModalOpen(false)}>
+              <button className="btn-icon" onClick={closeBatchReturnModal}>
                 <X size={18} />
               </button>
             </div>
@@ -2740,6 +2801,44 @@ export default function Equipamentos() {
                     </div>
                   </div>
                 </form>
+
+                {/* Área da Câmera */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
+                  {!isCameraActive ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={startCamera}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', margin: '0 auto', width: '100%', border: '1px solid #ff9800', color: '#ff9800', background: 'transparent' }}
+                    >
+                      <Camera size={16} /> Abrir Leitor de Câmera (QR Code)
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={stopCamera}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', margin: '0 auto', width: '100%', border: '1px solid var(--color-danger)', color: 'var(--color-danger)', background: 'transparent' }}
+                    >
+                      <X size={16} /> Parar Câmera
+                    </button>
+                  )}
+
+                  {isCameraActive && (
+                    <div 
+                      id="qr-reader" 
+                      style={{ 
+                        width: '100%', 
+                        maxWidth: '350px', 
+                        margin: '0.5rem auto', 
+                        borderRadius: 'var(--radius-md)', 
+                        overflow: 'hidden', 
+                        border: '2px solid #ff9800',
+                        background: '#000'
+                      }}
+                    />
+                  )}
+                </div>
 
                 <div style={{ marginTop: '0.5rem' }}>
                   <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>
@@ -2800,10 +2899,7 @@ export default function Equipamentos() {
               <button 
                 type="button" 
                 className="btn btn-secondary" 
-                onClick={() => {
-                  setBatchReturnList([]);
-                  setIsBatchReturnModalOpen(false);
-                }}
+                onClick={closeBatchReturnModal}
               >
                 Cancelar
               </button>

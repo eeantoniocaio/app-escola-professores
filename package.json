@@ -17,6 +17,7 @@
     "@vercel/analytics": "^2.0.1",
     "docx": "^9.7.0",
     "html2canvas": "^1.4.1",
+    "html5-qrcode": "^2.3.8",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.16.0",
     "pdfmake": "^0.3.8",
