@@ -125,6 +125,7 @@ export default function Equipamentos() {
   const [batchReturnList, setBatchReturnList] = useState([]);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const qrScannerRef = useRef(null);
+  const scannedIdsRef = useRef(new Set());
 
   const startCamera = async () => {
     setIsCameraActive(true);
@@ -1073,13 +1074,20 @@ export default function Equipamentos() {
       return;
     }
 
-    if (batchReturnList.some(item => item.id === device.id)) {
-      showToast(`O dispositivo "${device.tipo}" já está na lista de devolução`, 'info');
+    // Usar scannedIdsRef para ignorar leituras duplicadas rápidas no mesmo frame da camera
+    if (scannedIdsRef.current.has(device.id)) {
       setBatchReturnInput('');
       return;
     }
+    scannedIdsRef.current.add(device.id);
 
-    setBatchReturnList(prev => [...prev, device]);
+    setBatchReturnList(prev => {
+      if (prev.some(item => item.id === device.id)) {
+        return prev;
+      }
+      return [...prev, device];
+    });
+    
     showToast(`"${device.tipo}" adicionado à lista de devolução!`, 'success');
     setBatchReturnInput('');
   };
@@ -1087,6 +1095,13 @@ export default function Equipamentos() {
   const handleBatchInputSubmit = (e) => {
     e.preventDefault();
     handleBatchReturnScan(batchReturnInput);
+  };
+
+  const closeBatchReturnModal = async () => {
+    await stopCamera();
+    setBatchReturnList([]);
+    scannedIdsRef.current.clear();
+    setIsBatchReturnModalOpen(false);
   };
 
   const handleConfirmBatchReturn = async () => {
@@ -1132,6 +1147,7 @@ export default function Equipamentos() {
 
       showToast(`${batchReturnList.length} devoluções registradas com sucesso!`, 'success');
       setBatchReturnList([]);
+      scannedIdsRef.current.clear();
       setIsBatchReturnModalOpen(false);
       fetchData();
     } catch (err) {
@@ -2882,7 +2898,10 @@ export default function Equipamentos() {
                           <button 
                             type="button" 
                             className="btn-icon delete" 
-                            onClick={() => setBatchReturnList(prev => prev.filter(item => item.id !== dev.id))}
+                            onClick={() => {
+                              scannedIdsRef.current.delete(dev.id);
+                              setBatchReturnList(prev => prev.filter(item => item.id !== dev.id));
+                            }}
                             title="Remover da fila"
                           >
                             <X size={14} />
