@@ -127,6 +127,7 @@ export default function Equipamentos() {
   const qrScannerRef = useRef(null);
   const scannedIdsRef = useRef(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const startCamera = async () => {
     setIsCameraActive(true);
@@ -1106,7 +1107,8 @@ export default function Equipamentos() {
   };
 
   const handleConfirmBatchReturn = async () => {
-    if (batchReturnList.length === 0 || isSubmitting) return;
+    if (batchReturnList.length === 0 || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       for (const dev of batchReturnList) {
@@ -1155,18 +1157,20 @@ export default function Equipamentos() {
       console.error(err);
       showToast('Erro ao processar devolução em lote', 'error');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
 
   const handleBorrowDevice = async (e) => {
     e.preventDefault();
-    if (!loanDevice || isSubmitting) return;
+    if (!loanDevice || isSubmittingRef.current) return;
     if (!loanProfessor.trim()) {
       showToast('Selecione o professor', 'error');
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     const payload = {
       emprestado: true,
@@ -1204,12 +1208,14 @@ export default function Equipamentos() {
       console.error(err);
       showToast('Erro ao registrar empréstimo', 'error');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
 
   const handleReturnDevice = async () => {
-    if (!loanDevice || isSubmitting) return;
+    if (!loanDevice || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     const payload = {
@@ -1264,6 +1270,7 @@ export default function Equipamentos() {
       console.error(err);
       showToast('Erro ao registrar devolução', 'error');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
