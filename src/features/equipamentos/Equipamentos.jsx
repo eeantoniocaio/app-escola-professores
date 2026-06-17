@@ -126,6 +126,7 @@ export default function Equipamentos() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const qrScannerRef = useRef(null);
   const scannedIdsRef = useRef(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const startCamera = async () => {
     setIsCameraActive(true);
@@ -1105,8 +1106,8 @@ export default function Equipamentos() {
   };
 
   const handleConfirmBatchReturn = async () => {
-    if (batchReturnList.length === 0) return;
-    setLoading(true);
+    if (batchReturnList.length === 0 || isSubmitting) return;
+    setIsSubmitting(true);
     try {
       for (const dev of batchReturnList) {
         const payload = {
@@ -1154,18 +1155,19 @@ export default function Equipamentos() {
       console.error(err);
       showToast('Erro ao processar devolução em lote', 'error');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleBorrowDevice = async (e) => {
     e.preventDefault();
-    if (!loanDevice) return;
+    if (!loanDevice || isSubmitting) return;
     if (!loanProfessor.trim()) {
       showToast('Selecione o professor', 'error');
       return;
     }
 
+    setIsSubmitting(true);
     const payload = {
       emprestado: true,
       professor_emprestimo: loanProfessor,
@@ -1201,11 +1203,14 @@ export default function Equipamentos() {
     } catch (err) {
       console.error(err);
       showToast('Erro ao registrar empréstimo', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleReturnDevice = async () => {
-    if (!loanDevice) return;
+    if (!loanDevice || isSubmitting) return;
+    setIsSubmitting(true);
 
     const payload = {
       emprestado: false,
@@ -1258,6 +1263,8 @@ export default function Equipamentos() {
     } catch (err) {
       console.error(err);
       showToast('Erro ao registrar devolução', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -2736,8 +2743,8 @@ export default function Equipamentos() {
                   <button type="button" className="btn btn-secondary" onClick={() => setIsLoanModalOpen(false)}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--color-primary)' }}>
-                    Confirmar Empréstimo
+                  <button type="submit" className="btn btn-primary" disabled={isSubmitting} style={{ backgroundColor: 'var(--color-primary)', opacity: isSubmitting ? 0.6 : 1 }}>
+                    {isSubmitting ? 'Processando...' : 'Confirmar Empréstimo'}
                   </button>
                 </div>
               </form>
@@ -2768,11 +2775,11 @@ export default function Equipamentos() {
                 </div>
 
                 <div className="modal-footer-actions">
-                  <button type="button" className="btn btn-secondary" onClick={() => setIsLoanModalOpen(false)}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setIsLoanModalOpen(false)} disabled={isSubmitting}>
                     Cancelar
                   </button>
-                  <button type="button" className="btn btn-success" onClick={handleReturnDevice} style={{ backgroundColor: 'var(--color-success)', color: 'white', border: 'none' }}>
-                    Confirmar Devolução
+                  <button type="button" className="btn btn-success" onClick={handleReturnDevice} disabled={isSubmitting} style={{ backgroundColor: 'var(--color-success)', color: 'white', border: 'none', opacity: isSubmitting ? 0.6 : 1 }}>
+                    {isSubmitting ? 'Processando...' : 'Confirmar Devolução'}
                   </button>
                 </div>
               </div>
@@ -2919,6 +2926,7 @@ export default function Equipamentos() {
                 type="button" 
                 className="btn btn-secondary" 
                 onClick={closeBatchReturnModal}
+                disabled={isSubmitting}
               >
                 Cancelar
               </button>
@@ -2926,10 +2934,10 @@ export default function Equipamentos() {
                 type="button" 
                 className="btn btn-success" 
                 onClick={handleConfirmBatchReturn} 
-                disabled={batchReturnList.length === 0}
-                style={{ backgroundColor: 'var(--color-success)', color: 'white', border: 'none', opacity: batchReturnList.length === 0 ? 0.6 : 1 }}
+                disabled={batchReturnList.length === 0 || isSubmitting}
+                style={{ backgroundColor: 'var(--color-success)', color: 'white', border: 'none', opacity: (batchReturnList.length === 0 || isSubmitting) ? 0.6 : 1 }}
               >
-                Devolver todos ({batchReturnList.length})
+                {isSubmitting ? 'Processando...' : `Devolver todos (${batchReturnList.length})`}
               </button>
             </div>
           </div>
