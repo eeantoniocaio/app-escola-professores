@@ -1089,7 +1089,7 @@ export default function Equipamentos() {
     }
   };
 
-  const handleContinuousReturnScan = async (val) => {
+  const handleContinuousReturnScan = async (val, isManual = false) => {
     if (!val.trim()) return;
 
     let deviceId = val.trim();
@@ -1108,7 +1108,9 @@ export default function Equipamentos() {
     );
     
     if (!device) {
-      showToast('Dispositivo não encontrado', 'error');
+      if (isManual) {
+        showToast('Dispositivo não encontrado', 'error');
+      }
       setContinuousReturnInput('');
       return;
     }
@@ -1123,7 +1125,9 @@ export default function Equipamentos() {
     }
 
     if (!device.emprestado) {
-      showToast(`O dispositivo "${device.tipo}" já está disponível (não está emprestado)`, 'warning');
+      if (isManual) {
+        showToast(`O dispositivo "${device.tipo}" já está disponível (não está emprestado)`, 'warning');
+      }
       setContinuousReturnInput('');
       return;
     }
@@ -1148,7 +1152,9 @@ export default function Equipamentos() {
 
       // ChatGPT critical rule: não inserir nova devolução se não houver empréstimo ativo no histórico
       if (!activeLoans || activeLoans.length === 0) {
-        showToast(`Erro: Nenhum empréstimo ativo registrado no histórico para "${device.tipo}". Não é possível devolver.`, 'error');
+        if (isManual) {
+          showToast(`Erro: Nenhum empréstimo ativo registrado no histórico para "${device.tipo}". Não é possível devolver.`, 'error');
+        }
         setContinuousReturnInput('');
         isSubmittingRef.current = false;
         setIsSubmitting(false);
@@ -1198,7 +1204,7 @@ export default function Equipamentos() {
 
   const handleContinuousInputSubmit = (e) => {
     e.preventDefault();
-    handleContinuousReturnScan(continuousReturnInput);
+    handleContinuousReturnScan(continuousReturnInput, true);
   };
 
 
