@@ -1109,62 +1109,101 @@ export default function Equipamentos() {
     if (batchReturnList.length === 0 || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
     setIsSubmitting(true);
+
+    const devicesToProcess = [...batchReturnList];
+    
+    // Limpa a lista e o cache de escaneamento imediatamente para evitar múltiplos cliques/processamento concorrente
+    setBatchReturnList([]);
+    scannedIdsRef.current.clear();
+    setIsBatchReturnModalOpen(false);
+
     try {
-      // Garantia absoluta de unicidade de IDs na fila antes de executar as queries
+      // Garantia absoluta de unicidade de IDs na fila
       const uniqueDevices = [];
       const seenIds = new Set();
-      for (const dev of batchReturnList) {
+      for (const dev of devicesToProcess) {
         if (!seenIds.has(dev.id)) {
           seenIds.add(dev.id);
           uniqueDevices.push(dev);
         }
       }
 
-      for (const dev of uniqueDevices) {
-        const payload = {
+      if (uniqueDevices.length === 0) {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+        return;
+      }
+
+      const idsToUpdate = uniqueDevices.map(d => d.id);
+
+      // 1. Atualizar o status dos dispositivos para disponível
+      const { error: updateDevicesError } = await supabase
+        .from('dispositivos')
+        .update({
           emprestado: false,
           professor_emprestimo: null,
           data_emprestimo: null
-        };
+        })
+        .in('id', idsToUpdate);
 
-        await supabase
-          .from('dispositivos')
-          .update(payload)
-          .eq('id', dev.id);
+      if (updateDevicesError) throw updateDevicesError;
 
-        const { data: activeLoans, error: selectError } = await supabase
-          .from('historico_emprestimos')
-          .select('id')
-          .eq('dispositivo_id', dev.id)
-          .is('data_devolucao', null)
-          .order('data_emprestimo', { ascending: false })
-          .limit(1);
+      // 2. Buscar empréstimos ativos (sem data de devolução) para esses dispositivos
+      const { data: activeLoans, error: selectError } = await supabase
+        .from('historico_emprestimos')
+        .select('id, dispositivo_id')
+        .in('dispositivo_id', idsToUpdate)
+        .is('data_devolucao', null);
 
-        if (!selectError && activeLoans && activeLoans.length > 0) {
-          await supabase
-            .from('historico_emprestimos')
-            .update({ data_devolucao: new Date() })
-            .eq('id', activeLoans[0].id);
-        } else {
-          await supabase.from('historico_emprestimos').insert([{
-            dispositivo_id: dev.id,
-            professor: dev.professor_emprestimo || 'Não identificado',
-            data_emprestimo: dev.data_emprestimo || new Date(),
-            data_devolucao: new Date(),
-            tipo_dispositivo: dev.tipo,
-            patrimonio: dev.numero_escola || null
-          }]);
+      if (selectError) throw selectError;
+
+      const activeLoanIds = [];
+      const devicesWithActiveLoan = new Set();
+
+      if (activeLoans && activeLoans.length > 0) {
+        for (const loan of activeLoans) {
+          activeLoanIds.push(loan.id);
+          devicesWithActiveLoan.add(loan.dispositivo_id);
         }
+
+        // 3. Atualizar devoluções dos empréstimos ativos com a data/hora atual
+        const { error: updateHistoryError } = await supabase
+          .from('historico_emprestimos')
+          .update({ data_devolucao: new Date() })
+          .in('id', activeLoanIds);
+
+        if (updateHistoryError) throw updateHistoryError;
       }
 
-      showToast(`${batchReturnList.length} devoluções registradas com sucesso!`, 'success');
-      setBatchReturnList([]);
-      scannedIdsRef.current.clear();
-      setIsBatchReturnModalOpen(false);
+      // 4. Para dispositivos que não possuíam empréstimo ativo no histórico, inserir um registro já concluído
+      const devicesToInsert = uniqueDevices.filter(d => !devicesWithActiveLoan.has(d.id));
+      if (devicesToInsert.length > 0) {
+        const inserts = devicesToInsert.map(dev => ({
+          dispositivo_id: dev.id,
+          professor: dev.professor_emprestimo || 'Não identificado',
+          data_emprestimo: dev.data_emprestimo || new Date(),
+          data_devolucao: new Date(),
+          tipo_dispositivo: dev.tipo,
+          patrimonio: dev.numero_escola || null
+        }));
+
+        const { error: insertHistoryError } = await supabase
+          .from('historico_emprestimos')
+          .insert(inserts);
+
+        if (insertHistoryError) throw insertHistoryError;
+      }
+
+      showToast(`${uniqueDevices.length} devoluções registradas com sucesso!`, 'success');
       fetchData();
     } catch (err) {
       console.error(err);
       showToast('Erro ao processar devolução em lote', 'error');
+      // Restaura a fila de devolução caso ocorra algum erro no banco
+      setBatchReturnList(devicesToProcess);
+      for (const dev of devicesToProcess) {
+        scannedIdsRef.current.add(dev.id);
+      }
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
