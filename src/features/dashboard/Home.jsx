@@ -82,10 +82,16 @@ export default function Home() {
         )}
 
         {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor') && (
-          <button className="dashboard-action-card" onClick={handleEquipamentosClick}>
-            <Wrench />
-            <span>Equipamentos</span>
-          </button>
+          <>
+            <button className="dashboard-action-card" onClick={handleEquipamentosClick}>
+              <Wrench />
+              <span>Equipamentos</span>
+            </button>
+            <button className="dashboard-action-card" onClick={() => navigate('/equipamentos?tab=emprestimos')}>
+              <ClipboardList />
+              <span>Empréstimos</span>
+            </button>
+          </>
         )}
 
         {userRole !== 'secretaria' && userRole !== 'tecnico' && (

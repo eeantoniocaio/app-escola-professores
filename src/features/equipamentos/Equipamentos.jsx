@@ -165,7 +165,7 @@ export default function Equipamentos() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab && ['dashboard', 'salas', 'dispositivos', 'solicitacoes'].includes(tab)) {
+    if (tab && ['dashboard', 'salas', 'dispositivos', 'solicitacoes', 'emprestimos'].includes(tab)) {
       setActiveTab(tab);
     }
 
