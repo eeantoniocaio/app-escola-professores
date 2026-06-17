@@ -1110,7 +1110,9 @@ export default function Equipamentos() {
     isSubmittingRef.current = true;
     setIsSubmitting(true);
 
+    const executionId = Math.random().toString(36).substring(2, 9).toUpperCase();
     const devicesToProcess = [...batchReturnList];
+    console.log(`[RETURN EXECUTION ${executionId}] started processing ${devicesToProcess.length} items.`);
     
     // Limpa a lista e o cache de escaneamento imediatamente para evitar múltiplos cliques/processamento concorrente
     setBatchReturnList([]);
@@ -1129,11 +1131,13 @@ export default function Equipamentos() {
       }
 
       if (uniqueDevices.length === 0) {
+        console.log(`[RETURN EXECUTION ${executionId}] uniqueDevices list is empty.`);
         isSubmittingRef.current = false;
         setIsSubmitting(false);
         return;
       }
 
+      console.log(`[RETURN EXECUTION ${executionId}] unique IDs to return:`, uniqueDevices.map(d => d.id));
       const idsToUpdate = uniqueDevices.map(d => d.id);
 
       // 1. Atualizar o status dos dispositivos para disponível
@@ -1166,6 +1170,8 @@ export default function Equipamentos() {
           devicesWithActiveLoan.add(loan.dispositivo_id);
         }
 
+        console.log(`[RETURN EXECUTION ${executionId}] active loans to close:`, activeLoanIds);
+
         // 3. Atualizar devoluções dos empréstimos ativos com a data/hora atual
         const { error: updateHistoryError } = await supabase
           .from('historico_emprestimos')
@@ -1176,7 +1182,34 @@ export default function Equipamentos() {
       }
 
       // 4. Para dispositivos que não possuíam empréstimo ativo no histórico, inserir um registro já concluído
-      const devicesToInsert = uniqueDevices.filter(d => !devicesWithActiveLoan.has(d.id));
+      // Adicionamos uma salvaguarda extra: se o mesmo dispositivo foi devolvido nos últimos 10 segundos,
+      // pulamos a inserção dele para evitar qualquer concorrência residual.
+      const devicesFiltered = uniqueDevices.filter(d => !devicesWithActiveLoan.has(d.id));
+      const devicesToInsert = [];
+
+      if (devicesFiltered.length > 0) {
+        console.log(`[RETURN EXECUTION ${executionId}] devices without active loan in history, running recent check:`, devicesFiltered.map(d => d.id));
+        const tenSecondsAgo = new Date(Date.now() - 10000).toISOString();
+        const { data: recentReturns, error: recentError } = await supabase
+          .from('historico_emprestimos')
+          .select('dispositivo_id')
+          .in('dispositivo_id', devicesFiltered.map(d => d.id))
+          .gte('data_devolucao', tenSecondsAgo);
+
+        if (!recentError && recentReturns) {
+          const recentlyReturnedIds = new Set(recentReturns.map(r => r.dispositivo_id));
+          for (const dev of devicesFiltered) {
+            if (!recentlyReturnedIds.has(dev.id)) {
+              devicesToInsert.push(dev);
+            } else {
+              console.log(`[RETURN EXECUTION ${executionId}] skipped duplicate insert for device ${dev.id} as it was returned in the last 10s.`);
+            }
+          }
+        } else {
+          devicesToInsert.push(...devicesFiltered);
+        }
+      }
+
       if (devicesToInsert.length > 0) {
         const inserts = devicesToInsert.map(dev => ({
           dispositivo_id: dev.id,
@@ -1187,6 +1220,7 @@ export default function Equipamentos() {
           patrimonio: dev.numero_escola || null
         }));
 
+        console.log(`[RETURN EXECUTION ${executionId}] inserting history records:`, inserts.map(i => i.dispositivo_id));
         const { error: insertHistoryError } = await supabase
           .from('historico_emprestimos')
           .insert(inserts);
@@ -1194,10 +1228,11 @@ export default function Equipamentos() {
         if (insertHistoryError) throw insertHistoryError;
       }
 
+      console.log(`[RETURN EXECUTION ${executionId}] finished successfully.`);
       showToast(`${uniqueDevices.length} devoluções registradas com sucesso!`, 'success');
       fetchData();
     } catch (err) {
-      console.error(err);
+      console.error(`[RETURN EXECUTION ${executionId}] failed:`, err);
       showToast('Erro ao processar devolução em lote', 'error');
       // Restaura a fila de devolução caso ocorra algum erro no banco
       setBatchReturnList(devicesToProcess);
