@@ -119,13 +119,13 @@ export default function Equipamentos() {
   // Histórico de Empréstimos
   const [historicoEmprestimos, setHistoricoEmprestimos] = useState([]);
 
-  // Estados para Devolução em Lote
-  const [isBatchReturnModalOpen, setIsBatchReturnModalOpen] = useState(false);
-  const [batchReturnInput, setBatchReturnInput] = useState('');
-  const [batchReturnList, setBatchReturnList] = useState([]);
+  // Estados para Devolução Contínua
+  const [isContinuousReturnModalOpen, setIsContinuousReturnModalOpen] = useState(false);
+  const [continuousReturnInput, setContinuousReturnInput] = useState('');
   const [isCameraActive, setIsCameraActive] = useState(false);
   const qrScannerRef = useRef(null);
-  const scannedIdsRef = useRef(new Set());
+  const scannedCooldownRef = useRef({}); // { [deviceId]: timestamp }
+  const [lastReturnedDevice, setLastReturnedDevice] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
 
@@ -145,7 +145,11 @@ export default function Equipamentos() {
             }
           },
           (decodedText) => {
-            handleBatchReturnScan(decodedText);
+            // Este startCamera original é usado para outros leitores individuais se houverem
+            const urlObj = new URL(decodedText);
+            const searchParam = urlObj.searchParams.get('search') || urlObj.searchParams.get('device') || urlObj.searchParams.get('id') || decodedText;
+            setSearchQuery(searchParam);
+            setActiveTab('dispositivos');
           },
           (errorMessage) => {
             // Silence scan warnings
@@ -154,6 +158,37 @@ export default function Equipamentos() {
         qrScannerRef.current = html5QrCode;
       } catch (err) {
         console.error("Erro ao iniciar câmera:", err);
+        showToast("Não foi possível acessar a câmera. Verifique as permissões.", "error");
+        setIsCameraActive(false);
+      }
+    }, 200);
+  };
+
+  const startCameraContinuous = async () => {
+    setIsCameraActive(true);
+    setTimeout(async () => {
+      try {
+        const html5QrCode = new Html5Qrcode("qr-continuous-reader");
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: (width, height) => {
+              const minDim = Math.min(width, height);
+              const qrboxSize = Math.floor(minDim * 0.7);
+              return { width: qrboxSize, height: qrboxSize };
+            }
+          },
+          (decodedText) => {
+            handleContinuousReturnScan(decodedText);
+          },
+          (errorMessage) => {
+            // Silence scan warnings
+          }
+        );
+        qrScannerRef.current = html5QrCode;
+      } catch (err) {
+        console.error("Erro ao iniciar câmera contínua:", err);
         showToast("Não foi possível acessar a câmera. Verifique as permissões.", "error");
         setIsCameraActive(false);
       }
@@ -171,6 +206,13 @@ export default function Equipamentos() {
       }
     }
     setIsCameraActive(false);
+  };
+
+  const closeContinuousReturnModal = async () => {
+    await stopCamera();
+    setLastReturnedDevice(null);
+    setContinuousReturnInput('');
+    setIsContinuousReturnModalOpen(false);
   };
 
   useEffect(() => {
@@ -1040,7 +1082,7 @@ export default function Equipamentos() {
     }
   };
 
-  const handleBatchReturnScan = (val) => {
+  const handleContinuousReturnScan = async (val) => {
     if (!val.trim()) return;
 
     let deviceId = val.trim();
@@ -1059,185 +1101,97 @@ export default function Equipamentos() {
     );
     
     if (!device) {
-      showToast('Dispositivo não encontrado pelo ID ou Patrimônio inserido', 'error');
-      setBatchReturnInput('');
+      showToast('Dispositivo não encontrado', 'error');
+      setContinuousReturnInput('');
+      return;
+    }
+
+    // Cooldown check (5 segundos de cooldown por dispositivo)
+    const now = Date.now();
+    const lastScanTime = scannedCooldownRef.current[device.id] || 0;
+    if (now - lastScanTime < 5000) {
+      console.log(`Leitura ignorada (cooldown): ${device.tipo}`);
+      setContinuousReturnInput('');
       return;
     }
 
     if (!device.emprestado) {
       showToast(`O dispositivo "${device.tipo}" já está disponível (não está emprestado)`, 'warning');
-      setBatchReturnInput('');
+      setContinuousReturnInput('');
       return;
     }
 
-    // Usar scannedIdsRef para ignorar leituras duplicadas rápidas no mesmo frame da camera
-    if (scannedIdsRef.current.has(device.id)) {
-      setBatchReturnInput('');
-      return;
-    }
-    scannedIdsRef.current.add(device.id);
-
-    setBatchReturnList(prev => {
-      // Remove any existing copy to ensure absolute uniqueness in the state array
-      const filtered = prev.filter(item => item.id !== device.id);
-      return [...filtered, device];
-    });
-    
-    showToast(`"${device.tipo}" adicionado à lista de devolução!`, 'success');
-    setBatchReturnInput('');
-  };
-
-  const handleBatchInputSubmit = (e) => {
-    e.preventDefault();
-    handleBatchReturnScan(batchReturnInput);
-  };
-
-  const closeBatchReturnModal = async () => {
-    await stopCamera();
-    setBatchReturnList([]);
-    scannedIdsRef.current.clear();
-    setIsBatchReturnModalOpen(false);
-  };
-
-  const handleConfirmBatchReturn = async () => {
-    if (batchReturnList.length === 0 || isSubmittingRef.current) return;
+    // Trava concorrente
+    if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
     setIsSubmitting(true);
-
-    const executionId = Math.random().toString(36).substring(2, 9).toUpperCase();
-    const devicesToProcess = [...batchReturnList];
-    console.log(`[RETURN EXECUTION ${executionId}] started processing ${devicesToProcess.length} items.`);
-    
-    // Limpa a lista e o cache de escaneamento imediatamente para evitar múltiplos cliques/processamento concorrente
-    setBatchReturnList([]);
-    scannedIdsRef.current.clear();
-    setIsBatchReturnModalOpen(false);
+    scannedCooldownRef.current[device.id] = now;
 
     try {
-      // Garantia absoluta de unicidade de IDs na fila
-      const uniqueDevices = [];
-      const seenIds = new Set();
-      for (const dev of devicesToProcess) {
-        if (!seenIds.has(dev.id)) {
-          seenIds.add(dev.id);
-          uniqueDevices.push(dev);
-        }
-      }
+      // 1. Buscar empréstimo ativo no histórico
+      const { data: activeLoans, error: selectError } = await supabase
+        .from('historico_emprestimos')
+        .select('id')
+        .eq('dispositivo_id', device.id)
+        .is('data_devolucao', null)
+        .order('data_emprestimo', { ascending: false })
+        .limit(1);
 
-      if (uniqueDevices.length === 0) {
-        console.log(`[RETURN EXECUTION ${executionId}] uniqueDevices list is empty.`);
-        isSubmittingRef.current = false;
-        setIsSubmitting(false);
+      if (selectError) throw selectError;
+
+      // ChatGPT critical rule: não inserir nova devolução se não houver empréstimo ativo no histórico
+      if (!activeLoans || activeLoans.length === 0) {
+        showToast(`Erro: Nenhum empréstimo ativo registrado no histórico para "${device.tipo}". Não é possível devolver.`, 'error');
+        setContinuousReturnInput('');
         return;
       }
 
-      console.log(`[RETURN EXECUTION ${executionId}] unique IDs to return:`, uniqueDevices.map(d => d.id));
-      const idsToUpdate = uniqueDevices.map(d => d.id);
-
-      // 1. Atualizar o status dos dispositivos para disponível
-      const { error: updateDevicesError } = await supabase
+      // 2. Atualizar o status do dispositivo
+      const { error: updateDeviceError } = await supabase
         .from('dispositivos')
         .update({
           emprestado: false,
           professor_emprestimo: null,
           data_emprestimo: null
         })
-        .in('id', idsToUpdate);
+        .eq('id', device.id);
 
-      if (updateDevicesError) throw updateDevicesError;
+      if (updateDeviceError) throw updateDeviceError;
 
-      // 2. Buscar empréstimos ativos (sem data de devolução) para esses dispositivos
-      const { data: activeLoans, error: selectError } = await supabase
+      // 3. Atualizar a data de devolução do empréstimo ativo
+      const returnTime = new Date();
+      const { error: updateHistoryError } = await supabase
         .from('historico_emprestimos')
-        .select('id, dispositivo_id')
-        .in('dispositivo_id', idsToUpdate)
-        .is('data_devolucao', null);
+        .update({ data_devolucao: returnTime })
+        .eq('id', activeLoans[0].id);
 
-      if (selectError) throw selectError;
+      if (updateHistoryError) throw updateHistoryError;
 
-      const activeLoanIds = [];
-      const devicesWithActiveLoan = new Set();
+      // 4. Salvar estado de confirmação visual do último dispositivo devolvido
+      setLastReturnedDevice({
+        tipo: device.tipo,
+        patrimonio: device.numero_escola || 'N/D',
+        professor: device.professor_emprestimo || 'Não identificado',
+        data_devolucao: returnTime
+      });
 
-      if (activeLoans && activeLoans.length > 0) {
-        for (const loan of activeLoans) {
-          activeLoanIds.push(loan.id);
-          devicesWithActiveLoan.add(loan.dispositivo_id);
-        }
-
-        console.log(`[RETURN EXECUTION ${executionId}] active loans to close:`, activeLoanIds);
-
-        // 3. Atualizar devoluções dos empréstimos ativos com a data/hora atual
-        const { error: updateHistoryError } = await supabase
-          .from('historico_emprestimos')
-          .update({ data_devolucao: new Date() })
-          .in('id', activeLoanIds);
-
-        if (updateHistoryError) throw updateHistoryError;
-      }
-
-      // 4. Para dispositivos que não possuíam empréstimo ativo no histórico, inserir um registro já concluído
-      // Adicionamos uma salvaguarda extra: se o mesmo dispositivo foi devolvido nos últimos 10 segundos,
-      // pulamos a inserção dele para evitar qualquer concorrência residual.
-      const devicesFiltered = uniqueDevices.filter(d => !devicesWithActiveLoan.has(d.id));
-      const devicesToInsert = [];
-
-      if (devicesFiltered.length > 0) {
-        console.log(`[RETURN EXECUTION ${executionId}] devices without active loan in history, running recent check:`, devicesFiltered.map(d => d.id));
-        const tenSecondsAgo = new Date(Date.now() - 10000).toISOString();
-        const { data: recentReturns, error: recentError } = await supabase
-          .from('historico_emprestimos')
-          .select('dispositivo_id')
-          .in('dispositivo_id', devicesFiltered.map(d => d.id))
-          .gte('data_devolucao', tenSecondsAgo);
-
-        if (!recentError && recentReturns) {
-          const recentlyReturnedIds = new Set(recentReturns.map(r => r.dispositivo_id));
-          for (const dev of devicesFiltered) {
-            if (!recentlyReturnedIds.has(dev.id)) {
-              devicesToInsert.push(dev);
-            } else {
-              console.log(`[RETURN EXECUTION ${executionId}] skipped duplicate insert for device ${dev.id} as it was returned in the last 10s.`);
-            }
-          }
-        } else {
-          devicesToInsert.push(...devicesFiltered);
-        }
-      }
-
-      if (devicesToInsert.length > 0) {
-        const inserts = devicesToInsert.map(dev => ({
-          dispositivo_id: dev.id,
-          professor: dev.professor_emprestimo || 'Não identificado',
-          data_emprestimo: dev.data_emprestimo || new Date(),
-          data_devolucao: new Date(),
-          tipo_dispositivo: dev.tipo,
-          patrimonio: dev.numero_escola || null
-        }));
-
-        console.log(`[RETURN EXECUTION ${executionId}] inserting history records:`, inserts.map(i => i.dispositivo_id));
-        const { error: insertHistoryError } = await supabase
-          .from('historico_emprestimos')
-          .insert(inserts);
-
-        if (insertHistoryError) throw insertHistoryError;
-      }
-
-      console.log(`[RETURN EXECUTION ${executionId}] finished successfully.`);
-      showToast(`${uniqueDevices.length} devoluções registradas com sucesso!`, 'success');
-      fetchData();
+      showToast(`"${device.tipo}" devolvido com sucesso!`, 'success');
+      setContinuousReturnInput('');
+      fetchData(); // Atualiza em segundo plano
     } catch (err) {
-      console.error(`[RETURN EXECUTION ${executionId}] failed:`, err);
-      showToast('Erro ao processar devolução em lote', 'error');
-      // Restaura a fila de devolução caso ocorra algum erro no banco
-      setBatchReturnList(devicesToProcess);
-      for (const dev of devicesToProcess) {
-        scannedIdsRef.current.add(dev.id);
-      }
+      console.error(err);
+      showToast('Erro ao processar devolução', 'error');
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
+
+  const handleContinuousInputSubmit = (e) => {
+    e.preventDefault();
+    handleContinuousReturnScan(continuousReturnInput);
+  };
+
 
   const handleBorrowDevice = async (e) => {
     e.preventDefault();
@@ -1868,12 +1822,13 @@ export default function Equipamentos() {
             <button 
               className="btn btn-primary" 
               onClick={() => {
-                setBatchReturnList([]);
-                setIsBatchReturnModalOpen(true);
+                setLastReturnedDevice(null);
+                setContinuousReturnInput('');
+                setIsContinuousReturnModalOpen(true);
               }}
               style={{ backgroundColor: '#ff9800', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
             >
-              <CheckSquare size={16} /> Devolução em Lote
+              <Camera size={16} /> Devolução por Scanner
             </button>
           </div>
 
@@ -2871,15 +2826,15 @@ export default function Equipamentos() {
           </div>
         </div>
       )}
-      {/* ── MODAL: DEVOLUÇÃO EM LOTE ── */}
-      {isBatchReturnModalOpen && (
-        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeBatchReturnModal(); }}>
+      {/* ── MODAL: DEVOLUÇÃO CONTÍNUA POR SCANNER ── */}
+      {isContinuousReturnModalOpen && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeContinuousReturnModal(); }}>
           <div className="modal-content" style={{ maxWidth: '550px' }}>
             <div className="modal-header">
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckSquare size={20} color="#ff9800" /> Devolução em Lote
+                <Camera size={20} color="#ff9800" /> Devolução por Scanner
               </h3>
-              <button className="btn-icon" onClick={closeBatchReturnModal}>
+              <button className="btn-icon" onClick={closeContinuousReturnModal}>
                 <X size={18} />
               </button>
             </div>
@@ -2887,23 +2842,23 @@ export default function Equipamentos() {
             <div className="modal-body-scroll">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                  Escaneie ou digite os códigos/patrimônios dos dispositivos emprestados. Eles serão adicionados à fila e devolvidos de uma só vez.
+                  Aponte a câmera para o QR Code do dispositivo. A devolução será registrada imediatamente e a câmera continuará ativa para a próxima leitura.
                 </p>
 
-                <form onSubmit={handleBatchInputSubmit}>
+                <form onSubmit={handleContinuousInputSubmit}>
                   <div className="form-input-group">
                     <label>Escanear QR Code ou Digitar Patrimônio / ID</label>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <input
                         type="text"
-                        value={batchReturnInput}
-                        onChange={(e) => setBatchReturnInput(e.target.value)}
+                        value={continuousReturnInput}
+                        onChange={(e) => setContinuousReturnInput(e.target.value)}
                         placeholder="Clique aqui e escaneie ou digite..."
                         className="form-text-input"
                         autoFocus
                       />
-                      <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--color-primary)', margin: 0 }}>
-                        Adicionar
+                      <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--color-primary)', margin: 0 }} disabled={isSubmitting}>
+                        Devolver
                       </button>
                     </div>
                   </div>
@@ -2915,7 +2870,7 @@ export default function Equipamentos() {
                     <button
                       type="button"
                       className="btn btn-secondary"
-                      onClick={startCamera}
+                      onClick={startCameraContinuous}
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', margin: '0 auto', width: '100%', border: '1px solid #ff9800', color: '#ff9800', background: 'transparent' }}
                     >
                       <Camera size={16} /> Abrir Leitor de Câmera (QR Code)
@@ -2933,7 +2888,7 @@ export default function Equipamentos() {
 
                   {isCameraActive && (
                     <div 
-                      id="qr-reader" 
+                      id="qr-continuous-reader" 
                       style={{ 
                         width: '100%', 
                         maxWidth: '350px', 
@@ -2947,61 +2902,28 @@ export default function Equipamentos() {
                   )}
                 </div>
 
-                <div style={{ marginTop: '0.5rem' }}>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>
-                    Fila de Devolução ({batchReturnList.length})
-                  </h4>
-
-                  {batchReturnList.length === 0 ? (
-                    <div style={{ 
-                      textAlign: 'center', 
-                      padding: '2rem 1rem', 
-                      background: 'var(--bg-secondary)', 
-                      borderRadius: 'var(--radius-md)', 
-                      border: '1px dashed var(--border-light)', 
-                      color: 'var(--text-muted)',
-                      fontSize: '0.85rem'
-                    }}>
-                      Nenhum equipamento na fila. Comece a escanear!
+                {/* Feedback da última devolução realizada */}
+                {lastReturnedDevice && (
+                  <div style={{ 
+                    marginTop: '0.5rem', 
+                    padding: '1rem', 
+                    background: '#e6f4ea', 
+                    border: '1px solid #c2e7c9', 
+                    borderRadius: 'var(--radius-md)',
+                    color: '#137333',
+                    animation: 'fadeIn 0.2s ease-out'
+                  }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.25rem' }}>
+                      <CheckSquare size={16} /> Última Devolução Confirmada
                     </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.25rem' }}>
-                      {batchReturnList.map(dev => (
-                        <div 
-                          key={dev.id}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '0.6rem 1rem',
-                            background: '#fff',
-                            border: '1px solid var(--border-light)',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.85rem'
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 600 }}>{dev.tipo}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              Patrimônio: {dev.numero_escola || 'N/D'} • Retirado por: {dev.professor_emprestimo}
-                            </div>
-                          </div>
-                          <button 
-                            type="button" 
-                            className="btn-icon delete" 
-                            onClick={() => {
-                              scannedIdsRef.current.delete(dev.id);
-                              setBatchReturnList(prev => prev.filter(item => item.id !== dev.id));
-                            }}
-                            title="Remover da fila"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
+                    <div style={{ fontSize: '0.85rem' }}>
+                      <div><b>Equipamento:</b> {lastReturnedDevice.tipo}</div>
+                      <div><b>Patrimônio:</b> {lastReturnedDevice.patrimonio}</div>
+                      <div><b>Professor(a):</b> {lastReturnedDevice.professor}</div>
+                      <div><b>Hora:</b> {lastReturnedDevice.data_devolucao.toLocaleTimeString('pt-BR')}</div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -3009,19 +2931,10 @@ export default function Equipamentos() {
               <button 
                 type="button" 
                 className="btn btn-secondary" 
-                onClick={closeBatchReturnModal}
+                onClick={closeContinuousReturnModal}
                 disabled={isSubmitting}
               >
-                Cancelar
-              </button>
-              <button 
-                type="button" 
-                className="btn btn-success" 
-                onClick={handleConfirmBatchReturn} 
-                disabled={batchReturnList.length === 0 || isSubmitting}
-                style={{ backgroundColor: 'var(--color-success)', color: 'white', border: 'none', opacity: (batchReturnList.length === 0 || isSubmitting) ? 0.6 : 1 }}
-              >
-                {isSubmitting ? 'Processando...' : `Devolver todos (${batchReturnList.length})`}
+                Fechar
               </button>
             </div>
           </div>
