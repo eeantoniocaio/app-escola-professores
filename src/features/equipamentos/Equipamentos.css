@@ -27,8 +27,15 @@
   background: var(--bg-secondary);
   padding: 0.35rem;
   border-radius: var(--radius-md);
-  width: fit-content;
   border: 1px solid var(--border-light);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tab-container::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-button {
@@ -41,6 +48,8 @@
   background: transparent;
   color: var(--text-muted);
   transition: var(--transition-smooth);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tab-button.active {
@@ -815,7 +824,132 @@
   border-color: var(--color-primary);
 }
 
-/* ── RESPONSIVIDADE E CORREÇÃO DE MODAIS EM CELULARES ── */
+/* ── SEARCH BAR INPUTS E ICONS ── */
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.65rem 1rem 0.65rem 2.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-main);
+  outline: none;
+  font-size: 0.95rem;
+  transition: var(--transition-smooth);
+}
+
+.search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(43, 112, 201, 0.15);
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+/* ── FILTROS E CONTROLES ── */
+.controls-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  width: 100%;
+}
+
+.filters-group {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.select-filter {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.select-filter:focus {
+  border-color: var(--color-primary);
+}
+
+/* ── RESPONSIVIDADE E CORREÇÃO EM APARÊNCIA MOBILE ── */
+@media (max-width: 768px) {
+  .equipamentos-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 1.25rem;
+  }
+
+  .equipamentos-title-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .equipamentos-header > div:last-child {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .equipamentos-header .btn,
+  .equipamentos-header .btn-help {
+    width: 100%;
+    margin: 0 !important;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+  }
+
+  .search-bar-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .search-input-wrapper {
+    width: 100%;
+  }
+
+  .action-buttons-group {
+    width: 100%;
+  }
+
+  .action-buttons-group .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filters-group {
+    flex-direction: column;
+  }
+
+  .select-filter {
+    width: 100%;
+  }
+}
+
 @media (max-width: 576px) {
   .modal-overlay {
     padding: 0.5rem !important;
@@ -854,6 +988,10 @@
     flex: 1 !important;
     min-width: 100px !important;
     font-size: 0.85rem !important;
+  }
+
+  .dashboard-stats-cards {
+    grid-template-columns: 1fr;
   }
 }
 
