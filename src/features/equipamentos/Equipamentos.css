@@ -1009,4 +1009,9 @@
   border-radius: var(--radius-sm);
 }
 
+#qr-continuous-reader div {
+  height: auto !important;
+  min-height: unset !important;
+}
+
 
