@@ -129,9 +129,15 @@ export default function Equipamentos() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
 
+  // Estados para Empréstimo por Scanner/QR Code
+  const [isLoanScannerOpen, setIsLoanScannerOpen] = useState(false);
+  const [loanScannerInput, setLoanScannerInput] = useState('');
+
   const continuousReturnScanRef = useRef(null);
+  const loanScanRef = useRef(null);
   useEffect(() => {
     continuousReturnScanRef.current = handleContinuousReturnScan;
+    loanScanRef.current = handleLoanScan;
   });
 
   const startCamera = async () => {
@@ -220,6 +226,45 @@ export default function Equipamentos() {
     setLastReturnedDevice(null);
     setContinuousReturnInput('');
     setIsContinuousReturnModalOpen(false);
+  };
+
+  const startCameraLoan = async () => {
+    setIsCameraActive(true);
+    setTimeout(async () => {
+      try {
+        const html5QrCode = new Html5Qrcode("qr-loan-reader");
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: (width, height) => {
+              const minDim = Math.min(width, height);
+              const qrboxSize = Math.floor(minDim * 0.7);
+              return { width: qrboxSize, height: qrboxSize };
+            }
+          },
+          (decodedText) => {
+            if (loanScanRef.current) {
+              loanScanRef.current(decodedText);
+            }
+          },
+          (errorMessage) => {
+            // Silence scan warnings
+          }
+        );
+        qrScannerRef.current = html5QrCode;
+      } catch (err) {
+        console.error("Erro ao iniciar câmera de empréstimo:", err);
+        showToast("Não foi possível acessar a câmera. Verifique as permissões.", "error");
+        setIsCameraActive(false);
+      }
+    }, 200);
+  };
+
+  const closeLoanScannerModal = async () => {
+    await stopCamera();
+    setLoanScannerInput('');
+    setIsLoanScannerOpen(false);
   };
 
   useEffect(() => {
@@ -1207,6 +1252,45 @@ export default function Equipamentos() {
     handleContinuousReturnScan(continuousReturnInput, true);
   };
 
+  const handleLoanScan = (val) => {
+    if (!val.trim()) return;
+
+    let deviceId = val.trim();
+    try {
+      if (deviceId.startsWith('http://') || deviceId.startsWith('https://')) {
+        const urlObj = new URL(deviceId);
+        deviceId = urlObj.searchParams.get('search') || urlObj.searchParams.get('device') || urlObj.searchParams.get('id') || deviceId;
+      }
+    } catch (e) {
+      // Ignore URL parsing errors
+    }
+
+    const device = dispositivos.find(d => 
+      d.id.toLowerCase() === deviceId.toLowerCase() || 
+      (d.numero_escola && d.numero_escola.toLowerCase() === deviceId.toLowerCase())
+    );
+    
+    if (!device) {
+      showToast('Dispositivo não encontrado', 'error');
+      setLoanScannerInput('');
+      return;
+    }
+
+    if (device.emprestado) {
+      showToast(`O dispositivo "${device.tipo}" já está emprestado.`, 'warning');
+      setLoanScannerInput('');
+      return;
+    }
+
+    closeLoanScannerModal();
+    openLoanModal(device);
+  };
+
+  const handleLoanInputSubmit = (e) => {
+    e.preventDefault();
+    handleLoanScan(loanScannerInput);
+  };
+
 
   const handleBorrowDevice = async (e) => {
     e.preventDefault();
@@ -1834,17 +1918,29 @@ export default function Equipamentos() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="search-bar-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Dispositivos Disponíveis para Empréstimo</h3>
-            <button 
-              className="btn btn-primary" 
-              onClick={() => {
-                setLastReturnedDevice(null);
-                setContinuousReturnInput('');
-                setIsContinuousReturnModalOpen(true);
-              }}
-              style={{ backgroundColor: '#ff9800', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
-            >
-              <Camera size={16} /> Devolução por Scanner
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setLoanScannerInput('');
+                  setIsLoanScannerOpen(true);
+                }}
+                style={{ backgroundColor: 'var(--color-primary)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
+              >
+                <Camera size={16} /> Emprestar
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setLastReturnedDevice(null);
+                  setContinuousReturnInput('');
+                  setIsContinuousReturnModalOpen(true);
+                }}
+                style={{ backgroundColor: '#ff9800', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}
+              >
+                <Camera size={16} /> Devolução por Scanner
+              </button>
+            </div>
           </div>
 
           {loanableDevices.length === 0 ? (
@@ -2948,6 +3044,97 @@ export default function Equipamentos() {
                 className="btn btn-secondary" 
                 onClick={closeContinuousReturnModal}
                 disabled={isSubmitting}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: LEITURA DE QR CODE PARA EMPRÉSTIMO ── */}
+      {isLoanScannerOpen && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeLoanScannerModal(); }}>
+          <div className="modal-content" style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Camera size={20} color="var(--color-primary)" /> Leitor de QR Code para Empréstimo
+              </h3>
+              <button className="btn-icon" onClick={closeLoanScannerModal}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body-scroll">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                  Aponte a câmera para o QR Code do dispositivo que deseja emprestar. O sistema identificará o dispositivo e abrirá o formulário de empréstimo.
+                </p>
+
+                <form onSubmit={handleLoanInputSubmit}>
+                  <div className="form-input-group">
+                    <label>Escanear QR Code ou Digitar Patrimônio / ID</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        value={loanScannerInput}
+                        onChange={(e) => setLoanScannerInput(e.target.value)}
+                        placeholder="Clique aqui e escaneie ou digite..."
+                        className="form-text-input"
+                        autoFocus
+                      />
+                      <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--color-primary)', margin: 0 }}>
+                        Confirmar
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                {/* Área da Câmera */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
+                  {!isCameraActive ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={startCameraLoan}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', margin: '0 auto', width: '100%', border: '1px solid var(--color-primary)', color: 'var(--color-primary)', background: 'transparent' }}
+                    >
+                      <Camera size={16} /> Abrir Leitor de Câmera (QR Code)
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={stopCamera}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', margin: '0 auto', width: '100%', border: '1px solid var(--color-danger)', color: 'var(--color-danger)', background: 'transparent' }}
+                    >
+                      <X size={16} /> Parar Câmera
+                    </button>
+                  )}
+
+                  {isCameraActive && (
+                    <div 
+                      id="qr-loan-reader" 
+                      style={{ 
+                        width: '100%', 
+                        maxWidth: '290px', 
+                        margin: '0.5rem auto', 
+                        borderRadius: 'var(--radius-md)', 
+                        overflow: 'hidden', 
+                        border: '2px solid var(--color-primary)',
+                        background: '#000'
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer-actions">
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={closeLoanScannerModal}
               >
                 Fechar
               </button>
