@@ -995,3 +995,18 @@
   }
 }
 
+/* ── SCANNER CONTINUO DE DEVOLUCAO RESPONSIVO ── */
+#qr-continuous-reader {
+  width: 100% !important;
+  margin: 0.5rem auto !important;
+}
+
+#qr-continuous-reader video {
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  object-fit: cover !important;
+  border-radius: var(--radius-sm);
+}
+
+

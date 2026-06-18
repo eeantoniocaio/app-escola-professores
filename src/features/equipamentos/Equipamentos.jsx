@@ -2906,7 +2906,7 @@ export default function Equipamentos() {
                       id="qr-continuous-reader" 
                       style={{ 
                         width: '100%', 
-                        maxWidth: '350px', 
+                        maxWidth: '290px', 
                         margin: '0.5rem auto', 
                         borderRadius: 'var(--radius-md)', 
                         overflow: 'hidden', 
