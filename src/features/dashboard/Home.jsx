@@ -35,11 +35,14 @@ export default function Home() {
               <BarChart2 />
               <span>Relatórios</span>
             </button>
-            <button className="dashboard-action-card" onClick={() => navigate('/chamada')}>
-              <CheckSquare />
-              <span>Chamada</span>
-            </button>
           </>
+        )}
+
+        {(userRole === 'gestao' || userRole === 'agente') && (
+          <button className="dashboard-action-card" onClick={() => navigate('/chamada')}>
+            <CheckSquare />
+            <span>Chamada</span>
+          </button>
         )}
 
         {(userRole === 'gestao' || userRole === 'professor') && (
@@ -49,10 +52,12 @@ export default function Home() {
           </button>
         )}
 
-        <button className="dashboard-action-card" onClick={() => navigate('/turmas')}>
-          <GraduationCap />
-          <span>Turmas</span>
-        </button>
+        {userRole !== 'agente' && (
+          <button className="dashboard-action-card" onClick={() => navigate('/turmas')}>
+            <GraduationCap />
+            <span>Turmas</span>
+          </button>
+        )}
 
         <button className="dashboard-action-card" onClick={() => navigate('/mapa-classe')}>
           <Users />
@@ -94,7 +99,7 @@ export default function Home() {
           </>
         )}
 
-        {userRole !== 'secretaria' && userRole !== 'tecnico' && (
+        {userRole !== 'secretaria' && userRole !== 'tecnico' && userRole !== 'agente' && (
           <>
             <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias')}>
               <ShieldAlert />

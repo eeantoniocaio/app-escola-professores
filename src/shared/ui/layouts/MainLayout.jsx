@@ -29,6 +29,8 @@ export default function MainLayout() {
         return 'Técnico';
       case 'professor':
         return 'Professor(a)';
+      case 'agente':
+        return 'Agente';
       default:
         return role || 'Usuário';
     }
@@ -340,9 +342,11 @@ export default function MainLayout() {
           </Link>
           
 
-          <Link to="/turmas" className={`nav-link ${isActive('/turmas')}`} onClick={() => setIsMobileMenuOpen(false)}>
-            <GraduationCap size={18} /> Turmas
-          </Link>
+          {userRole !== 'agente' && (
+            <Link to="/turmas" className={`nav-link ${isActive('/turmas')}`} onClick={() => setIsMobileMenuOpen(false)}>
+              <GraduationCap size={18} /> Turmas
+            </Link>
+          )}
 
           <Link to="/mapa-classe" className={`nav-link ${isActive('/mapa-classe')}`} onClick={() => setIsMobileMenuOpen(false)}>
             <Users size={18} /> Mapa de Classe

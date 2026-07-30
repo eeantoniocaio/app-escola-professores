@@ -42,20 +42,23 @@ function AppRoutes() {
     );
   }
 
+  const redirectPath = (userRole === 'secretaria' || userRole === 'tecnico') ? "/turmas" : "/";
+  const hasEquipamentosAccess = userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'gestao' || userRole === 'professor';
+
   return (
     <GlobalDataProvider>
       <Suspense fallback={<div style={{ textAlign: 'center', padding: '3rem' }}>Carregando interface...</div>}>
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
-            <Route path="eventos" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Eventos />} />
-            <Route path="eventos/novo" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Eventos />} />
-            <Route path="eventos/editar/:id" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Eventos />} />
-            <Route path="registros" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Registros />} />
-            <Route path="ocorrencias" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <HistoricoOcorrencias />} />
-            <Route path="reposicoes" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <EnvioQuestoes />} />
+            <Route path="eventos" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente') ? <Navigate to={redirectPath} replace /> : <Eventos />} />
+            <Route path="eventos/novo" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente') ? <Navigate to={redirectPath} replace /> : <Eventos />} />
+            <Route path="eventos/editar/:id" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente') ? <Navigate to={redirectPath} replace /> : <Eventos />} />
+            <Route path="registros" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente') ? <Navigate to={redirectPath} replace /> : <Registros />} />
+            <Route path="ocorrencias" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente') ? <Navigate to={redirectPath} replace /> : <HistoricoOcorrencias />} />
+            <Route path="reposicoes" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente') ? <Navigate to={redirectPath} replace /> : <EnvioQuestoes />} />
             <Route path="configuracoes" element={(isMaster || userRole === 'gestao' || userRole === 'secretaria') ? <Configuracoes /> : <Navigate to="/" replace />} />
-            <Route path="turmas" element={<Turmas />} />
+            <Route path="turmas" element={userRole === 'agente' ? <Navigate to="/" replace /> : <Turmas />} />
             <Route path="mapa-classe" element={<MapaClasse />} />
             <Route path="documentos" element={<Documentos />} />
             <Route path="acervo" element={<Acervo />} />
@@ -63,11 +66,11 @@ function AppRoutes() {
               <Route index element={<ChamadaHome />} />
               <Route path="classe/:classId" element={<ChamadaClasse />} />
             </Route>
-            <Route path="equipamentos" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'gestao' || userRole === 'professor') ? <Equipamentos /> : <Navigate to="/turmas" replace />} />
+            <Route path="equipamentos" element={hasEquipamentosAccess ? <Equipamentos /> : <Navigate to={userRole === 'agente' ? "/" : "/turmas"} replace />} />
             <Route path="solicitacoes-materiais" element={<SolicitacoesMateriais />} />
             <Route path="perfil-turma" element={(userRole === 'gestao' || userRole === 'professor') ? <PerfilTurma /> : <Navigate to="/" replace />} />
-            <Route path="relatorios" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <Relatorios />} />
-            <Route path="boas-praticas" element={(userRole === 'secretaria' || userRole === 'tecnico') ? <Navigate to="/turmas" replace /> : <BoasPraticas />} />
+            <Route path="relatorios" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente') ? <Navigate to={redirectPath} replace /> : <Relatorios />} />
+            <Route path="boas-praticas" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente') ? <Navigate to={redirectPath} replace /> : <BoasPraticas />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
