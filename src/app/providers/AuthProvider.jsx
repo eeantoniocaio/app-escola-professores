@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
         }
 
         // Auto-associar e-mail do agente ao papel 'agente'
-        if (userEmail === 'agenteantonniocaio@gmail.com') {
+        if (userEmail === 'agenteantoniocaio@gmail.com' || userEmail === 'agenteantonniocaio@gmail.com') {
           papel = 'agente';
           nome = 'Agente';
         }
@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
         }
 
         // Auto-associar e-mail do agente ao papel 'agente' e nome 'Agente'
-        if (userEmail === 'agenteantonniocaio@gmail.com' && papel !== 'agente') {
+        if ((userEmail === 'agenteantoniocaio@gmail.com' || userEmail === 'agenteantonniocaio@gmail.com') && papel !== 'agente') {
           papel = 'agente';
           nome = 'Agente';
           await supabase.from('perfis').update({ papel: 'agente', nome: 'Agente' }).eq('id', userId);
