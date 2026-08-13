@@ -120,13 +120,20 @@ DECLARE
   v_aluno_id bigint;
   v_qtd_ativos int;
   v_emprestimo_id bigint;
+  v_operador_id uuid;
 BEGIN
-  -- 1. Verificar permissão de operador no banco
+  -- 1. Identificar e validar usuário autenticado exclusivamente via auth.uid()
+  v_operador_id := auth.uid();
+  IF v_operador_id IS NULL THEN
+    RAISE EXCEPTION 'Usuário autenticado não identificado.';
+  END IF;
+
+  -- 2. Verificar permissão de operador no banco
   IF public.get_user_role() NOT IN ('gestao', 'biblioteca', 'secretaria') THEN
     RAISE EXCEPTION 'Acesso negado. Apenas Gestão, Biblioteca e Secretaria podem realizar empréstimos.';
   END IF;
 
-  -- 2. Validação rigorosa de data no backend (PostgreSQL)
+  -- 3. Validação rigorosa de data no backend (PostgreSQL)
   IF p_data_prevista_devolucao IS NULL THEN
     RAISE EXCEPTION 'A data prevista de devolução é obrigatória.';
   END IF;
@@ -135,12 +142,7 @@ BEGIN
     RAISE EXCEPTION 'A data prevista de devolução não pode ser anterior à data atual.';
   END IF;
 
-  v_operador_id := auth.uid();
-  IF v_operador_id IS NULL THEN
-    SELECT id INTO v_operador_id FROM auth.users LIMIT 1;
-  END IF;
-
-  -- 3. BLOQUEIO DE LINHA ESTÁVEL DO ALUNO (FOR UPDATE)
+  -- 4. BLOQUEIO DE LINHA ESTÁVEL DO ALUNO (FOR UPDATE)
   SELECT id INTO v_aluno_id
   FROM public.alunos
   WHERE id = p_aluno_id
@@ -150,7 +152,7 @@ BEGIN
     RAISE EXCEPTION 'Aluno com ID % não foi encontrado.', p_aluno_id;
   END IF;
 
-  -- 3. Contar empréstimos ativos para este aluno (com a linha do aluno travada)
+  -- 5. Contar empréstimos ativos para este aluno (com a linha do aluno travada)
   SELECT COUNT(*) INTO v_qtd_ativos
   FROM public.emprestimos_livros
   WHERE aluno_id = p_aluno_id AND status = 'ativo';
@@ -159,7 +161,7 @@ BEGIN
     RAISE EXCEPTION 'O aluno já possui % empréstimo(s) ativo(s). Limite máximo de 2 livros atingido.', v_qtd_ativos;
   END IF;
 
-  -- 4. BLOQUEIO DO EXEMPLAR (FOR UPDATE)
+  -- 6. BLOQUEIO DO EXEMPLAR (FOR UPDATE)
   SELECT id, status INTO v_exemplar_id, v_exemplar_status
   FROM public.exemplares_livros
   WHERE UPPER(TRIM(codigo_exemplar)) = UPPER(TRIM(p_codigo_exemplar))
@@ -173,7 +175,7 @@ BEGIN
     RAISE EXCEPTION 'Este exemplar não está disponível para empréstimo (Status atual: %).', v_exemplar_status;
   END IF;
 
-  -- 5. Registrar Empréstimo com operador_id derivado exclusivamente da sessão (auth.uid())
+  -- 7. Registrar Empréstimo com operador_id derivado exclusivamente da sessão (auth.uid())
   INSERT INTO public.emprestimos_livros (
     exemplar_id,
     aluno_id,
@@ -192,7 +194,7 @@ BEGIN
     v_operador_id
   ) RETURNING id INTO v_emprestimo_id;
 
-  -- 6. Atualizar status do exemplar para 'emprestado'
+  -- 8. Atualizar status do exemplar para 'emprestado'
   UPDATE public.exemplares_livros
   SET status = 'emprestado', updated_at = now()
   WHERE id = v_exemplar_id;
@@ -214,13 +216,20 @@ RETURNS jsonb AS $$
 DECLARE
   v_exemplar_id uuid;
   v_emprestimo_id bigint;
+  v_operador_id uuid;
 BEGIN
-  -- 1. Verificar permissão de operador no banco
+  -- 1. Identificar e validar usuário autenticado exclusivamente via auth.uid()
+  v_operador_id := auth.uid();
+  IF v_operador_id IS NULL THEN
+    RAISE EXCEPTION 'Usuário autenticado não identificado.';
+  END IF;
+
+  -- 2. Verificar permissão de operador no banco
   IF public.get_user_role() NOT IN ('gestao', 'biblioteca', 'secretaria') THEN
     RAISE EXCEPTION 'Acesso negado. Apenas Gestão, Biblioteca e Secretaria podem registrar devoluções.';
   END IF;
 
-  -- 2. Localizar o exemplar pelo código (FOR UPDATE)
+  -- 3. Localizar o exemplar pelo código (FOR UPDATE)
   SELECT id INTO v_exemplar_id
   FROM public.exemplares_livros
   WHERE UPPER(TRIM(codigo_exemplar)) = UPPER(TRIM(p_codigo_exemplar))
@@ -230,7 +239,7 @@ BEGIN
     RAISE EXCEPTION 'Exemplar com o código "%" não foi encontrado.', p_codigo_exemplar;
   END IF;
 
-  -- 3. Localizar empréstimo ativo deste exemplar (FOR UPDATE)
+  -- 4. Localizar empréstimo ativo deste exemplar (FOR UPDATE)
   SELECT id INTO v_emprestimo_id
   FROM public.emprestimos_livros
   WHERE exemplar_id = v_exemplar_id AND status = 'ativo'
@@ -240,7 +249,7 @@ BEGIN
     RAISE EXCEPTION 'Não existe empréstimo ativo registrado para este exemplar.';
   END IF;
 
-  -- 4. Marcar empréstimo como devolvido
+  -- 5. Marcar empréstimo como devolvido
   UPDATE public.emprestimos_livros
   SET 
     status = 'devolvido',
@@ -249,7 +258,7 @@ BEGIN
     updated_at = now()
   WHERE id = v_emprestimo_id;
 
-  -- 5. Atualizar o exemplar para disponível
+  -- 6. Atualizar o exemplar para disponível
   UPDATE public.exemplares_livros
   SET status = 'disponivel', updated_at = now()
   WHERE id = v_exemplar_id;
@@ -304,3 +313,55 @@ DROP TRIGGER IF EXISTS audit_emprestimos ON public.emprestimos_livros;
 CREATE TRIGGER audit_emprestimos
   AFTER INSERT OR UPDATE OR DELETE ON public.emprestimos_livros
   FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+-- 12. Função RPC: buscar_alunos_biblioteca (SECURITY DEFINER)
+-- Retorna estritamente id, nome, turma, ra limitados a 20 registros para busca de empréstimos
+CREATE OR REPLACE FUNCTION public.buscar_alunos_biblioteca(
+  p_termo text
+)
+RETURNS TABLE (
+  id bigint,
+  nome text,
+  turma text,
+  ra text
+) AS $$
+DECLARE
+  v_termo text;
+  v_user_role text;
+BEGIN
+  -- 1. Controle de Autorização por Papel (gestao, biblioteca, secretaria)
+  v_user_role := public.get_user_role();
+  IF v_user_role IS NULL OR v_user_role NOT IN ('gestao', 'biblioteca', 'secretaria') THEN
+    RAISE EXCEPTION 'Acesso negado. Apenas Gestão, Biblioteca e Secretaria podem pesquisar alunos para empréstimo.';
+  END IF;
+
+  -- 2. Normalização do termo de busca
+  v_termo := TRIM(COALESCE(p_termo, ''));
+
+  -- 3. Retornar vazio se o termo tiver menos de 2 caracteres
+  IF length(v_termo) < 2 THEN
+    RETURN;
+  END IF;
+
+  -- 4. Busca parametrizada segura (Nome ou RA) limitada a 20 resultados
+  RETURN QUERY
+  SELECT 
+    a.id,
+    a.nome,
+    a.turma,
+    a.ra
+  FROM public.alunos a
+  WHERE 
+    a.nome ILIKE '%' || v_termo || '%' 
+    OR a.ra ILIKE '%' || v_termo || '%'
+  ORDER BY a.nome ASC
+  LIMIT 20;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Revogar permissão EXECUTE de PUBLIC e anon
+REVOKE EXECUTE ON FUNCTION public.buscar_alunos_biblioteca(text) FROM PUBLIC, anon;
+
+-- Conceder EXECUTE para authenticated (a autorização definitiva por papel ocorre via get_user_role() dentro da RPC)
+GRANT EXECUTE ON FUNCTION public.buscar_alunos_biblioteca(text) TO authenticated;
+

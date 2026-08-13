@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  X, Camera, Search, User, BookOpen, Calendar, CheckCircle, 
-  AlertTriangle, ArrowRight, ArrowLeft, RefreshCw, FileText, Tag, UserCheck, ShieldAlert
+  X, Camera, Search, BookOpen, CheckCircle, 
+  AlertTriangle, ArrowRight, ArrowLeft, RefreshCw, FileText
 } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useToast } from '../../app/providers/ToastProvider';
@@ -43,21 +43,24 @@ export default function NovoEmprestimoModal({ isOpen, onClose, onSuccess }) {
   // Resultado Final Sucesso
   const [successData, setSuccessData] = useState(null);
 
+  const resetForm = () => {
+    setStep(1);
+    setExemplarCode('');
+    setValidatedExemplar(null);
+    setExemplarError(null);
+    setStudentSearchTerm('');
+    setStudentSearchResults([]);
+    setSelectedStudent(null);
+    setStudentActiveLoans([]);
+    setReturnDate(getDefaultReturnDate());
+    setObservacoes('');
+    setSubmitting(false);
+    setSuccessData(null);
+  };
+
   useEffect(() => {
     if (!isOpen) {
-      // Resetar todo o formulário ao fechar
-      setStep(1);
-      setExemplarCode('');
-      setValidatedExemplar(null);
-      setExemplarError(null);
-      setStudentSearchTerm('');
-      setStudentSearchResults([]);
-      setSelectedStudent(null);
-      setStudentActiveLoans([]);
-      setReturnDate(getDefaultReturnDate());
-      setObservacoes('');
-      setSubmitting(false);
-      setSuccessData(null);
+      resetForm();
     }
   }, [isOpen]);
 
@@ -107,28 +110,24 @@ export default function NovoEmprestimoModal({ isOpen, onClose, onSuccess }) {
     }
   };
 
-  // Buscar Alunos por Nome ou RA no Supabase
+  // Buscar Alunos por Nome ou RA via RPC Segura (buscar_alunos_biblioteca)
   const handleSearchStudents = async (term) => {
     setStudentSearchTerm(term);
-    if (!term.trim() || term.trim().length < 2) {
+    const cleanTerm = term ? term.trim() : '';
+    if (!cleanTerm || cleanTerm.length < 2) {
       setStudentSearchResults([]);
       return;
     }
 
     setLoadingStudentSearch(true);
     try {
-      const cleanTerm = `%${term.trim()}%`;
       const { data, error } = await supabase
-        .from('alunos')
-        .select('id, nome, turma, ra')
-        .or(`nome.ilike.${cleanTerm},ra.ilike.${cleanTerm}`)
-        .order('nome')
-        .limit(15);
+        .rpc('buscar_alunos_biblioteca', { p_termo: cleanTerm });
 
       if (error) throw error;
       setStudentSearchResults(data || []);
     } catch (err) {
-      console.error('Erro ao buscar alunos:', err);
+      console.error('Erro ao buscar alunos via RPC:', err);
     } finally {
       setLoadingStudentSearch(false);
     }
