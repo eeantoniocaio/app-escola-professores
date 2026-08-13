@@ -4,7 +4,7 @@ import {
   BookOpen, Search, Plus, Edit2, Trash2, X, ArrowLeft, RefreshCw, 
   AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Layers, Tag,
   AlertCircle, ShieldAlert, Package, Wrench, QrCode, Printer, Camera,
-  ClipboardList, Calendar, UserCheck, Clock, FileText
+  ClipboardList, Calendar, UserCheck, Clock, FileText, CornerDownLeft
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { supabase } from '../../shared/services/supabase';
@@ -12,6 +12,7 @@ import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import BibliotecaQrScanner from './BibliotecaQrScanner';
 import NovoEmprestimoModal from './NovoEmprestimoModal';
+import DevolucaoModal from './DevolucaoModal';
 import './Biblioteca.css';
 
 export default function Biblioteca() {
@@ -64,6 +65,10 @@ export default function Biblioteca() {
   const [loadingLoans, setLoadingLoans] = useState(false);
   const [loansSearchQuery, setLoansSearchQuery] = useState('');
   const [isNovoEmprestimoOpen, setIsNovoEmprestimoOpen] = useState(false);
+
+  // ── ESTADOS DA DEVOLUÇÃO DE LIVROS (Sprint 5) ──
+  const [isDevolucaoOpen, setIsDevolucaoOpen] = useState(false);
+  const [prefilledDevolucaoCode, setPrefilledDevolucaoCode] = useState('');
 
   // Buscar Prateleiras Cadastradas
   const fetchShelves = useCallback(async () => {
@@ -542,6 +547,29 @@ export default function Biblioteca() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* Botão COMPARTILHAR CATÁLOGO PÚBLICO (Sprint 6) */}
+          <button 
+            className="btn-secondary" 
+            onClick={() => {
+              const publicUrl = `${window.location.origin}/biblioteca/consulta`;
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(publicUrl);
+                showToast('Link do catálogo público copiado para a área de transferência!', 'success');
+              }
+            }} 
+            title="Copiar link do catálogo público para alunos e famílias"
+          >
+            <Share2 size={18} /> Compartilhar Catálogo Público
+          </button>
+
+          {/* Botão REGISTRAR DEVOLUÇÃO (Sprint 5) */}
+          <button 
+            className="btn-primary" 
+            onClick={() => { setPrefilledDevolucaoCode(''); setIsDevolucaoOpen(true); }} 
+            style={{ background: '#16A34A', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <CornerDownLeft size={18} /> Registrar Devolução
+          </button>
           {/* Botão NOVO EMPRÉSTIMO (Sprint 4) */}
           <button className="btn-primary" onClick={() => setIsNovoEmprestimoOpen(true)} style={{ background: '#2563EB' }}>
             <Plus size={18} /> Novo Empréstimo
@@ -794,6 +822,7 @@ export default function Biblioteca() {
                     <th>Retirada</th>
                     <th>Devolução Prevista</th>
                     <th>Status</th>
+                    <th style={{ textAlign: 'right' }}>Ação</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -833,6 +862,19 @@ export default function Biblioteca() {
                               <CheckCircle size={12} /> Em dia (Ativo)
                             </span>
                           )}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem', color: '#16A34A', borderColor: 'rgba(22, 163, 74, 0.4)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                            onClick={() => {
+                              setPrefilledDevolucaoCode(loan.exemplares_livros?.codigo_exemplar || '');
+                              setIsDevolucaoOpen(true);
+                            }}
+                            title="Registrar Devolução deste exemplar"
+                          >
+                            <CornerDownLeft size={14} /> Devolver
+                          </button>
                         </td>
                       </tr>
                     );
@@ -1179,6 +1221,17 @@ export default function Biblioteca() {
         onSuccess={() => {
           fetchBooks();
           if (activeTab === 'emprestimos') fetchActiveLoans();
+        }}
+      />
+
+      {/* ── MODAL DEVOLUÇÃO DE LIVRO (Sprint 5) ── */}
+      <DevolucaoModal
+        isOpen={isDevolucaoOpen}
+        onClose={() => { setIsDevolucaoOpen(false); setPrefilledDevolucaoCode(''); }}
+        prefilledCode={prefilledDevolucaoCode}
+        onSuccess={() => {
+          fetchBooks();
+          fetchActiveLoans();
         }}
       />
     </div>

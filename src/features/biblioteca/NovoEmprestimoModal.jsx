@@ -59,9 +59,24 @@ export default function NovoEmprestimoModal({ isOpen, onClose, onSuccess }) {
   };
 
   useEffect(() => {
-    if (!isOpen) {
-      resetForm();
+    let isMounted = true;
+    if (!isOpen && isMounted) {
+      setStep(1);
+      setExemplarCode('');
+      setValidatedExemplar(null);
+      setExemplarError(null);
+      setStudentSearchTerm('');
+      setStudentSearchResults([]);
+      setSelectedStudent(null);
+      setStudentActiveLoans([]);
+      setReturnDate(getDefaultReturnDate());
+      setObservacoes('');
+      setSubmitting(false);
+      setSuccessData(null);
     }
+    return () => {
+      isMounted = false;
+    };
   }, [isOpen]);
 
   // Validar Código do Exemplar no Banco (Digitação ou Scan)

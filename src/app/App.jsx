@@ -28,6 +28,7 @@ const PerfilTurma = React.lazy(() => import('../features/turmas/PerfilTurma'));
 const ChamadaLayout = React.lazy(() => import('../pages/Chamada/ChamadaLayout'));
 const ChamadaHome = React.lazy(() => import('../pages/Chamada/ChamadaHome'));
 const ChamadaClasse = React.lazy(() => import('../pages/Chamada/ChamadaClasse'));
+const BibliotecaConsulta = React.lazy(() => import('../pages/BibliotecaConsulta/BibliotecaConsulta'));
 
 function AppRoutes() {
   const { session, authLoading, isMaster, userRole } = useAuth();
@@ -36,10 +37,13 @@ function AppRoutes() {
 
   if (!session) {
     return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <Suspense fallback={<div style={{ textAlign: 'center', padding: '3rem' }}>Carregando interface...</div>}>
+        <Routes>
+          <Route path="/biblioteca/consulta" element={<BibliotecaConsulta />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Suspense>
     );
   }
 
@@ -50,6 +54,8 @@ function AppRoutes() {
     <GlobalDataProvider>
       <Suspense fallback={<div style={{ textAlign: 'center', padding: '3rem' }}>Carregando interface...</div>}>
         <Routes>
+          {/* Rota Pública do Catálogo da Biblioteca (Acessível para usuários logados sem o layout administrativo) */}
+          <Route path="/biblioteca/consulta" element={<BibliotecaConsulta />} />
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="eventos" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente') ? <Navigate to={redirectPath} replace /> : <Eventos />} />

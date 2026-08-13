@@ -304,7 +304,7 @@ export default function BibliotecaQrScanner({ isOpen, onClose }) {
               </div>
 
               <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '1.25rem' }}>
-                Nenhum livro ou exemplar com o código <strong>"{scanResult.code}"</strong> foi localizado no acervo da biblioteca.
+                Nenhum livro ou exemplar com o código <strong>&quot;{scanResult.code}&quot;</strong> foi localizado no acervo da biblioteca.
               </p>
 
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
