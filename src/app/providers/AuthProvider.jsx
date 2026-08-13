@@ -59,34 +59,9 @@ export function AuthProvider({ children }) {
       }
 
       if (data) {
-        let papel = data.papel;
-        let nome = data.nome;
-        let avatar = data.avatar_url;
-
-        // Auto-associar e-mail da secretaria ao papel 'secretaria' e nome 'Secretaria'
-        if (userEmail === 'secretariaantoniocaio@gmail.com' && papel !== 'secretaria') {
-          papel = 'secretaria';
-          nome = 'Secretaria';
-          await supabase.from('perfis').update({ papel: 'secretaria', nome: 'Secretaria' }).eq('id', userId);
-        }
-
-        // Auto-associar e-mail do agente ao papel 'agente' e nome 'Agente'
-        if ((userEmail === 'agenteantoniocaio@gmail.com' || userEmail === 'agenteantonniocaio@gmail.com') && papel !== 'agente') {
-          papel = 'agente';
-          nome = 'Agente';
-          await supabase.from('perfis').update({ papel: 'agente', nome: 'Agente' }).eq('id', userId);
-        }
-
-        // Auto-associar e-mail da biblioteca ao papel 'biblioteca' e nome 'Biblioteca'
-        if (userEmail === 'bibliotecaantoniocaio@gmail.com' && papel !== 'biblioteca') {
-          papel = 'biblioteca';
-          nome = 'Biblioteca';
-          await supabase.from('perfis').update({ papel: 'biblioteca', nome: 'Biblioteca' }).eq('id', userId);
-        }
-
-        setUserRole(papel);
-        setUserName(nome);
-        setAvatarUrl(avatar);
+        setUserRole(data.papel);
+        setUserName(data.nome);
+        setAvatarUrl(data.avatar_url);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
