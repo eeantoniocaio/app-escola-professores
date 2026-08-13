@@ -365,3 +365,38 @@ REVOKE EXECUTE ON FUNCTION public.buscar_alunos_biblioteca(text) FROM PUBLIC, an
 -- Conceder EXECUTE para authenticated (a autorização definitiva por papel ocorre via get_user_role() dentro da RPC)
 GRANT EXECUTE ON FUNCTION public.buscar_alunos_biblioteca(text) TO authenticated;
 
+-- 13. Autorização de Acesso do E-mail da Biblioteca e Atualização do Trigger handle_new_user
+INSERT INTO public.emails_autorizados (email)
+SELECT 'bibliotecaantoniocaio@gmail.com'
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.emails_autorizados WHERE LOWER(email) = 'bibliotecaantoniocaio@gmail.com'
+);
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.perfis (id, papel, nome)
+  VALUES (
+    NEW.id,
+    CASE 
+      WHEN LOWER(NEW.email) = 'e017590a@educacao.sp.gov.br' OR LOWER(NEW.email) = 'secretariaantoniocaio@gmail.com' THEN 'secretaria'
+      WHEN LOWER(NEW.email) = 'proatiantoniocaio@gmail.com' THEN 'tecnico'
+      WHEN LOWER(NEW.email) = 'agenteantoniocaio@gmail.com' OR LOWER(NEW.email) = 'agenteantonniocaio@gmail.com' THEN 'agente'
+      WHEN LOWER(NEW.email) = 'bibliotecaantoniocaio@gmail.com' THEN 'biblioteca'
+      ELSE 'professor'
+    END,
+    CASE 
+      WHEN LOWER(NEW.email) = 'e017590a@educacao.sp.gov.br' OR LOWER(NEW.email) = 'secretariaantoniocaio@gmail.com' THEN 'Secretaria'
+      WHEN LOWER(NEW.email) = 'proatiantoniocaio@gmail.com' THEN 'Tecnico'
+      WHEN LOWER(NEW.email) = 'agenteantoniocaio@gmail.com' OR LOWER(NEW.email) = 'agenteantonniocaio@gmail.com' THEN 'Agente'
+      WHEN LOWER(NEW.email) = 'bibliotecaantoniocaio@gmail.com' THEN 'Biblioteca'
+      ELSE NULL
+    END
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    papel = EXCLUDED.papel,
+    nome = EXCLUDED.nome;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
