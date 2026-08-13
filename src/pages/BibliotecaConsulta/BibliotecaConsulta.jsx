@@ -44,11 +44,23 @@ export default function BibliotecaConsulta() {
     let isMounted = true;
     const loadShelves = async () => {
       try {
-        const { data, error: err } = await supabase
-          .rpc('buscar_prateleiras_catalogo');
+        // Tentar RPC dedicada pública buscar_prateleiras_biblioteca
+        let { data, error: err } = await supabase
+          .rpc('buscar_prateleiras_biblioteca');
+
+        // Fallback de retrocompatibilidade para RPC anterior ou VIEW
+        if (err) {
+          const { data: catData, error: catErr } = await supabase
+            .rpc('buscar_prateleiras_catalogo');
+
+          if (!catErr && catData) {
+            data = catData;
+            err = null;
+          }
+        }
 
         if (err) {
-          // Fallback de segurança se a RPC não estiver disponível
+          // Fallback final via VIEW caso as RPCs não estejam implantadas
           const { data: viewData } = await supabase
             .from('vw_livros_catalogo')
             .select('prateleira');

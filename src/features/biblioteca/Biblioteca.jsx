@@ -70,14 +70,30 @@ export default function Biblioteca() {
   const [isDevolucaoOpen, setIsDevolucaoOpen] = useState(false);
   const [prefilledDevolucaoCode, setPrefilledDevolucaoCode] = useState('');
 
-  // Buscar Prateleiras Cadastradas
+  // Buscar Prateleiras Cadastradas (otimizado via RPC)
   const fetchShelves = useCallback(async () => {
     try {
-      const { data, error } = await supabase.from('livros').select('prateleira');
-      if (error) throw error;
-      if (data) {
-        const uniqueShelves = [...new Set(data.map(item => item.prateleira.trim()))].sort();
-        setShelves(uniqueShelves);
+      let { data, error } = await supabase.rpc('buscar_prateleiras_biblioteca');
+      if (error) {
+        // Fallback para RPC anterior
+        const { data: catData, error: catErr } = await supabase.rpc('buscar_prateleiras_catalogo');
+        if (!catErr && catData) {
+          data = catData;
+          error = null;
+        }
+      }
+
+      if (error) {
+        // Fallback de segurança na tabela livros
+        const { data: rawData, error: rawErr } = await supabase.from('livros').select('prateleira');
+        if (rawErr) throw rawErr;
+        if (rawData) {
+          const uniqueShelves = [...new Set(rawData.map(item => item.prateleira?.trim()).filter(Boolean))].sort();
+          setShelves(uniqueShelves);
+        }
+      } else if (data) {
+        const list = data.map(item => item.prateleira?.trim()).filter(Boolean);
+        setShelves(list);
       }
     } catch (err) {
       console.error('Erro ao carregar prateleiras:', err);
