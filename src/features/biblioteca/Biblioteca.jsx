@@ -4,7 +4,7 @@ import {
   BookOpen, Search, Plus, Edit2, Trash2, X, ArrowLeft, RefreshCw, 
   AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Layers, Tag,
   AlertCircle, ShieldAlert, Package, Wrench, QrCode, Printer, Camera,
-  ClipboardList, Calendar, UserCheck, Clock, FileText, CornerDownLeft, Share2
+  ClipboardList, Clock, CornerDownLeft, Share2
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { supabase } from '../../shared/services/supabase';

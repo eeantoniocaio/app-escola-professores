@@ -205,7 +205,8 @@ export default function DevolucaoModal({ isOpen, onClose, onSuccess, prefilledCo
   };
 
   useEffect(() => {
-    if (isOpen) {
+    let isMounted = true;
+    if (isOpen && isMounted) {
       if (prefilledCode) {
         handleLookupLoan(prefilledCode);
       } else {
@@ -214,6 +215,7 @@ export default function DevolucaoModal({ isOpen, onClose, onSuccess, prefilledCo
     }
 
     return () => {
+      isMounted = false;
       stopCamera();
     };
   }, [isOpen, prefilledCode, handleLookupLoan, startCamera, stopCamera]);
