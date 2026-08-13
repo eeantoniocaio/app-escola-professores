@@ -4,7 +4,7 @@ import { useAuth } from '../../../app/providers/AuthProvider';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { supabase } from '../../services/supabase';
 import logoUrl from '../../../assets/logo.png';
-import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench, User, Camera, UploadCloud, BookOpen } from 'lucide-react';
+import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench, User, Camera, UploadCloud, BookOpen, ClipboardList } from 'lucide-react';
 import { useToast } from '../../../app/providers/ToastProvider';
 import ErrorBoundary from '../ErrorBoundary';
 
@@ -344,19 +344,23 @@ export default function MainLayout() {
           </Link>
           
 
-          {userRole !== 'agente' && (
+          {userRole !== 'agente' && userRole !== 'biblioteca' && (
             <Link to="/turmas" className={`nav-link ${isActive('/turmas')}`} onClick={() => setIsMobileMenuOpen(false)}>
               <GraduationCap size={18} /> Turmas
             </Link>
           )}
 
-          <Link to="/mapa-classe" className={`nav-link ${isActive('/mapa-classe')}`} onClick={() => setIsMobileMenuOpen(false)}>
-            <Users size={18} /> Mapa de Classe
-          </Link>
+          {userRole !== 'biblioteca' && (
+            <Link to="/mapa-classe" className={`nav-link ${isActive('/mapa-classe')}`} onClick={() => setIsMobileMenuOpen(false)}>
+              <Users size={18} /> Mapa de Classe
+            </Link>
+          )}
 
-          <Link to="/documentos" className={`nav-link ${isActive('/documentos')}`} onClick={() => setIsMobileMenuOpen(false)}>
-            <FolderOpen size={18} /> Documentos
-          </Link>
+          {userRole !== 'biblioteca' && (
+            <Link to="/documentos" className={`nav-link ${isActive('/documentos')}`} onClick={() => setIsMobileMenuOpen(false)}>
+              <FolderOpen size={18} /> Documentos
+            </Link>
+          )}
 
           {(userRole === 'gestao' || userRole === 'biblioteca' || userRole === 'secretaria') && (
             <Link to="/biblioteca" className={`nav-link ${isActive('/biblioteca')}`} onClick={() => setIsMobileMenuOpen(false)}>
@@ -364,17 +368,22 @@ export default function MainLayout() {
             </Link>
           )}
 
+          <Link to="/solicitacoes-materiais" className={`nav-link ${isActive('/solicitacoes-materiais')}`} onClick={() => setIsMobileMenuOpen(false)}>
+            <ClipboardList size={18} /> Solicitações
+          </Link>
+
           {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor') && (
             <Link to="/equipamentos" className={`nav-link ${isActive('/equipamentos')}`} onClick={() => setIsMobileMenuOpen(false)}>
               <Wrench size={18} /> Equipamentos
             </Link>
           )}
           
-          {userRole !== 'secretaria' && userRole !== 'tecnico' && (
+          {userRole !== 'secretaria' && userRole !== 'tecnico' && userRole !== 'agente' && userRole !== 'biblioteca' && (
             <Link to="/ocorrencias" className={`nav-link ${isActive('/ocorrencias')}`} onClick={() => setIsMobileMenuOpen(false)}>
               <PlusCircle size={18} /> Ocorrências
             </Link>
           )}
+
           
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <button 

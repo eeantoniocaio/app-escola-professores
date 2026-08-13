@@ -52,27 +52,33 @@ export default function Home() {
           </button>
         )}
 
-        {userRole !== 'agente' && (
+        {userRole !== 'agente' && userRole !== 'biblioteca' && (
           <button className="dashboard-action-card" onClick={() => navigate('/turmas')}>
             <GraduationCap />
             <span>Turmas</span>
           </button>
         )}
 
-        <button className="dashboard-action-card" onClick={() => navigate('/mapa-classe')}>
-          <Users />
-          <span>Mapa de Classe</span>
-        </button>
+        {userRole !== 'biblioteca' && (
+          <button className="dashboard-action-card" onClick={() => navigate('/mapa-classe')}>
+            <Users />
+            <span>Mapa de Classe</span>
+          </button>
+        )}
 
-        <button className="dashboard-action-card" onClick={() => navigate('/documentos')}>
-          <FolderOpen />
-          <span>Documentos</span>
-        </button>
+        {userRole !== 'biblioteca' && (
+          <button className="dashboard-action-card" onClick={() => navigate('/documentos')}>
+            <FolderOpen />
+            <span>Documentos</span>
+          </button>
+        )}
 
-        <button className="dashboard-action-card" onClick={() => navigate('/acervo')}>
-          <Library />
-          <span>Acervo</span>
-        </button>
+        {userRole !== 'biblioteca' && (
+          <button className="dashboard-action-card" onClick={() => navigate('/acervo')}>
+            <Library />
+            <span>Acervo</span>
+          </button>
+        )}
 
         <button className="dashboard-action-card" onClick={() => navigate('/solicitacoes-materiais')}>
           <ClipboardList />
@@ -106,7 +112,7 @@ export default function Home() {
           </>
         )}
 
-        {userRole !== 'secretaria' && userRole !== 'tecnico' && userRole !== 'agente' && (
+        {userRole !== 'secretaria' && userRole !== 'tecnico' && userRole !== 'agente' && userRole !== 'biblioteca' && (
           <>
             <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias')}>
               <ShieldAlert />
