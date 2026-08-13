@@ -6,7 +6,6 @@ import { useToast } from '../../app/providers/ToastProvider';
 
 export default function BibliotecaQrScanner({ isOpen, onClose }) {
   const { showToast } = useToast();
-  const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [scanResult, setScanResult] = useState(null); // { found: bool, data: obj, code: str }
   const [loadingLookup, setLoadingLookup] = useState(false);

@@ -4,7 +4,7 @@ import {
   BookOpen, Search, Plus, Edit2, Trash2, X, ArrowLeft, RefreshCw, 
   AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Layers, Tag,
   AlertCircle, ShieldAlert, Package, Wrench, QrCode, Printer, Camera,
-  ClipboardList, Calendar, UserCheck, Clock, FileText, CornerDownLeft
+  ClipboardList, Calendar, UserCheck, Clock, FileText, CornerDownLeft, Share2
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { supabase } from '../../shared/services/supabase';
@@ -159,14 +159,20 @@ export default function Biblioteca() {
   }, [showToast]);
 
   useEffect(() => {
-    if (isAuthorized) {
-      if (activeTab === 'acervo') {
-        fetchBooks();
-        fetchShelves();
-      } else if (activeTab === 'emprestimos') {
-        fetchActiveLoans();
+    let isMounted = true;
+    const loadTabData = async () => {
+      if (isAuthorized && isMounted) {
+        if (activeTab === 'acervo') {
+          fetchBooks();
+          fetchShelves();
+        } else if (activeTab === 'emprestimos') {
+          fetchActiveLoans();
+        }
       }
-    }
+    };
+
+    loadTabData();
+    return () => { isMounted = false; };
   }, [isAuthorized, activeTab, fetchBooks, fetchShelves, fetchActiveLoans]);
 
   const handleSearchChange = (val) => {
@@ -807,7 +813,7 @@ export default function Biblioteca() {
               <ClipboardList size={40} style={{ marginBottom: '0.75rem', opacity: 0.4 }} />
               <p style={{ fontWeight: 600, fontSize: '1rem' }}>Nenhum empréstimo ativo registrado.</p>
               <p style={{ fontSize: '0.85rem' }}>
-                Clique no botão "Novo Empréstimo" acima para registrar a primeira retirada.
+                Clique no botão &quot;Novo Empréstimo&quot; acima para registrar a primeira retirada.
               </p>
             </div>
           ) : (
