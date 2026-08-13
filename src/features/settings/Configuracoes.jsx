@@ -442,7 +442,7 @@ export default function Configuracoes() {
             <AddForm value={novaTurma} onChange={e => setNovaTurma(e.target.value)} onSubmit={handleAddTurma} placeholder="Nome da turma (Ex: 6ºA, 7ºB)" />
           </>
         )
-      case 'disciplinas':
+      case 'disciplinas': {
         const canEditDisciplinas = isMaster || userRole === 'gestao';
         return (
           <>
@@ -465,6 +465,7 @@ export default function Configuracoes() {
             )}
           </>
         )
+      }
       default:
         return null
     }
