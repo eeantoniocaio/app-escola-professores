@@ -21,6 +21,7 @@ const Relatorios = React.lazy(() => import('../features/relatorios/Relatorios/Re
 const BoasPraticas = React.lazy(() => import('../features/boaspraticas/BoasPraticas'));
 const Documentos = React.lazy(() => import('../features/documentos/Documentos'));
 const Acervo = React.lazy(() => import('../features/acervo/Acervo'));
+const Biblioteca = React.lazy(() => import('../features/biblioteca/Biblioteca'));
 const Equipamentos = React.lazy(() => import('../features/equipamentos/Equipamentos'));
 const SolicitacoesMateriais = React.lazy(() => import('../features/solicitacoes/SolicitacoesMateriais'));
 const PerfilTurma = React.lazy(() => import('../features/turmas/PerfilTurma'));
@@ -62,6 +63,7 @@ function AppRoutes() {
             <Route path="mapa-classe" element={<MapaClasse />} />
             <Route path="documentos" element={<Documentos />} />
             <Route path="acervo" element={<Acervo />} />
+            <Route path="biblioteca" element={(userRole === 'gestao' || userRole === 'biblioteca' || userRole === 'secretaria') ? <Biblioteca /> : <Navigate to="/" replace />} />
             <Route path="chamada" element={<ChamadaLayout />}>
               <Route index element={<ChamadaHome />} />
               <Route path="classe/:classId" element={<ChamadaClasse />} />

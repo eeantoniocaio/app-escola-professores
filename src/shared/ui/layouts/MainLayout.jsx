@@ -4,7 +4,7 @@ import { useAuth } from '../../../app/providers/AuthProvider';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { supabase } from '../../services/supabase';
 import logoUrl from '../../../assets/logo.png';
-import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench, User, Camera, UploadCloud } from 'lucide-react';
+import { Home as HomeIcon, BarChart2, Users, PlusCircle, PenTool, Settings, LogOut, ChevronRight, Link as LinkIcon, GraduationCap, Bell, AlertTriangle, X, FolderOpen, Wrench, User, Camera, UploadCloud, BookOpen } from 'lucide-react';
 import { useToast } from '../../../app/providers/ToastProvider';
 import ErrorBoundary from '../ErrorBoundary';
 
@@ -31,6 +31,8 @@ export default function MainLayout() {
         return 'Professor(a)';
       case 'agente':
         return 'Agente';
+      case 'biblioteca':
+        return 'Biblioteca';
       default:
         return role || 'Usuário';
     }
@@ -355,6 +357,12 @@ export default function MainLayout() {
           <Link to="/documentos" className={`nav-link ${isActive('/documentos')}`} onClick={() => setIsMobileMenuOpen(false)}>
             <FolderOpen size={18} /> Documentos
           </Link>
+
+          {(userRole === 'gestao' || userRole === 'biblioteca' || userRole === 'secretaria') && (
+            <Link to="/biblioteca" className={`nav-link ${isActive('/biblioteca')}`} onClick={() => setIsMobileMenuOpen(false)}>
+              <BookOpen size={18} /> Biblioteca
+            </Link>
+          )}
 
           {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor') && (
             <Link to="/equipamentos" className={`nav-link ${isActive('/equipamentos')}`} onClick={() => setIsMobileMenuOpen(false)}>

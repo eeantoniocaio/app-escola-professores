@@ -86,6 +86,13 @@ export default function Home() {
           </button>
         )}
 
+        {(userRole === 'gestao' || userRole === 'biblioteca' || userRole === 'secretaria') && (
+          <button className="dashboard-action-card" onClick={() => navigate('/biblioteca')}>
+            <BookOpen />
+            <span>Biblioteca</span>
+          </button>
+        )}
+
         {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor') && (
           <>
             <button className="dashboard-action-card" onClick={handleEquipamentosClick}>
