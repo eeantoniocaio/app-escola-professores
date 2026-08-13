@@ -365,7 +365,32 @@ REVOKE EXECUTE ON FUNCTION public.buscar_alunos_biblioteca(text) FROM PUBLIC, an
 -- Conceder EXECUTE para authenticated (a autorização definitiva por papel ocorre via get_user_role() dentro da RPC)
 GRANT EXECUTE ON FUNCTION public.buscar_alunos_biblioteca(text) TO authenticated;
 
--- 13. Autorização de Acesso do E-mail da Biblioteca e Atualização do Trigger handle_new_user
+-- 13. Função RPC: buscar_prateleiras_catalogo (SECURITY DEFINER)
+CREATE OR REPLACE FUNCTION public.buscar_prateleiras_catalogo()
+RETURNS TABLE (prateleira text) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT DISTINCT l.prateleira
+  FROM public.livros l
+  WHERE l.prateleira IS NOT NULL AND TRIM(l.prateleira) <> ''
+  ORDER BY l.prateleira ASC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+REVOKE EXECUTE ON FUNCTION public.buscar_prateleiras_catalogo() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.buscar_prateleiras_catalogo() TO anon, authenticated;
+
+-- 14. Hardening e Blindagem Determinística da VIEW Pública e Revogação de Acessos Diretos
+ALTER VIEW public.vw_livros_catalogo OWNER TO postgres;
+
+REVOKE ALL ON public.vw_livros_catalogo FROM PUBLIC;
+GRANT SELECT ON public.vw_livros_catalogo TO anon, authenticated;
+
+REVOKE ALL ON public.livros FROM anon;
+REVOKE ALL ON public.exemplares_livros FROM anon;
+REVOKE ALL ON public.emprestimos_livros FROM anon;
+
+-- 15. Autorização de Acesso do E-mail da Biblioteca e Atualização Segura do Trigger handle_new_user
 INSERT INTO public.emails_autorizados (email)
 SELECT 'bibliotecaantoniocaio@gmail.com'
 WHERE NOT EXISTS (
@@ -393,10 +418,9 @@ BEGIN
       ELSE NULL
     END
   )
-  ON CONFLICT (id) DO UPDATE SET
-    papel = EXCLUDED.papel,
-    nome = EXCLUDED.nome;
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
 

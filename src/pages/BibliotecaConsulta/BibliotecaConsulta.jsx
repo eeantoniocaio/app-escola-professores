@@ -45,16 +45,23 @@ export default function BibliotecaConsulta() {
     const loadShelves = async () => {
       try {
         const { data, error: err } = await supabase
-          .from('vw_livros_catalogo')
-          .select('prateleira');
+          .rpc('buscar_prateleiras_catalogo');
 
-        if (err) throw err;
-        if (data && isMounted) {
-          const uniqueShelves = [...new Set(data.map(item => item.prateleira?.trim()).filter(Boolean))].sort();
-          setShelves(uniqueShelves);
+        if (err) {
+          // Fallback de segurança se a RPC não estiver disponível
+          const { data: viewData } = await supabase
+            .from('vw_livros_catalogo')
+            .select('prateleira');
+          if (viewData && isMounted) {
+            const uniqueShelves = [...new Set(viewData.map(item => item.prateleira?.trim()).filter(Boolean))].sort();
+            setShelves(uniqueShelves);
+          }
+        } else if (data && isMounted) {
+          const list = data.map(item => item.prateleira?.trim()).filter(Boolean);
+          setShelves(list);
         }
       } catch (err) {
-        console.error('Erro ao buscar prateleiras na view pública:', err);
+        console.error('Erro ao buscar prateleiras via RPC:', err);
       }
     };
 
