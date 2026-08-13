@@ -198,21 +198,22 @@ export default function DevolucaoModal({ isOpen, onClose, onSuccess, prefilledCo
     }
   }, [startCamera]);
 
+  const handleClose = () => {
+    stopCamera();
+    resetForm();
+    onClose();
+  };
+
   useEffect(() => {
-    let isMounted = true;
     if (isOpen) {
       if (prefilledCode) {
-        if (isMounted) {
-          setInputCode(prefilledCode);
-          handleLookupLoan(prefilledCode);
-        }
+        handleLookupLoan(prefilledCode);
       } else {
         startCamera();
       }
     }
 
     return () => {
-      isMounted = false;
       stopCamera();
     };
   }, [isOpen, prefilledCode, handleLookupLoan, startCamera, stopCamera]);
@@ -280,13 +281,13 @@ export default function DevolucaoModal({ isOpen, onClose, onSuccess, prefilledCo
   const isOverdue = activeLoan && activeLoan.data_prevista_devolucao < todayStr;
 
   return (
-    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !submitting) onClose(); }}>
+    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !submitting) handleClose(); }}>
       <div className="modal-content" style={{ maxWidth: '560px' }}>
         <div className="modal-header">
           <h3>
             <CornerDownLeft size={20} color="var(--color-primary)" /> Registrar Devolução de Livro
           </h3>
-          <button className="btn-action-icon" onClick={onClose} disabled={submitting}>
+          <button className="btn-action-icon" onClick={handleClose} disabled={submitting}>
             <X size={18} />
           </button>
         </div>
@@ -582,7 +583,7 @@ export default function DevolucaoModal({ isOpen, onClose, onSuccess, prefilledCo
                 <button className="btn-secondary" onClick={handleRestartScan}>
                   <RefreshCw size={14} /> Devolver Outro Livro
                 </button>
-                <button className="btn-primary" onClick={onClose}>
+                <button className="btn-primary" onClick={handleClose}>
                   Concluir
                 </button>
               </div>
@@ -629,7 +630,7 @@ export default function DevolucaoModal({ isOpen, onClose, onSuccess, prefilledCo
                 <button className="btn-secondary" onClick={handleRestartScan}>
                   <RefreshCw size={14} /> Escanear Outro
                 </button>
-                <button className="btn-primary" onClick={onClose}>
+                <button className="btn-primary" onClick={handleClose}>
                   Fechar
                 </button>
               </div>
@@ -663,7 +664,7 @@ export default function DevolucaoModal({ isOpen, onClose, onSuccess, prefilledCo
                 <button className="btn-secondary" onClick={handleRestartScan}>
                   <RefreshCw size={14} /> Tentar Outro Código
                 </button>
-                <button className="btn-primary" onClick={onClose}>
+                <button className="btn-primary" onClick={handleClose}>
                   Fechar
                 </button>
               </div>
@@ -675,7 +676,7 @@ export default function DevolucaoModal({ isOpen, onClose, onSuccess, prefilledCo
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
             RPC Transacional: public.registrar_devolucao_livro
           </span>
-          <button className="btn-secondary" onClick={onClose} disabled={submitting}>
+          <button className="btn-secondary" onClick={handleClose} disabled={submitting}>
             Fechar
           </button>
         </div>

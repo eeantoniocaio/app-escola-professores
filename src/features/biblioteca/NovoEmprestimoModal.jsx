@@ -58,26 +58,10 @@ export default function NovoEmprestimoModal({ isOpen, onClose, onSuccess }) {
     setSuccessData(null);
   };
 
-  useEffect(() => {
-    let isMounted = true;
-    if (!isOpen && isMounted) {
-      setStep(1);
-      setExemplarCode('');
-      setValidatedExemplar(null);
-      setExemplarError(null);
-      setStudentSearchTerm('');
-      setStudentSearchResults([]);
-      setSelectedStudent(null);
-      setStudentActiveLoans([]);
-      setReturnDate(getDefaultReturnDate());
-      setObservacoes('');
-      setSubmitting(false);
-      setSuccessData(null);
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen]);
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   // Validar Código do Exemplar no Banco (Digitação ou Scan)
   const handleValidateExemplarCode = async (codeToTest) => {
@@ -235,13 +219,13 @@ export default function NovoEmprestimoModal({ isOpen, onClose, onSuccess }) {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !submitting) onClose(); }}>
+    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !submitting) handleClose(); }}>
       <div className="modal-content" style={{ maxWidth: '640px' }}>
         <div className="modal-header">
           <h3>
             <BookOpen size={20} color="var(--color-primary)" /> Novo Empréstimo de Livro
           </h3>
-          <button className="btn-action-icon" onClick={onClose} disabled={submitting}>
+          <button className="btn-action-icon" onClick={handleClose} disabled={submitting}>
             <X size={18} />
           </button>
         </div>
@@ -515,7 +499,7 @@ export default function NovoEmprestimoModal({ isOpen, onClose, onSuccess }) {
                 </div>
               </div>
 
-              <button className="btn-primary" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>
+              <button className="btn-primary" onClick={handleClose} style={{ width: '100%', justifyContent: 'center' }}>
                 Concluir
               </button>
             </div>
@@ -530,7 +514,7 @@ export default function NovoEmprestimoModal({ isOpen, onClose, onSuccess }) {
                 <ArrowLeft size={16} /> Voltar
               </button>
             ) : (
-              <button className="btn-secondary" onClick={onClose} disabled={submitting}>
+              <button className="btn-secondary" onClick={handleClose} disabled={submitting}>
                 Cancelar
               </button>
             )}
