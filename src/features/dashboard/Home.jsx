@@ -1,6 +1,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench, CheckSquare, Library, UserCheck, ClipboardList, FolderKanban } from 'lucide-react';
+import {
+  PlusCircle,
+  Calendar,
+  BookOpen,
+  BarChart2,
+  ShieldAlert,
+  Users,
+  PenTool,
+  Star,
+  GraduationCap,
+  FolderOpen,
+  Wrench,
+  CheckSquare,
+  Library,
+  UserCheck,
+  ClipboardList,
+  FolderKanban,
+} from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 
@@ -13,6 +30,122 @@ export default function Home() {
     navigate('/equipamentos');
   };
 
+  const cards = [
+    {
+      title: 'Novo Evento',
+      icon: PlusCircle,
+      onClick: () => navigate('/eventos/novo'),
+      visible: userRole === 'gestao',
+    },
+    {
+      title: 'Registros',
+      icon: BookOpen,
+      onClick: () => navigate('/registros'),
+      visible: userRole === 'gestao',
+    },
+    {
+      title: 'Relatórios',
+      icon: BarChart2,
+      onClick: () => navigate('/relatorios'),
+      visible: userRole === 'gestao',
+    },
+    {
+      title: 'Chamada',
+      icon: CheckSquare,
+      onClick: () => navigate('/chamada'),
+      visible: userRole === 'gestao' || userRole === 'agente',
+    },
+    {
+      title: 'Eventos',
+      icon: Calendar,
+      onClick: () => navigate('/eventos'),
+      visible: userRole === 'gestao' || userRole === 'professor',
+    },
+    {
+      title: 'Turmas',
+      icon: GraduationCap,
+      onClick: () => navigate('/turmas'),
+      visible: userRole !== 'agente' && userRole !== 'biblioteca',
+    },
+    {
+      title: 'Mapa de Classe',
+      icon: Users,
+      onClick: () => navigate('/mapa-classe'),
+      visible: userRole !== 'biblioteca',
+    },
+    {
+      title: 'Documentos',
+      icon: FolderOpen,
+      onClick: () => navigate('/documentos'),
+      visible: userRole !== 'biblioteca',
+    },
+    {
+      title: 'Acervo',
+      icon: Library,
+      onClick: () => navigate('/acervo'),
+      visible: userRole !== 'biblioteca',
+    },
+    {
+      title: 'Projetos da Escola',
+      icon: FolderKanban,
+      onClick: () => navigate('/projetos'),
+      visible: true,
+    },
+    {
+      title: 'Solicitação de materiais ou serviços',
+      icon: ClipboardList,
+      onClick: () => navigate('/solicitacoes-materiais'),
+      visible: true,
+    },
+    {
+      title: 'Perfil da Turma',
+      icon: UserCheck,
+      onClick: () => navigate('/perfil-turma'),
+      visible: userRole === 'gestao' || userRole === 'professor',
+    },
+    {
+      title: 'Biblioteca',
+      icon: BookOpen,
+      onClick: () => navigate('/biblioteca'),
+      visible: userRole === 'gestao' || userRole === 'biblioteca' || userRole === 'secretaria',
+    },
+    {
+      title: 'Equipamentos',
+      icon: Wrench,
+      onClick: handleEquipamentosClick,
+      visible: userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor',
+    },
+    {
+      title: 'Empréstimos',
+      icon: ClipboardList,
+      onClick: () => navigate('/equipamentos?tab=emprestimos'),
+      visible: userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor',
+    },
+    {
+      title: 'Ocorrências',
+      icon: ShieldAlert,
+      onClick: () => navigate('/ocorrencias'),
+      visible: userRole !== 'secretaria' && userRole !== 'tecnico' && userRole !== 'agente' && userRole !== 'biblioteca',
+    },
+    {
+      title: 'Questões de reposições',
+      icon: PenTool,
+      onClick: () => navigate('/reposicoes'),
+      visible: userRole !== 'secretaria' && userRole !== 'tecnico' && userRole !== 'agente' && userRole !== 'biblioteca',
+      spanStyle: { textAlign: 'center', fontSize: '1rem' },
+    },
+    {
+      title: 'Boas Práticas',
+      icon: Star,
+      onClick: () => navigate('/boas-praticas'),
+      visible: userRole !== 'secretaria' && userRole !== 'tecnico' && userRole !== 'agente' && userRole !== 'biblioteca',
+    },
+  ];
+
+  const visibleCards = cards
+    .filter((card) => card.visible)
+    .sort((a, b) => a.title.localeCompare(b.title, 'pt-BR', { sensitivity: 'base' }));
+
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <div className="welcome-section" style={{ marginBottom: '3rem', textAlign: 'center' }}>
@@ -20,122 +153,17 @@ export default function Home() {
       </div>
 
       <div className="dashboard-grid">
-        {userRole === 'gestao' && (
-          <>
-            {/* Navigates to a specific route or we could open a modal context */}
-            <button className="dashboard-action-card" onClick={() => navigate('/eventos/novo')}>
-              <PlusCircle />
-              <span>Novo Evento</span>
+        {visibleCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <button key={card.title} className="dashboard-action-card" onClick={card.onClick}>
+              <Icon />
+              <span style={card.spanStyle}>{card.title}</span>
             </button>
-            <button className="dashboard-action-card" onClick={() => navigate('/registros')}>
-              <BookOpen />
-              <span>Registros</span>
-            </button>
-            <button className="dashboard-action-card" onClick={() => navigate('/relatorios')}>
-              <BarChart2 />
-              <span>Relatórios</span>
-            </button>
-          </>
-        )}
-
-        {(userRole === 'gestao' || userRole === 'agente') && (
-          <button className="dashboard-action-card" onClick={() => navigate('/chamada')}>
-            <CheckSquare />
-            <span>Chamada</span>
-          </button>
-        )}
-
-        {(userRole === 'gestao' || userRole === 'professor') && (
-          <button className="dashboard-action-card" onClick={() => navigate('/eventos')}>
-            <Calendar />
-            <span>Eventos</span>
-          </button>
-        )}
-
-        {userRole !== 'agente' && userRole !== 'biblioteca' && (
-          <button className="dashboard-action-card" onClick={() => navigate('/turmas')}>
-            <GraduationCap />
-            <span>Turmas</span>
-          </button>
-        )}
-
-        {userRole !== 'biblioteca' && (
-          <button className="dashboard-action-card" onClick={() => navigate('/mapa-classe')}>
-            <Users />
-            <span>Mapa de Classe</span>
-          </button>
-        )}
-
-        {userRole !== 'biblioteca' && (
-          <button className="dashboard-action-card" onClick={() => navigate('/documentos')}>
-            <FolderOpen />
-            <span>Documentos</span>
-          </button>
-        )}
-
-        {userRole !== 'biblioteca' && (
-          <button className="dashboard-action-card" onClick={() => navigate('/acervo')}>
-            <Library />
-            <span>Acervo</span>
-          </button>
-        )}
-
-        <button className="dashboard-action-card" onClick={() => navigate('/projetos')}>
-          <FolderKanban />
-          <span>Projetos da Escola</span>
-        </button>
-
-        <button className="dashboard-action-card" onClick={() => navigate('/solicitacoes-materiais')}>
-          <ClipboardList />
-          <span>Solicitação de materiais ou serviços</span>
-        </button>
-
-        {(userRole === 'gestao' || userRole === 'professor') && (
-          <button className="dashboard-action-card" onClick={() => navigate('/perfil-turma')}>
-            <UserCheck />
-            <span>Perfil da Turma</span>
-          </button>
-        )}
-
-        {(userRole === 'gestao' || userRole === 'biblioteca' || userRole === 'secretaria') && (
-          <button className="dashboard-action-card" onClick={() => navigate('/biblioteca')}>
-            <BookOpen />
-            <span>Biblioteca</span>
-          </button>
-        )}
-
-        {(userRole === 'gestao' || userRole === 'tecnico' || userRole === 'secretaria' || userRole === 'professor') && (
-          <>
-            <button className="dashboard-action-card" onClick={handleEquipamentosClick}>
-              <Wrench />
-              <span>Equipamentos</span>
-            </button>
-            <button className="dashboard-action-card" onClick={() => navigate('/equipamentos?tab=emprestimos')}>
-              <ClipboardList />
-              <span>Empréstimos</span>
-            </button>
-          </>
-        )}
-
-        {userRole !== 'secretaria' && userRole !== 'tecnico' && userRole !== 'agente' && userRole !== 'biblioteca' && (
-          <>
-            <button className="dashboard-action-card" onClick={() => navigate('/ocorrencias')}>
-              <ShieldAlert />
-              <span>Ocorrências</span>
-            </button>
-
-            <button className="dashboard-action-card" onClick={() => navigate('/reposicoes')}>
-              <PenTool />
-              <span style={{ textAlign: 'center', fontSize: '1rem' }}>Questões de reposições</span>
-            </button>
-
-            <button className="dashboard-action-card" onClick={() => navigate('/boas-praticas')}>
-              <Star />
-              <span>Boas Práticas</span>
-            </button>
-          </>
-        )}
+          );
+        })}
       </div>
     </div>
   );
 }
+
