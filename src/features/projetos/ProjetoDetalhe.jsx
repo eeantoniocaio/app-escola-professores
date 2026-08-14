@@ -9,6 +9,7 @@ import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { DIAS_SEMANA_MAP, formatHorario } from './Projetos';
+import { getProjectCapaColor } from './projetoCapaColors';
 import ProjetoModal from './ProjetoModal';
 import ProjetoHorarioModal from './ProjetoHorarioModal';
 import ProjetoResponsavelModal from './ProjetoResponsavelModal';
@@ -259,14 +260,12 @@ export default function ProjetoDetalhe() {
       </button>
 
       <div className="projetos-detalhe-card">
-        {projeto.capa_url && (
-          <img
-            src={projeto.capa_url}
-            alt={projeto.nome}
-            className="projetos-detalhe-banner"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-        )}
+        <div
+          className="projetos-detalhe-banner-block"
+          style={{ backgroundColor: getProjectCapaColor(projeto.capa_url) }}
+        >
+          <FolderKanban size={56} color="rgba(255, 255, 255, 0.85)" />
+        </div>
 
         <div className="projetos-detalhe-header">
           <div className="projetos-detalhe-header-info">

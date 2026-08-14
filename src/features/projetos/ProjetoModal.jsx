@@ -1,80 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Link as LinkIcon, FolderKanban, Loader2, CheckCircle } from 'lucide-react';
+import { X, FolderKanban, Loader2, Check } from 'lucide-react';
 import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
+import {
+  PROJECT_CAPA_FAMILIES,
+  DEFAULT_CAPA_COLOR,
+  VALID_CAPA_HEX_SET,
+  getProjectCapaColor
+} from './projetoCapaColors';
 
 export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit = null }) {
   const { userRole } = useAuth();
   const { showToast } = useToast();
 
   const [nome, setNome] = useState('');
-  const [capaUrl, setCapaUrl] = useState('');
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_CAPA_COLOR);
   const [ativo, setAtivo] = useState(true);
 
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [activeTabCapa, setActiveTabCapa] = useState('url'); // 'url' | 'file'
 
   useEffect(() => {
     if (projetoToEdit) {
       setNome(projetoToEdit.nome || '');
-      setCapaUrl(projetoToEdit.capa_url || '');
+      setSelectedColor(getProjectCapaColor(projetoToEdit.capa_url));
       setAtivo(projetoToEdit.ativo !== false);
     } else {
       setNome('');
-      setCapaUrl('');
+      setSelectedColor(DEFAULT_CAPA_COLOR);
       setAtivo(true);
     }
   }, [projetoToEdit, isOpen]);
 
   if (!isOpen) return null;
-
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (userRole !== 'gestao' && userRole !== 'secretaria') {
-      showToast('Apenas Gestão e Secretaria podem fazer upload de capas.', 'warning');
-      return;
-    }
-
-    const validMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!validMimes.includes(file.type)) {
-      showToast('Formato de imagem não suportado. Utilize JPEG, PNG, WEBP ou GIF.', 'warning');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('A imagem deve ter no máximo 5MB.', 'warning');
-      return;
-    }
-
-    setUploadingImage(true);
-    try {
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'png';
-      const fileName = `capa_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-      const filePath = `projetos/${fileName}`;
-
-      const { data, error } = await supabase.storage
-        .from('evidencias')
-        .upload(filePath, file, { upsert: true });
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('evidencias')
-        .getPublicUrl(filePath);
-
-      setCapaUrl(publicUrl);
-      showToast('Imagem de capa enviada com sucesso!', 'success');
-    } catch (err) {
-      console.error('Erro no upload da capa:', err);
-      showToast('Erro ao fazer upload da imagem de capa.', 'error');
-    } finally {
-      setUploadingImage(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -90,19 +48,16 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
       return;
     }
 
-    if (capaUrl && capaUrl.trim()) {
-      const urlTrim = capaUrl.trim();
-      if (!urlTrim.startsWith('http://') && !urlTrim.startsWith('https://')) {
-        showToast('A URL da capa deve iniciar com http:// ou https://', 'warning');
-        return;
-      }
-    }
+    // Validação estrita do código hexadecimal da cor contra valores permitidos
+    const colorToSave = VALID_CAPA_HEX_SET.has(selectedColor.toLowerCase())
+      ? selectedColor.toUpperCase()
+      : DEFAULT_CAPA_COLOR;
 
     setSubmitting(true);
     try {
       const payload = {
         nome: cleanNome,
-        capa_url: capaUrl.trim() || null,
+        capa_url: colorToSave,
         ativo: Boolean(ativo),
         updated_at: new Date().toISOString()
       };
@@ -116,7 +71,7 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
         if (error) throw error;
         showToast('Projeto atualizado com sucesso!', 'success');
       } else {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('projetos')
           .insert([payload])
           .select()
@@ -138,29 +93,43 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, padding: '1rem', animation: 'fadeIn 0.2s ease-out'
-    }}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
-        background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', width: '100%', maxWidth: '500px',
-        maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-light)',
-        padding: '1.5rem'
-      }}>
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: '1rem', animation: 'fadeIn 0.2s ease-out'
+      }}
+    >
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', width: '100%', maxWidth: '560px',
+          maxHeight: '92vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-light)',
+          padding: '1.5rem'
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
             <FolderKanban color="var(--color-primary)" />
             {projetoToEdit ? 'Editar Projeto' : 'Novo Projeto'}
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '0.25rem' }}
+            aria-label="Fechar modal"
+          >
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Campo Nome */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
               Nome do Projeto *
             </label>
             <input
@@ -176,88 +145,69 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
             />
           </div>
 
-          {/* Imagem de Capa */}
+          {/* Seletor Visual de Cores */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
-              Imagem de Capa (Opcional)
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              Cor da Capa
             </label>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setActiveTabCapa('url')}
-                style={{
-                  padding: '0.25rem 0.625rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600',
-                  border: '1px solid var(--border-light)',
-                  background: activeTabCapa === 'url' ? 'var(--color-primary-light)' : 'transparent',
-                  color: activeTabCapa === 'url' ? 'var(--color-primary)' : 'var(--text-muted)',
-                  cursor: 'pointer'
-                }}
-              >
-                URL da Imagem
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTabCapa('file')}
-                style={{
-                  padding: '0.25rem 0.625rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600',
-                  border: '1px solid var(--border-light)',
-                  background: activeTabCapa === 'file' ? 'var(--color-primary-light)' : 'transparent',
-                  color: activeTabCapa === 'file' ? 'var(--color-primary)' : 'var(--text-muted)',
-                  cursor: 'pointer'
-                }}
-              >
-                Upload de Imagem
-              </button>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }} role="radiogroup" aria-label="Seletor de cor da capa">
+              {PROJECT_CAPA_FAMILIES.map((familia) => (
+                <div key={familia.nome} className="projeto-color-family-group">
+                  <div className="projeto-color-family-label">
+                    <span>{familia.icone}</span>
+                    <span>{familia.nome}</span>
+                  </div>
+                  <div className="projeto-color-swatches-row">
+                    {familia.cores.map((cor) => {
+                      const isSelected = selectedColor.toLowerCase() === cor.hex.toLowerCase();
+                      return (
+                        <button
+                          key={cor.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={isSelected}
+                          aria-label={`Cor ${cor.nome}`}
+                          title={`${cor.nome} (${cor.hex})`}
+                          tabIndex={0}
+                          onClick={() => setSelectedColor(cor.hex)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setSelectedColor(cor.hex);
+                            }
+                          }}
+                          className={`projeto-color-swatch-btn ${isSelected ? 'selected' : ''}`}
+                          style={{ backgroundColor: cor.hex }}
+                        >
+                          {isSelected && <Check size={16} color="#FFFFFF" strokeWidth={3} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
-
-            {activeTabCapa === 'url' ? (
-              <input
-                type="url"
-                placeholder="https://exemplo.com/imagem.jpg"
-                value={capaUrl}
-                onChange={(e) => setCapaUrl(e.target.value)}
-                style={{
-                  width: '100%', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9375rem'
-                }}
-              />
-            ) : (
-              <div>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  onChange={handleImageUpload}
-                  disabled={uploadingImage}
-                  style={{ fontSize: '0.875rem' }}
-                />
-                {uploadingImage && (
-                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
-                    <Loader2 size={14} className="animate-spin" /> Enviando imagem...
-                  </span>
-                )}
-              </div>
-            )}
-
-            {capaUrl && (
-              <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <img
-                  src={capaUrl}
-                  alt="Pré-visualização da capa"
-                  style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-light)' }}
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setCapaUrl('')}
-                  style={{ background: 'none', border: 'none', color: 'var(--color-danger)', fontSize: '0.75rem', cursor: 'pointer' }}
-                >
-                  Remover Capa
-                </button>
-              </div>
-            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+          {/* Prévia da Capa */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Prévia do Card
+            </label>
+            <div
+              className="projeto-capa-preview-banner"
+              style={{ backgroundColor: selectedColor }}
+            >
+              <FolderKanban size={40} color="rgba(255,255,255,0.85)" />
+              <span className="projeto-capa-preview-title">
+                {nome.trim() || 'Nome do Projeto'}
+              </span>
+            </div>
+          </div>
+
+          {/* Status Ativo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <input
               type="checkbox"
               id="chkAtivo"
@@ -270,7 +220,8 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
             </label>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
+          {/* Botões do Rodapé */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
             <button
               type="button"
               onClick={onClose}
@@ -284,7 +235,7 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
             </button>
             <button
               type="submit"
-              disabled={submitting || uploadingImage}
+              disabled={submitting}
               style={{
                 padding: '0.625rem 1.25rem', borderRadius: 'var(--radius-sm)', border: 'none',
                 background: 'var(--color-primary)', color: '#FFF', fontWeight: '600', cursor: 'pointer',

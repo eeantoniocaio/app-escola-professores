@@ -5,6 +5,7 @@ import { supabase } from '../../shared/services/supabase';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import ProjetoModal from './ProjetoModal';
+import { getProjectCapaColor } from './projetoCapaColors';
 import './Projetos.css';
 
 export const DIAS_SEMANA_MAP = {
@@ -205,23 +206,11 @@ export default function Projetos() {
                 className={`projeto-card ${!projeto.ativo ? 'inativo' : ''}`}
                 onClick={() => navigate(`/projetos/${projeto.id}`)}
               >
-                {projeto.capa_url ? (
-                  <img
-                    src={projeto.capa_url}
-                    alt={projeto.nome}
-                    className="projeto-card-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
                 <div
-                  className="projeto-card-cover-placeholder"
-                  style={{ display: projeto.capa_url ? 'none' : 'flex' }}
+                  className="projeto-card-cover-banner"
+                  style={{ backgroundColor: getProjectCapaColor(projeto.capa_url) }}
                 >
-                  <FolderKanban size={48} />
+                  <FolderKanban size={44} color="rgba(255, 255, 255, 0.85)" />
                 </div>
 
                 <div className="projeto-card-body">
