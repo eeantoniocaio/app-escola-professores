@@ -77,6 +77,8 @@ export default function Biblioteca() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedBookIds, setSelectedBookIds] = useState([]);
+  const [deletingBooks, setDeletingBooks] = useState(false);
 
   // Modal Cadastro / Edição de Livro
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
@@ -94,6 +96,7 @@ export default function Biblioteca() {
   const [newExemplarCode, setNewExemplarCode] = useState('');
   const [addingExemplar, setAddingExemplar] = useState(false);
   const [selectedExemplarIds, setSelectedExemplarIds] = useState([]);
+  const [deletingExemplares, setDeletingExemplares] = useState(false);
 
   // ── ESTADOS SPRINT BIB-9 & BIB-10: CADASTRO EM LOTE DE EXEMPLARES E IMPRESSÃO ──
   const [exemplarRegisterMode, setExemplarRegisterMode] = useState('lote'); // 'lote' | 'single'
@@ -193,6 +196,7 @@ export default function Biblioteca() {
 
         setBooks(formattedBooks);
         setTotalCount(count || 0);
+        setSelectedBookIds([]);
       }
     } catch (err) {
       console.error('Erro ao buscar livros:', err);
@@ -339,38 +343,163 @@ export default function Biblioteca() {
     }
   };
 
+  const toggleSelectBook = (id) => {
+    setSelectedBookIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllBooks = () => {
+    if (selectedBookIds.length === books.length && books.length > 0) {
+      setSelectedBookIds([]);
+    } else {
+      setSelectedBookIds(books.map(b => b.id));
+    }
+  };
+
   const handleDeleteBook = async (book) => {
     try {
-      const { count: exemplaresCount, error: expErr } = await supabase
+      // 1. Verificar se a obra possui exemplares atualmente emprestados
+      const { count: activeLoansCount, error: activeErr } = await supabase
+        .from('exemplares_livros')
+        .select('id', { count: 'exact', head: true })
+        .eq('livro_id', book.id)
+        .eq('status', 'emprestado');
+
+      if (activeErr) throw activeErr;
+
+      if (activeLoansCount && activeLoansCount > 0) {
+        showToast(
+          `Não é possível excluir "${book.titulo}" pois ela possui ${activeLoansCount} exemplar(es) atualmente emprestado(s). Devolva os exemplares primeiro.`,
+          'warning'
+        );
+        return;
+      }
+
+      // 2. Contar exemplares físicos cadastrados para confirmação clara
+      const { count: totalExemplares, error: expErr } = await supabase
         .from('exemplares_livros')
         .select('id', { count: 'exact', head: true })
         .eq('livro_id', book.id);
 
       if (expErr) throw expErr;
 
-      if (exemplaresCount && exemplaresCount > 0) {
-        showToast(
-          `Não é possível excluir "${book.titulo}" pois ele possui ${exemplaresCount} exemplar(es) físico(s) cadastrado(s). Remova os exemplares primeiro.`,
-          'warning'
-        );
-        return;
+      let confirmMsg = `Confirma a exclusão da obra "${book.titulo}" do acervo?`;
+      if (totalExemplares && totalExemplares > 0) {
+        confirmMsg = `Confirma a exclusão da obra "${book.titulo}" e seus ${totalExemplares} exemplar(es) físico(s)? Esta ação é irreversível.`;
       }
 
-      if (!window.confirm(`Confirma a exclusão da obra "${book.titulo}" do acervo?`)) return;
+      if (!window.confirm(confirmMsg)) return;
 
-      const { error } = await supabase
+      // 3. Buscar os IDs dos exemplares para remover histórico de empréstimos (se houver)
+      const { data: exemplaresData } = await supabase
+        .from('exemplares_livros')
+        .select('id')
+        .eq('livro_id', book.id);
+
+      if (exemplaresData && exemplaresData.length > 0) {
+        const expIds = exemplaresData.map(e => e.id);
+        // Excluir registros de empréstimos devolvidos/antigos desses exemplares
+        await supabase
+          .from('emprestimos_livros')
+          .delete()
+          .in('exemplar_id', expIds);
+
+        // Excluir exemplares
+        const { error: delExpErr } = await supabase
+          .from('exemplares_livros')
+          .delete()
+          .eq('livro_id', book.id);
+
+        if (delExpErr) throw delExpErr;
+      }
+
+      // 4. Excluir a obra
+      const { error: delBookErr } = await supabase
         .from('livros')
         .delete()
         .eq('id', book.id);
 
-      if (error) throw error;
+      if (delBookErr) throw delBookErr;
 
-      showToast('Livro removido do acervo com sucesso!', 'success');
+      showToast(`Obra "${book.titulo}" excluída com sucesso!`, 'success');
+      setSelectedBookIds(prev => prev.filter(id => id !== book.id));
       fetchBooks();
       fetchShelves();
     } catch (err) {
       console.error('Erro ao excluir livro:', err);
       showToast('Erro ao excluir a obra.', 'error');
+    }
+  };
+
+  const handleDeleteBatchBooks = async () => {
+    if (selectedBookIds.length === 0) return;
+
+    setDeletingBooks(true);
+    try {
+      // 1. Verificar se algum dos livros selecionados possui exemplares emprestados
+      const { data: borrowedExemplares, error: checkErr } = await supabase
+        .from('exemplares_livros')
+        .select('id, codigo_exemplar, livros(titulo)')
+        .in('livro_id', selectedBookIds)
+        .eq('status', 'emprestado');
+
+      if (checkErr) throw checkErr;
+
+      if (borrowedExemplares && borrowedExemplares.length > 0) {
+        const borrowedTitles = [...new Set(borrowedExemplares.map(e => e.livros?.titulo).filter(Boolean))].join(', ');
+        showToast(
+          `Não é possível excluir o lote pois a(s) seguinte(s) obra(s) possui(em) exemplar(es) emprestado(s): ${borrowedTitles}. Registre a devolução antes de excluir.`,
+          'warning'
+        );
+        setDeletingBooks(false);
+        return;
+      }
+
+      const count = selectedBookIds.length;
+      if (!window.confirm(`Confirma a exclusão em lote de ${count} obra(s) selecionada(s) e todos os seus exemplares? Esta ação é irreversível.`)) {
+        setDeletingBooks(false);
+        return;
+      }
+
+      // 2. Buscar exemplares de todos os livros selecionados para limpar histórico
+      const { data: exemplaresData } = await supabase
+        .from('exemplares_livros')
+        .select('id')
+        .in('livro_id', selectedBookIds);
+
+      if (exemplaresData && exemplaresData.length > 0) {
+        const expIds = exemplaresData.map(e => e.id);
+        await supabase
+          .from('emprestimos_livros')
+          .delete()
+          .in('exemplar_id', expIds);
+
+        const { error: delExpErr } = await supabase
+          .from('exemplares_livros')
+          .delete()
+          .in('livro_id', selectedBookIds);
+
+        if (delExpErr) throw delExpErr;
+      }
+
+      // 3. Excluir as obras
+      const { error: delBooksErr } = await supabase
+        .from('livros')
+        .delete()
+        .in('id', selectedBookIds);
+
+      if (delBooksErr) throw delBooksErr;
+
+      showToast(`${count} obra(s) excluída(s) com sucesso!`, 'success');
+      setSelectedBookIds([]);
+      fetchBooks();
+      fetchShelves();
+    } catch (err) {
+      console.error('Erro na exclusão em lote de obras:', err);
+      showToast('Erro ao excluir as obras selecionadas.', 'error');
+    } finally {
+      setDeletingBooks(false);
     }
   };
 
@@ -593,6 +722,12 @@ export default function Biblioteca() {
     if (!window.confirm(`Confirma a remoção do exemplar ${exemplar.codigo_exemplar}?`)) return;
 
     try {
+      // Limpar histórico de empréstimos devolvidos/antigos deste exemplar
+      await supabase
+        .from('emprestimos_livros')
+        .delete()
+        .eq('exemplar_id', exemplar.id);
+
       const { error } = await supabase
         .from('exemplares_livros')
         .delete()
@@ -601,11 +736,59 @@ export default function Biblioteca() {
       if (error) throw error;
 
       showToast('Exemplar removido!', 'success');
+      setSelectedExemplarIds(prev => prev.filter(id => id !== exemplar.id));
       fetchExemplaresForBook(selectedBookForExemplares.id);
       fetchBooks();
     } catch (err) {
       console.error('Erro ao excluir exemplar:', err);
       showToast('Erro ao remover o exemplar.', 'error');
+    }
+  };
+
+  const handleDeleteBatchExemplares = async () => {
+    if (selectedExemplarIds.length === 0) return;
+
+    const selectedList = exemplares.filter(exp => selectedExemplarIds.includes(exp.id));
+    const borrowed = selectedList.filter(exp => exp.status === 'emprestado');
+
+    if (borrowed.length > 0) {
+      showToast(
+        `Não é possível excluir o lote pois o(s) seguinte(s) exemplar(es) está(ão) emprestado(s): ${borrowed.map(e => e.codigo_exemplar).join(', ')}.`,
+        'warning'
+      );
+      return;
+    }
+
+    const count = selectedExemplarIds.length;
+    if (!window.confirm(`Confirma a exclusão em lote de ${count} exemplar(es) selecionado(s)? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    setDeletingExemplares(true);
+    try {
+      // Limpar histórico de empréstimos dos exemplares selecionados
+      await supabase
+        .from('emprestimos_livros')
+        .delete()
+        .in('exemplar_id', selectedExemplarIds);
+
+      // Excluir exemplares
+      const { error } = await supabase
+        .from('exemplares_livros')
+        .delete()
+        .in('id', selectedExemplarIds);
+
+      if (error) throw error;
+
+      showToast(`${count} exemplar(es) removido(s) com sucesso!`, 'success');
+      setSelectedExemplarIds([]);
+      fetchExemplaresForBook(selectedBookForExemplares.id);
+      fetchBooks();
+    } catch (err) {
+      console.error('Erro ao excluir lote de exemplares:', err);
+      showToast('Erro ao remover exemplares selecionados.', 'error');
+    } finally {
+      setDeletingExemplares(false);
     }
   };
 
@@ -882,6 +1065,32 @@ export default function Biblioteca() {
             </select>
           </div>
 
+          {/* Barra de Ações em Lote de Obras */}
+          {selectedBookIds.length > 0 && (
+            <div className="batch-actions-bar">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
+                <CheckCircle size={18} color="var(--color-primary)" />
+                <span><strong>{selectedBookIds.length}</strong> de {books.length} obra(s) selecionada(s) nesta página</span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <button 
+                  className="btn-danger-action"
+                  onClick={handleDeleteBatchBooks}
+                  disabled={deletingBooks}
+                >
+                  <Trash2 size={16} /> {deletingBooks ? 'Excluindo...' : `Excluir Selecionadas (${selectedBookIds.length})`}
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setSelectedBookIds([])}
+                  style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+                >
+                  Limpar Seleção
+                </button>
+              </div>
+            </div>
+          )}
+
           {loadingBooks ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
               <RefreshCw size={28} className="spin-animation" style={{ marginBottom: '0.5rem', color: 'var(--color-primary)' }} />
@@ -909,6 +1118,15 @@ export default function Biblioteca() {
                 <table className="biblioteca-table">
                   <thead>
                     <tr>
+                      <th style={{ width: '40px', textAlign: 'center' }}>
+                        <input 
+                          type="checkbox"
+                          checked={books.length > 0 && selectedBookIds.length === books.length}
+                          onChange={toggleSelectAllBooks}
+                          title="Selecionar todas as obras desta página"
+                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                        />
+                      </th>
                       <th>Livro / Título</th>
                       <th>Autor(a)</th>
                       <th>Prateleira</th>
@@ -918,55 +1136,66 @@ export default function Biblioteca() {
                     </tr>
                   </thead>
                   <tbody>
-                    {books.map(book => (
-                      <tr key={book.id}>
-                        <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                          {book.titulo}
-                        </td>
-                        <td>{book.autor}</td>
-                        <td>
-                          <span className="shelf-badge">
-                            <Tag size={12} /> {book.prateleira}
-                          </span>
-                        </td>
-                        <td style={{ fontWeight: 600 }}>
-                          {book.totalExemplares} unidade(s)
-                        </td>
-                        <td>
-                          <span style={{ 
-                            fontWeight: 700, 
-                            color: book.disponiveisCount > 0 ? 'var(--color-success)' : 'var(--color-danger)' 
-                          }}>
-                            {book.disponiveisCount} disponível(eis)
-                          </span>
-                        </td>
-                        <td>
-                          <div className="action-buttons" style={{ justifyContent: 'flex-end' }}>
-                            <button 
-                              className="btn-action-icon"
-                              onClick={() => openExemplaresModal(book)}
-                              title="Gerenciar Exemplares & QR Codes"
-                            >
-                              <Layers size={16} />
-                            </button>
-                            <button 
-                              className="btn-action-icon"
-                              onClick={() => openEditBookModal(book)}
-                              title="Editar Dados Bibliográficos"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button 
-                              className="btn-action-icon danger"
-                              onClick={() => handleDeleteBook(book)}
-                              title="Excluir Obra"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {books.map(book => {
+                      const isSelected = selectedBookIds.includes(book.id);
+                      return (
+                        <tr key={book.id} className={isSelected ? 'row-selected' : ''}>
+                          <td style={{ textAlign: 'center' }}>
+                            <input 
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelectBook(book.id)}
+                              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                            />
+                          </td>
+                          <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                            {book.titulo}
+                          </td>
+                          <td>{book.autor}</td>
+                          <td>
+                            <span className="shelf-badge">
+                              <Tag size={12} /> {book.prateleira}
+                            </span>
+                          </td>
+                          <td style={{ fontWeight: 600 }}>
+                            {book.totalExemplares} unidade(s)
+                          </td>
+                          <td>
+                            <span style={{ 
+                              fontWeight: 700, 
+                              color: book.disponiveisCount > 0 ? 'var(--color-success)' : 'var(--color-danger)' 
+                            }}>
+                              {book.disponiveisCount} disponível(eis)
+                            </span>
+                          </td>
+                          <td>
+                            <div className="action-buttons" style={{ justifyContent: 'flex-end' }}>
+                              <button 
+                                className="btn-action-icon"
+                                onClick={() => openExemplaresModal(book)}
+                                title="Gerenciar Exemplares & QR Codes"
+                              >
+                                <Layers size={16} />
+                              </button>
+                              <button 
+                                className="btn-action-icon"
+                                onClick={() => openEditBookModal(book)}
+                                title="Editar Dados Bibliográficos"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button 
+                                className="btn-action-icon danger"
+                                onClick={() => handleDeleteBook(book)}
+                                title="Excluir Obra"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1402,7 +1631,9 @@ export default function Biblioteca() {
                   background: 'var(--bg-secondary)', 
                   borderRadius: 'var(--radius-md)',
                   marginBottom: '1rem',
-                  border: '1px solid var(--border-light)'
+                  border: '1px solid var(--border-light)',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem'
                 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>
                     <input 
@@ -1413,14 +1644,27 @@ export default function Biblioteca() {
                     Selecionar Todos ({selectedExemplarIds.length}/{exemplares.length})
                   </label>
 
-                  <button 
-                    className="btn-secondary" 
-                    onClick={handleOpenBatchPrint}
-                    disabled={selectedExemplarIds.length === 0}
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.82rem' }}
-                  >
-                    <Printer size={14} /> Imprimir Selecionados ({selectedExemplarIds.length})
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button 
+                      type="button"
+                      className="btn-danger-action-sm"
+                      onClick={handleDeleteBatchExemplares}
+                      disabled={selectedExemplarIds.length === 0 || deletingExemplares}
+                      title="Excluir exemplares selecionados em lote"
+                    >
+                      <Trash2 size={14} /> {deletingExemplares ? 'Excluindo...' : `Excluir Selecionados (${selectedExemplarIds.length})`}
+                    </button>
+
+                    <button 
+                      type="button"
+                      className="btn-secondary" 
+                      onClick={handleOpenBatchPrint}
+                      disabled={selectedExemplarIds.length === 0}
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.82rem' }}
+                    >
+                      <Printer size={14} /> Imprimir Selecionados ({selectedExemplarIds.length})
+                    </button>
+                  </div>
                 </div>
               )}
 
