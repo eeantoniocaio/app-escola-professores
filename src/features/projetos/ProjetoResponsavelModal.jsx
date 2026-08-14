@@ -8,25 +8,56 @@ export default function ProjetoResponsavelModal({ isOpen, onClose, onSuccess, pr
   const { userRole } = useAuth();
   const { showToast } = useToast();
 
-  const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState('professor');
+  const [nome, setNome] = useState('');
   const [funcao, setFuncao] = useState('');
 
+  const [professores, setProfessores] = useState([]);
+  const [loadingProfessores, setLoadingProfessores] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (isOpen) {
+      fetchProfessores();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
     if (respToEdit) {
-      setNome(respToEdit.nome || '');
       setTipo(respToEdit.tipo || 'professor');
+      setNome(respToEdit.nome || '');
       setFuncao(respToEdit.funcao || '');
     } else {
-      setNome('');
       setTipo('professor');
+      setNome('');
       setFuncao('');
     }
   }, [respToEdit, isOpen]);
 
+  const fetchProfessores = async () => {
+    setLoadingProfessores(true);
+    try {
+      const { data, error } = await supabase
+        .from('perfis')
+        .select('id, nome, papel')
+        .eq('papel', 'professor')
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+      setProfessores(data || []);
+    } catch (err) {
+      console.error('Erro ao carregar lista de professores:', err);
+    } finally {
+      setLoadingProfessores(false);
+    }
+  };
+
   if (!isOpen) return null;
+
+  const handleTipoChange = (newTipo) => {
+    setTipo(newTipo);
+    // Se mudar para professor e não tiver nome selecionado, não forçamos um valor inexistente
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,6 +115,8 @@ export default function ProjetoResponsavelModal({ isOpen, onClose, onSuccess, pr
     }
   };
 
+  const isCustomNameInProfs = nome && professores.some(p => p.nome === nome);
+
   return (
     <div className="modal-overlay" onClick={onClose} style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -105,30 +138,14 @@ export default function ProjetoResponsavelModal({ isOpen, onClose, onSuccess, pr
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-              Nome do Responsável *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Ex: Profª Maria Silva"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              style={{
-                width: '100%', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9375rem'
-              }}
-            />
-          </div>
-
+          {/* 1º CAMPO: Tipo */}
           <div>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
               Tipo *
             </label>
             <select
               value={tipo}
-              onChange={(e) => setTipo(e.target.value)}
+              onChange={(e) => handleTipoChange(e.target.value)}
               style={{
                 width: '100%', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-sm)',
                 border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9375rem'
@@ -140,6 +157,50 @@ export default function ProjetoResponsavelModal({ isOpen, onClose, onSuccess, pr
             </select>
           </div>
 
+          {/* 2º CAMPO: Nome do Responsável */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+              Nome do Responsável *
+            </label>
+            {tipo === 'professor' ? (
+              <select
+                required
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                disabled={loadingProfessores}
+                style={{
+                  width: '100%', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9375rem'
+                }}
+              >
+                <option value="">
+                  {loadingProfessores ? 'Carregando professores...' : 'Selecione um(a) professor(a)...'}
+                </option>
+                {professores.map((prof) => (
+                  <option key={prof.id} value={prof.nome}>
+                    {prof.nome}
+                  </option>
+                ))}
+                {nome && !isCustomNameInProfs && (
+                  <option value={nome}>{nome}</option>
+                )}
+              </select>
+            ) : (
+              <input
+                type="text"
+                required
+                placeholder="Ex: Maria Silva"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                style={{
+                  width: '100%', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9375rem'
+                }}
+              />
+            )}
+          </div>
+
+          {/* 3º CAMPO: Função no Projeto */}
           <div>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
               Função no Projeto (Opcional)
