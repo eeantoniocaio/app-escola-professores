@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench, CheckSquare, Library, UserCheck, ClipboardList } from 'lucide-react';
+import { PlusCircle, Calendar, BookOpen, BarChart2, ShieldAlert, Users, AlertTriangle, PenTool, Star, GraduationCap, FolderOpen, Wrench, CheckSquare, Library, UserCheck, ClipboardList, FolderKanban } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 
@@ -79,6 +79,11 @@ export default function Home() {
             <span>Acervo</span>
           </button>
         )}
+
+        <button className="dashboard-action-card" onClick={() => navigate('/projetos')}>
+          <FolderKanban />
+          <span>Projetos da Escola</span>
+        </button>
 
         <button className="dashboard-action-card" onClick={() => navigate('/solicitacoes-materiais')}>
           <ClipboardList />

@@ -1,0 +1,284 @@
+/* ProjetoDetalhe.css - Módulo Projetos da Escola */
+
+.projetos-detalhe-container {
+  padding: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.projetos-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: var(--transition-smooth);
+}
+
+.projetos-back-btn:hover {
+  background-color: var(--bg-secondary);
+  color: var(--color-primary);
+}
+
+.projetos-detalhe-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 2rem;
+}
+
+.projetos-detalhe-banner {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  background-color: var(--bg-secondary);
+}
+
+.projetos-detalhe-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--bg-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.projetos-detalhe-header-info h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+.projetos-admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.projetos-btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.875rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.projetos-btn-action:hover {
+  background-color: var(--bg-secondary);
+}
+
+.projetos-btn-action.primary {
+  background-color: var(--color-primary);
+  color: #FFF;
+  border-color: var(--color-primary);
+}
+
+.projetos-btn-action.primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.projetos-btn-action.warning {
+  background-color: #FFFBEB;
+  color: #D97706;
+  border-color: #FCD34D;
+}
+
+.projetos-btn-action.danger {
+  background-color: #FEF2F2;
+  color: #DC2626;
+  border-color: #FCA5A5;
+}
+
+.projetos-detalhe-section {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--bg-secondary);
+}
+
+.projetos-detalhe-section:last-child {
+  border-bottom: none;
+}
+
+.projetos-detalhe-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.projetos-detalhe-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 0;
+}
+
+.projetos-detalhe-section-title svg {
+  color: var(--color-primary);
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.projetos-text-block {
+  color: var(--text-main);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.projetos-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.projetos-info-card {
+  background-color: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  position: relative;
+}
+
+.projetos-info-card-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.projetos-icon-btn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.projetos-icon-btn:hover {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+}
+
+.projetos-icon-btn.danger:hover {
+  color: var(--color-danger);
+  background-color: var(--color-danger-bg);
+}
+
+.projetos-info-card-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.projetos-info-card-value {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+/* Tabela de Alunos e Responsáveis */
+.projetos-table-wrapper {
+  overflow-x: auto;
+}
+
+.projetos-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.projetos-table th {
+  background-color: var(--bg-secondary);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.projetos-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--bg-secondary);
+  color: var(--text-main);
+}
+
+.projetos-table tr:last-child td {
+  border-bottom: none;
+}
+
+.projetos-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.projetos-type-badge.professor {
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.projetos-type-badge.funcionario {
+  background-color: #F0FDF4;
+  color: #15803D;
+}
+
+.projetos-type-badge.voluntario {
+  background-color: #FEF3C7;
+  color: #B45309;
+}
+
+.projetos-empty-text {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .projetos-detalhe-container {
+    padding: 1rem;
+  }
+  .projetos-detalhe-header {
+    flex-direction: column;
+  }
+  .projetos-detalhe-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -29,6 +29,8 @@ const ChamadaLayout = React.lazy(() => import('../pages/Chamada/ChamadaLayout'))
 const ChamadaHome = React.lazy(() => import('../pages/Chamada/ChamadaHome'));
 const ChamadaClasse = React.lazy(() => import('../pages/Chamada/ChamadaClasse'));
 const BibliotecaConsulta = React.lazy(() => import('../pages/BibliotecaConsulta/BibliotecaConsulta'));
+const Projetos = React.lazy(() => import('../features/projetos/Projetos'));
+const ProjetoDetalhe = React.lazy(() => import('../features/projetos/ProjetoDetalhe'));
 
 function AppRoutes() {
   const { session, authLoading, isMaster, userRole } = useAuth();
@@ -79,6 +81,8 @@ function AppRoutes() {
             <Route path="perfil-turma" element={(userRole === 'gestao' || userRole === 'professor') ? <PerfilTurma /> : <Navigate to={redirectPath} replace />} />
             <Route path="relatorios" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente' || userRole === 'biblioteca') ? <Navigate to={redirectPath} replace /> : <Relatorios />} />
             <Route path="boas-praticas" element={(userRole === 'secretaria' || userRole === 'tecnico' || userRole === 'agente' || userRole === 'biblioteca') ? <Navigate to={redirectPath} replace /> : <BoasPraticas />} />
+            <Route path="projetos" element={<Projetos />} />
+            <Route path="projetos/:id" element={<ProjetoDetalhe />} />
           </Route>
           <Route path="*" element={<Navigate to={redirectPath} replace />} />
 
