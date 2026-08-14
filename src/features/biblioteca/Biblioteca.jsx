@@ -15,6 +15,48 @@ import NovoEmprestimoModal from './NovoEmprestimoModal';
 import DevolucaoModal from './DevolucaoModal';
 import './Biblioteca.css';
 
+// ── AUXILIARES SPRINT BIB-9: GERADOR DE SEQUÊNCIA E SUGESTÃO ──
+function generateCodeSequence(initialCode, quantity) {
+  const clean = (initialCode || '').trim().toUpperCase();
+  const qty = parseInt(quantity, 10) || 0;
+  if (!clean || qty < 1) return [];
+
+  const match = clean.match(/^(.*?)(\d+)([^\d]*)$/);
+  let prefix = clean;
+  let startNum = 1;
+  let padLength = 6;
+  let suffix = '';
+
+  if (match) {
+    prefix = match[1];
+    startNum = parseInt(match[2], 10);
+    padLength = match[2].length;
+    suffix = match[3];
+  } else {
+    if (!prefix.endsWith('-') && !prefix.endsWith('_')) {
+      prefix += '-';
+    }
+  }
+
+  const result = [];
+  for (let i = 0; i < qty; i++) {
+    const currentNum = startNum + i;
+    const numStr = String(currentNum).padStart(padLength, '0');
+    result.push(`${prefix}${numStr}${suffix}`);
+  }
+  return result;
+}
+
+function suggestNextCode(existingList) {
+  if (!existingList || existingList.length === 0) {
+    return 'BIB-000001';
+  }
+  const lastCode = existingList[existingList.length - 1]?.codigo_exemplar;
+  if (!lastCode) return 'BIB-000001';
+  const seq = generateCodeSequence(lastCode, 2);
+  return seq.length > 1 ? seq[1] : 'BIB-000001';
+}
+
 export default function Biblioteca() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
@@ -52,6 +94,14 @@ export default function Biblioteca() {
   const [newExemplarCode, setNewExemplarCode] = useState('');
   const [addingExemplar, setAddingExemplar] = useState(false);
   const [selectedExemplarIds, setSelectedExemplarIds] = useState([]);
+
+  // ── ESTADOS SPRINT BIB-9: CADASTRO EM LOTE DE EXEMPLARES ──
+  const [exemplarRegisterMode, setExemplarRegisterMode] = useState('lote'); // 'lote' | 'single'
+  const [batchQuantity, setBatchQuantity] = useState(5);
+  const [batchInitialCode, setBatchInitialCode] = useState('');
+  const [batchPreviewItems, setBatchPreviewItems] = useState([]);
+  const [checkingBatch, setCheckingBatch] = useState(false);
+  const [addingBatchExemplares, setAddingBatchExemplares] = useState(false);
 
   // Modal Scanner Câmera (Sprint 3B)
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -334,7 +384,10 @@ export default function Biblioteca() {
         .order('codigo_exemplar', { ascending: true });
 
       if (error) throw error;
-      if (data) setExemplares(data);
+      if (data) {
+        setExemplares(data);
+        setBatchInitialCode(suggestNextCode(data));
+      }
     } catch (err) {
       console.error('Erro ao carregar exemplares:', err);
       showToast('Erro ao carregar os exemplares.', 'error');
@@ -347,6 +400,105 @@ export default function Biblioteca() {
     setSelectedBookForExemplares(book);
     setNewExemplarCode('');
     fetchExemplaresForBook(book.id);
+  };
+
+  // ── SPRINT BIB-9: PRÉVIA E CHECAGEM DE DUPLICIDADES DO LOTE ──
+  useEffect(() => {
+    if (!selectedBookForExemplares || exemplarRegisterMode !== 'lote') return;
+
+    const sequence = generateCodeSequence(batchInitialCode, batchQuantity);
+    if (sequence.length === 0) {
+      setBatchPreviewItems([]);
+      return;
+    }
+
+    let isMounted = true;
+    setCheckingBatch(true);
+
+    const checkDuplicates = async () => {
+      try {
+        const { data: existingRecords, error } = await supabase
+          .from('exemplares_livros')
+          .select('codigo_exemplar')
+          .in('codigo_exemplar', sequence);
+
+        if (error) throw error;
+
+        const existingSet = new Set((existingRecords || []).map(r => r.codigo_exemplar?.toUpperCase()));
+        const seenInBatch = new Set();
+
+        const preview = sequence.map((code) => {
+          const upperCode = code.toUpperCase();
+          const isDbDuplicate = existingSet.has(upperCode);
+          const isBatchDuplicate = seenInBatch.has(upperCode);
+          seenInBatch.add(upperCode);
+
+          return {
+            code,
+            exists: isDbDuplicate || isBatchDuplicate,
+            reason: isDbDuplicate ? 'Já cadastrado no acervo' : (isBatchDuplicate ? 'Duplicado no lote' : null)
+          };
+        });
+
+        if (isMounted) {
+          setBatchPreviewItems(preview);
+        }
+      } catch (err) {
+        console.error('Erro ao verificar duplicidades do lote:', err);
+      } finally {
+        if (isMounted) setCheckingBatch(false);
+      }
+    };
+
+    const timer = setTimeout(checkDuplicates, 250);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [batchInitialCode, batchQuantity, selectedBookForExemplares, exemplarRegisterMode]);
+
+  const handleAddBatchExemplares = async (e) => {
+    e.preventDefault();
+    if (batchPreviewItems.length === 0) {
+      showToast('Nenhum exemplar válido para criação.', 'warning');
+      return;
+    }
+
+    const hasErrors = batchPreviewItems.some(item => item.exists);
+    if (hasErrors) {
+      showToast('Ajuste o código inicial ou a quantidade para remover os códigos duplicados.', 'error');
+      return;
+    }
+
+    setAddingBatchExemplares(true);
+    try {
+      const recordsToInsert = batchPreviewItems.map(item => ({
+        livro_id: selectedBookForExemplares.id,
+        codigo_exemplar: item.code,
+        status: 'disponivel'
+      }));
+
+      const { data: insertedData, error: insertErr } = await supabase
+        .from('exemplares_livros')
+        .insert(recordsToInsert)
+        .select('id');
+
+      if (insertErr) throw insertErr;
+
+      showToast(`Sucesso! ${recordsToInsert.length} exemplares criados em lote.`, 'success');
+
+      if (insertedData && insertedData.length > 0) {
+        setSelectedExemplarIds(insertedData.map(d => d.id));
+      }
+
+      fetchExemplaresForBook(selectedBookForExemplares.id);
+      fetchBooks();
+    } catch (err) {
+      console.error('Erro ao adicionar lote de exemplares:', err);
+      showToast('Erro ao cadastrar exemplares em lote.', 'error');
+    } finally {
+      setAddingBatchExemplares(false);
+    }
   };
 
   const handleAddExemplar = async (e) => {
@@ -1023,31 +1175,139 @@ export default function Biblioteca() {
             </div>
 
             <div className="modal-body">
-              <form onSubmit={handleAddExemplar} style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', alignItems: 'flex-end' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                    Código do Exemplar (Etiqueta / QR Code) <span style={{ color: 'var(--color-danger)' }}>*</span>
-                  </label>
-                  <input 
-                    type="text"
-                    value={newExemplarCode}
-                    onChange={e => setNewExemplarCode(e.target.value)}
-                    placeholder="Ex: BIB-000001"
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--border-light)',
-                      fontSize: '0.9rem',
-                      textTransform: 'uppercase'
-                    }}
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn-primary" disabled={addingExemplar} style={{ padding: '0.65rem 1rem' }}>
-                  <Plus size={16} /> {addingExemplar ? 'Adicionando...' : 'Adicionar'}
+              {/* Seletor de Modo de Cadastro */}
+              <div className="exemplar-mode-tabs">
+                <button
+                  type="button"
+                  className={`exemplar-mode-btn ${exemplarRegisterMode === 'lote' ? 'active' : ''}`}
+                  onClick={() => setExemplarRegisterMode('lote')}
+                >
+                  <Layers size={16} /> Cadastro em Lote
                 </button>
-              </form>
+                <button
+                  type="button"
+                  className={`exemplar-mode-btn ${exemplarRegisterMode === 'single' ? 'active' : ''}`}
+                  onClick={() => setExemplarRegisterMode('single')}
+                >
+                  <Plus size={16} /> Cadastro Individual
+                </button>
+              </div>
+
+              {exemplarRegisterMode === 'single' ? (
+                <form onSubmit={handleAddExemplar} style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', alignItems: 'flex-end' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                      Código do Exemplar (Etiqueta / QR Code) <span style={{ color: 'var(--color-danger)' }}>*</span>
+                    </label>
+                    <input 
+                      type="text"
+                      value={newExemplarCode}
+                      onChange={e => setNewExemplarCode(e.target.value)}
+                      placeholder="Ex: BIB-000001"
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border-light)',
+                        fontSize: '0.9rem',
+                        textTransform: 'uppercase'
+                      }}
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="btn-primary" disabled={addingExemplar} style={{ padding: '0.65rem 1rem' }}>
+                    <Plus size={16} /> {addingExemplar ? 'Adicionando...' : 'Adicionar'}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleAddBatchExemplares} style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                        Código Inicial da Sequência <span style={{ color: 'var(--color-danger)' }}>*</span>
+                      </label>
+                      <input 
+                        type="text"
+                        value={batchInitialCode}
+                        onChange={e => setBatchInitialCode(e.target.value.toUpperCase())}
+                        placeholder="Ex: BIB-000001"
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 0.85rem',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid var(--border-light)',
+                          fontSize: '0.9rem',
+                          textTransform: 'uppercase'
+                        }}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                        Quantidade <span style={{ color: 'var(--color-danger)' }}>*</span>
+                      </label>
+                      <input 
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={batchQuantity}
+                        onChange={e => setBatchQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 0.85rem',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid var(--border-light)',
+                          fontSize: '0.9rem'
+                        }}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Painel de Prévia da Sequência */}
+                  <div className="batch-preview-container">
+                    <div className="batch-preview-header">
+                      <span>Prévia dos Códigos a Criar ({batchPreviewItems.length})</span>
+                      {checkingBatch && (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <RefreshCw size={12} className="spin-animation" /> Verificando...
+                        </span>
+                      )}
+                    </div>
+
+                    {batchPreviewItems.length > 0 ? (
+                      <div className="batch-preview-list">
+                        {batchPreviewItems.map((item, idx) => (
+                          <div key={idx} className={`batch-preview-chip ${item.exists ? 'invalid' : 'valid'}`} title={item.reason || 'Código disponível'}>
+                            {item.exists ? <AlertCircle size={14} color="#dc2626" /> : <CheckCircle size={14} color="#16a34a" />}
+                            {item.code}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>
+                        Informe um código inicial e a quantidade para visualizar a prévia.
+                      </div>
+                    )}
+
+                    {batchPreviewItems.some(item => item.exists) && (
+                      <div className="batch-warning-banner">
+                        <AlertTriangle size={16} />
+                        <span>Alguns códigos da prévia já existem no acervo ou estão duplicados. Altere o código inicial ou quantidade.</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="btn-primary" 
+                    disabled={addingBatchExemplares || checkingBatch || batchPreviewItems.length === 0 || batchPreviewItems.some(item => item.exists)} 
+                    style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
+                  >
+                    <Layers size={18} /> {addingBatchExemplares ? 'Criando Exemplares em Lote...' : `Criar ${batchPreviewItems.length} Exemplares em Lote`}
+                  </button>
+                </form>
+              )}
 
               {exemplares.length > 0 && (
                 <div style={{ 
