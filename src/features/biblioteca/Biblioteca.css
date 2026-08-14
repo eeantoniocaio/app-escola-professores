@@ -572,9 +572,27 @@
     font-size: 8pt !important;
     color: #444444 !important;
   }
+
+  .qr-school-header-print {
+    font-size: 7.5pt !important;
+    font-weight: bold !important;
+    color: #333333 !important;
+    text-transform: uppercase !important;
+    margin-bottom: 3px !important;
+    letter-spacing: 0.04em !important;
+  }
 }
 
-/* ── SPRINT BIB-9: CADASTRO EM LOTE DE EXEMPLARES ── */
+/* ── SPRINT BIB-9 & BIB-10: CADASTRO E IMPRESSÃO DE EXEMPLARES EM LOTE ── */
+.qr-school-header {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.4rem;
+}
+
 .exemplar-mode-tabs {
   display: flex;
   background: var(--bg-secondary);
@@ -671,5 +689,43 @@
   font-size: 0.82rem;
   margin-top: 0.75rem;
 }
+
+/* ── SPRINT BIB-10: TELA DE SUCESSO DO LOTE ── */
+.batch-success-screen {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  background: var(--color-success-bg);
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.25rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.batch-success-screen h3 {
+  font-size: 1.25rem;
+  color: #166534;
+  margin: 0.75rem 0 0.25rem;
+  font-weight: 700;
+}
+
+.batch-success-range {
+  font-size: 0.9rem;
+  color: #15803d;
+  margin-bottom: 1.5rem;
+}
+
+.batch-success-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.batch-success-actions button {
+  width: 100%;
+}
+
 
 

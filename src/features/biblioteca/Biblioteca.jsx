@@ -95,13 +95,14 @@ export default function Biblioteca() {
   const [addingExemplar, setAddingExemplar] = useState(false);
   const [selectedExemplarIds, setSelectedExemplarIds] = useState([]);
 
-  // ── ESTADOS SPRINT BIB-9: CADASTRO EM LOTE DE EXEMPLARES ──
+  // ── ESTADOS SPRINT BIB-9 & BIB-10: CADASTRO EM LOTE DE EXEMPLARES E IMPRESSÃO ──
   const [exemplarRegisterMode, setExemplarRegisterMode] = useState('lote'); // 'lote' | 'single'
   const [batchQuantity, setBatchQuantity] = useState(5);
   const [batchInitialCode, setBatchInitialCode] = useState('');
   const [batchPreviewItems, setBatchPreviewItems] = useState([]);
   const [checkingBatch, setCheckingBatch] = useState(false);
   const [addingBatchExemplares, setAddingBatchExemplares] = useState(false);
+  const [batchSuccessData, setBatchSuccessData] = useState(null);
 
   // Modal Scanner Câmera (Sprint 3B)
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -399,6 +400,7 @@ export default function Biblioteca() {
   const openExemplaresModal = (book) => {
     setSelectedBookForExemplares(book);
     setNewExemplarCode('');
+    setBatchSuccessData(null);
     fetchExemplaresForBook(book.id);
   };
 
@@ -478,24 +480,37 @@ export default function Biblioteca() {
         status: 'disponivel'
       }));
 
+      // Inserção atômica no Supabase em lote
       const { data: insertedData, error: insertErr } = await supabase
         .from('exemplares_livros')
         .insert(recordsToInsert)
-        .select('id');
+        .select('id, codigo_exemplar, status');
 
       if (insertErr) throw insertErr;
 
-      showToast(`Sucesso! ${recordsToInsert.length} exemplares criados em lote.`, 'success');
+      showToast(`Sucesso! ${recordsToInsert.length} exemplar(es) criado(s) em lote.`, 'success');
 
+      // Seleção automática dos exemplares recém-criados
       if (insertedData && insertedData.length > 0) {
         setSelectedExemplarIds(insertedData.map(d => d.id));
       }
 
-      fetchExemplaresForBook(selectedBookForExemplares.id);
+      await fetchExemplaresForBook(selectedBookForExemplares.id);
       fetchBooks();
+
+      // Dados para a tela de confirmação de sucesso e impressão direta (Sprint BIB-10)
+      const startCode = batchPreviewItems[0].code;
+      const endCode = batchPreviewItems[batchPreviewItems.length - 1].code;
+
+      setBatchSuccessData({
+        count: recordsToInsert.length,
+        startCode,
+        endCode,
+        createdExemplars: insertedData || []
+      });
     } catch (err) {
       console.error('Erro ao adicionar lote de exemplares:', err);
-      showToast('Erro ao cadastrar exemplares em lote.', 'error');
+      showToast('Erro ao cadastrar exemplares em lote. A operação foi abortada e nenhum exemplar foi criado.', 'error');
     } finally {
       setAddingBatchExemplares(false);
     }
@@ -636,8 +651,13 @@ export default function Biblioteca() {
     try {
       const selectedExemplaresList = exemplares.filter(exp => selectedExemplarIds.includes(exp.id));
       
+      // Ordenação numérica natural estrita (Sprint BIB-10)
+      const sortedList = [...selectedExemplaresList].sort((a, b) => 
+        (a.codigo_exemplar || '').localeCompare(b.codigo_exemplar || '', undefined, { numeric: true, sensitivity: 'base' })
+      );
+
       const batchItems = await Promise.all(
-        selectedExemplaresList.map(async (exp) => {
+        sortedList.map(async (exp) => {
           const qrDataUrl = await QRCode.toDataURL(exp.codigo_exemplar, {
             width: 200,
             margin: 2,
@@ -655,6 +675,37 @@ export default function Biblioteca() {
     } catch (err) {
       console.error('Erro ao preparar lote de QR Codes:', err);
       showToast('Erro ao gerar lote para impressão.', 'error');
+    }
+  };
+
+  // Impressão imediata dos novos exemplares recém-criados em lote (Sprint BIB-10)
+  const handlePrintCreatedBatch = async (createdList) => {
+    if (!createdList || createdList.length === 0) return;
+    try {
+      const sortedList = [...createdList].sort((a, b) => 
+        (a.codigo_exemplar || '').localeCompare(b.codigo_exemplar || '', undefined, { numeric: true, sensitivity: 'base' })
+      );
+
+      const batchItems = await Promise.all(
+        sortedList.map(async (exp) => {
+          const qrDataUrl = await QRCode.toDataURL(exp.codigo_exemplar, {
+            width: 200,
+            margin: 2,
+            color: { dark: '#0f172a', light: '#ffffff' }
+          });
+          return {
+            exemplar: exp,
+            livro: selectedBookForExemplares,
+            qrDataUrl
+          };
+        })
+      );
+
+      setBatchSuccessData(null);
+      setBatchPrintModalData(batchItems);
+    } catch (err) {
+      console.error('Erro ao gerar impressão do lote recém-criado:', err);
+      showToast('Erro ao abrir etiquetas para impressão.', 'error');
     }
   };
 
@@ -1175,138 +1226,171 @@ export default function Biblioteca() {
             </div>
 
             <div className="modal-body">
-              {/* Seletor de Modo de Cadastro */}
-              <div className="exemplar-mode-tabs">
-                <button
-                  type="button"
-                  className={`exemplar-mode-btn ${exemplarRegisterMode === 'lote' ? 'active' : ''}`}
-                  onClick={() => setExemplarRegisterMode('lote')}
-                >
-                  <Layers size={16} /> Cadastro em Lote
-                </button>
-                <button
-                  type="button"
-                  className={`exemplar-mode-btn ${exemplarRegisterMode === 'single' ? 'active' : ''}`}
-                  onClick={() => setExemplarRegisterMode('single')}
-                >
-                  <Plus size={16} /> Cadastro Individual
-                </button>
-              </div>
+              {/* TELA DE CONFIRMAÇÃO DE SUCESSO E IMPRESSÃO IMEDIATA (Sprint BIB-10) */}
+              {batchSuccessData ? (
+                <div className="batch-success-screen">
+                  <CheckCircle size={48} color="var(--color-success)" style={{ margin: '0 auto' }} />
+                  <h3>{batchSuccessData.count} exemplar(es) cadastrado(s) com sucesso!</h3>
+                  <p className="batch-success-range">
+                    Sequência gerada: <strong>{batchSuccessData.startCode}</strong> {batchSuccessData.count > 1 ? `até ${batchSuccessData.endCode}` : ''}
+                  </p>
 
-              {exemplarRegisterMode === 'single' ? (
-                <form onSubmit={handleAddExemplar} style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', alignItems: 'flex-end' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                      Código do Exemplar (Etiqueta / QR Code) <span style={{ color: 'var(--color-danger)' }}>*</span>
-                    </label>
-                    <input 
-                      type="text"
-                      value={newExemplarCode}
-                      onChange={e => setNewExemplarCode(e.target.value)}
-                      placeholder="Ex: BIB-000001"
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--border-light)',
-                        fontSize: '0.9rem',
-                        textTransform: 'uppercase'
-                      }}
-                      required
-                    />
+                  <div className="batch-success-actions">
+                    <button 
+                      type="button"
+                      className="btn-primary" 
+                      style={{ padding: '0.75rem 1.25rem', fontSize: '0.95rem', justifyContent: 'center' }}
+                      onClick={() => handlePrintCreatedBatch(batchSuccessData.createdExemplars)}
+                    >
+                      <Printer size={18} /> Imprimir etiquetas QR ({batchSuccessData.count})
+                    </button>
+
+                    <button 
+                      type="button"
+                      className="btn-secondary" 
+                      style={{ justifyContent: 'center' }}
+                      onClick={() => setBatchSuccessData(null)}
+                    >
+                      Continuar sem imprimir
+                    </button>
                   </div>
-                  <button type="submit" className="btn-primary" disabled={addingExemplar} style={{ padding: '0.65rem 1rem' }}>
-                    <Plus size={16} /> {addingExemplar ? 'Adicionando...' : 'Adicionar'}
-                  </button>
-                </form>
+                </div>
               ) : (
-                <form onSubmit={handleAddBatchExemplares} style={{ marginBottom: '1.25rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                        Código Inicial da Sequência <span style={{ color: 'var(--color-danger)' }}>*</span>
-                      </label>
-                      <input 
-                        type="text"
-                        value={batchInitialCode}
-                        onChange={e => setBatchInitialCode(e.target.value.toUpperCase())}
-                        placeholder="Ex: BIB-000001"
-                        style={{
-                          width: '100%',
-                          padding: '0.65rem 0.85rem',
-                          borderRadius: 'var(--radius-md)',
-                          border: '1px solid var(--border-light)',
-                          fontSize: '0.9rem',
-                          textTransform: 'uppercase'
-                        }}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                        Quantidade <span style={{ color: 'var(--color-danger)' }}>*</span>
-                      </label>
-                      <input 
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={batchQuantity}
-                        onChange={e => setBatchQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                        style={{
-                          width: '100%',
-                          padding: '0.65rem 0.85rem',
-                          borderRadius: 'var(--radius-md)',
-                          border: '1px solid var(--border-light)',
-                          fontSize: '0.9rem'
-                        }}
-                        required
-                      />
-                    </div>
+                <>
+                  {/* Seletor de Modo de Cadastro */}
+                  <div className="exemplar-mode-tabs">
+                    <button
+                      type="button"
+                      className={`exemplar-mode-btn ${exemplarRegisterMode === 'lote' ? 'active' : ''}`}
+                      onClick={() => setExemplarRegisterMode('lote')}
+                    >
+                      <Layers size={16} /> Cadastro em Lote
+                    </button>
+                    <button
+                      type="button"
+                      className={`exemplar-mode-btn ${exemplarRegisterMode === 'single' ? 'active' : ''}`}
+                      onClick={() => setExemplarRegisterMode('single')}
+                    >
+                      <Plus size={16} /> Cadastro Individual
+                    </button>
                   </div>
 
-                  {/* Painel de Prévia da Sequência */}
-                  <div className="batch-preview-container">
-                    <div className="batch-preview-header">
-                      <span>Prévia dos Códigos a Criar ({batchPreviewItems.length})</span>
-                      {checkingBatch && (
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <RefreshCw size={12} className="spin-animation" /> Verificando...
-                        </span>
-                      )}
-                    </div>
+                  {exemplarRegisterMode === 'single' ? (
+                    <form onSubmit={handleAddExemplar} style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', alignItems: 'flex-end' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                          Código do Exemplar (Etiqueta / QR Code) <span style={{ color: 'var(--color-danger)' }}>*</span>
+                        </label>
+                        <input 
+                          type="text"
+                          value={newExemplarCode}
+                          onChange={e => setNewExemplarCode(e.target.value)}
+                          placeholder="Ex: BIB-000001"
+                          style={{
+                            width: '100%',
+                            padding: '0.65rem 0.85rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border-light)',
+                            fontSize: '0.9rem',
+                            textTransform: 'uppercase'
+                          }}
+                          required
+                        />
+                      </div>
+                      <button type="submit" className="btn-primary" disabled={addingExemplar} style={{ padding: '0.65rem 1rem' }}>
+                        <Plus size={16} /> {addingExemplar ? 'Adicionando...' : 'Adicionar'}
+                      </button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleAddBatchExemplares} style={{ marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                        <div>
+                          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                            Código Inicial da Sequência <span style={{ color: 'var(--color-danger)' }}>*</span>
+                          </label>
+                          <input 
+                            type="text"
+                            value={batchInitialCode}
+                            onChange={e => setBatchInitialCode(e.target.value.toUpperCase())}
+                            placeholder="Ex: BIB-000001"
+                            style={{
+                              width: '100%',
+                              padding: '0.65rem 0.85rem',
+                              borderRadius: 'var(--radius-md)',
+                              border: '1px solid var(--border-light)',
+                              fontSize: '0.9rem',
+                              textTransform: 'uppercase'
+                            }}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                            Quantidade <span style={{ color: 'var(--color-danger)' }}>*</span>
+                          </label>
+                          <input 
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={batchQuantity}
+                            onChange={e => setBatchQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                            style={{
+                              width: '100%',
+                              padding: '0.65rem 0.85rem',
+                              borderRadius: 'var(--radius-md)',
+                              border: '1px solid var(--border-light)',
+                              fontSize: '0.9rem'
+                            }}
+                            required
+                          />
+                        </div>
+                      </div>
 
-                    {batchPreviewItems.length > 0 ? (
-                      <div className="batch-preview-list">
-                        {batchPreviewItems.map((item, idx) => (
-                          <div key={idx} className={`batch-preview-chip ${item.exists ? 'invalid' : 'valid'}`} title={item.reason || 'Código disponível'}>
-                            {item.exists ? <AlertCircle size={14} color="#dc2626" /> : <CheckCircle size={14} color="#16a34a" />}
-                            {item.code}
+                      {/* Painel de Prévia da Sequência */}
+                      <div className="batch-preview-container">
+                        <div className="batch-preview-header">
+                          <span>Prévia dos Códigos a Criar ({batchPreviewItems.length})</span>
+                          {checkingBatch && (
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <RefreshCw size={12} className="spin-animation" /> Verificando...
+                            </span>
+                          )}
+                        </div>
+
+                        {batchPreviewItems.length > 0 ? (
+                          <div className="batch-preview-list">
+                            {batchPreviewItems.map((item, idx) => (
+                              <div key={idx} className={`batch-preview-chip ${item.exists ? 'invalid' : 'valid'}`} title={item.reason || 'Código disponível'}>
+                                {item.exists ? <AlertCircle size={14} color="#dc2626" /> : <CheckCircle size={14} color="#16a34a" />}
+                                {item.code}
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>
-                        Informe um código inicial e a quantidade para visualizar a prévia.
-                      </div>
-                    )}
+                        ) : (
+                          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>
+                            Informe um código inicial e a quantidade para visualizar a prévia.
+                          </div>
+                        )}
 
-                    {batchPreviewItems.some(item => item.exists) && (
-                      <div className="batch-warning-banner">
-                        <AlertTriangle size={16} />
-                        <span>Alguns códigos da prévia já existem no acervo ou estão duplicados. Altere o código inicial ou quantidade.</span>
+                        {batchPreviewItems.some(item => item.exists) && (
+                          <div className="batch-warning-banner">
+                            <AlertTriangle size={16} />
+                            <span>Alguns códigos da prévia já existem no acervo ou estão duplicados. Altere o código inicial ou quantidade.</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
 
-                  <button 
-                    type="submit" 
-                    className="btn-primary" 
-                    disabled={addingBatchExemplares || checkingBatch || batchPreviewItems.length === 0 || batchPreviewItems.some(item => item.exists)} 
-                    style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
-                  >
-                    <Layers size={18} /> {addingBatchExemplares ? 'Criando Exemplares em Lote...' : `Criar ${batchPreviewItems.length} Exemplares em Lote`}
-                  </button>
-                </form>
+                      <button 
+                        type="submit" 
+                        className="btn-primary" 
+                        disabled={addingBatchExemplares || checkingBatch || batchPreviewItems.length === 0 || batchPreviewItems.some(item => item.exists)} 
+                        style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
+                      >
+                        <Layers size={18} /> {addingBatchExemplares ? 'Criando Exemplares em Lote...' : `Criar ${batchPreviewItems.length} Exemplares em Lote`}
+                      </button>
+                    </form>
+                  )}
+                </>
               )}
 
               {exemplares.length > 0 && (
@@ -1428,6 +1512,7 @@ export default function Biblioteca() {
 
             <div className="modal-body printable-area">
               <div className="qr-label-single">
+                <div className="qr-school-header">ESCOLA ESTADUAL ANTONIO CAIO</div>
                 <img src={singleQrModalData.qrDataUrl} alt={`QR ${singleQrModalData.exemplar.codigo_exemplar}`} />
                 <div className="qr-code-text">{singleQrModalData.exemplar.codigo_exemplar}</div>
                 <div className="qr-book-title">{singleQrModalData.livro.titulo}</div>
@@ -1469,10 +1554,11 @@ export default function Biblioteca() {
               <div className="qr-batch-grid qr-batch-grid-print">
                 {batchPrintModalData.map(item => (
                   <div key={item.exemplar.id} className="qr-label-card qr-label-card-print">
+                    <div className="qr-school-header qr-school-header-print">ESCOLA ESTADUAL ANTONIO CAIO</div>
                     <img src={item.qrDataUrl} alt={`QR ${item.exemplar.codigo_exemplar}`} />
                     <div className="qr-code-text qr-code-text-print">{item.exemplar.codigo_exemplar}</div>
                     <div className="qr-book-title qr-book-title-print">{item.livro.titulo}</div>
-                    <div className="qr-book-meta qr-book-meta-print">Prateleira {item.livro.prateleira}</div>
+                    <div className="qr-book-meta qr-book-meta-print">{item.livro.autor} • Prateleira {item.livro.prateleira}</div>
                   </div>
                 ))}
               </div>
