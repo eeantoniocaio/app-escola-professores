@@ -311,43 +311,47 @@ export default function ProjetoDetalhe() {
         </div>
 
         {/* 1. SEÇÃO INFORMAÇÕES DO PROJETO */}
-        <div className="projetos-detalhe-section">
-          <div className="projetos-detalhe-section-header">
-            <h2 className="projetos-detalhe-section-title">
-              <Info />
-              Sobre o Projeto
-            </h2>
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <strong style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-              DESCRIÇÃO
-            </strong>
-            <p className="projetos-text-block">
-              {projeto.descricao || 'Nenhuma descrição cadastrada.'}
-            </p>
-          </div>
-
-          {projeto.objetivo && (
-            <div style={{ marginBottom: '1rem' }}>
-              <strong style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-                <Target size={14} />
-                OBJETIVO
-              </strong>
-              <p className="projetos-text-block">{projeto.objetivo}</p>
+        {(projeto.descricao || projeto.objetivo || projeto.local) && (
+          <div className="projetos-detalhe-section">
+            <div className="projetos-detalhe-section-header">
+              <h2 className="projetos-detalhe-section-title">
+                <Info />
+                Sobre o Projeto
+              </h2>
             </div>
-          )}
 
-          {projeto.local && (
-            <div>
-              <strong style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-                <MapPin size={14} />
-                LOCAL PRINCIPAL
-              </strong>
-              <p className="projetos-text-block">{projeto.local}</p>
-            </div>
-          )}
-        </div>
+            {projeto.descricao && (
+              <div style={{ marginBottom: '1rem' }}>
+                <strong style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                  DESCRIÇÃO
+                </strong>
+                <p className="projetos-text-block">
+                  {projeto.descricao}
+                </p>
+              </div>
+            )}
+
+            {projeto.objetivo && (
+              <div style={{ marginBottom: '1rem' }}>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                  <Target size={14} />
+                  OBJETIVO
+                </strong>
+                <p className="projetos-text-block">{projeto.objetivo}</p>
+              </div>
+            )}
+
+            {projeto.local && (
+              <div>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                  <MapPin size={14} />
+                  LOCAL PRINCIPAL
+                </strong>
+                <p className="projetos-text-block">{projeto.local}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 2. SEÇÃO QUANDO ACONTECE (HORÁRIOS) */}
         <div className="projetos-detalhe-section">

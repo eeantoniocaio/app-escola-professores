@@ -9,9 +9,6 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
   const { showToast } = useToast();
 
   const [nome, setNome] = useState('');
-  const [descricao, setDescricao] = useState('');
-  const [objetivo, setObjetivo] = useState('');
-  const [local, setLocal] = useState('');
   const [capaUrl, setCapaUrl] = useState('');
   const [ativo, setAtivo] = useState(true);
 
@@ -22,16 +19,10 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
   useEffect(() => {
     if (projetoToEdit) {
       setNome(projetoToEdit.nome || '');
-      setDescricao(projetoToEdit.descricao || '');
-      setObjetivo(projetoToEdit.objetivo || '');
-      setLocal(projetoToEdit.local || '');
       setCapaUrl(projetoToEdit.capa_url || '');
       setAtivo(projetoToEdit.ativo !== false);
     } else {
       setNome('');
-      setDescricao('');
-      setObjetivo('');
-      setLocal('');
       setCapaUrl('');
       setAtivo(true);
     }
@@ -111,9 +102,6 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
     try {
       const payload = {
         nome: cleanNome,
-        descricao: descricao.trim() || null,
-        objetivo: objetivo.trim() || null,
-        local: local.trim() || null,
         capa_url: capaUrl.trim() || null,
         ativo: Boolean(ativo),
         updated_at: new Date().toISOString()
@@ -156,7 +144,7 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
       zIndex: 1000, padding: '1rem', animation: 'fadeIn 0.2s ease-out'
     }}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
-        background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', width: '100%', maxWidth: '580px',
+        background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', width: '100%', maxWidth: '500px',
         maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-light)',
         padding: '1.5rem'
       }}>
@@ -181,54 +169,6 @@ export default function ProjetoModal({ isOpen, onClose, onSuccess, projetoToEdit
               placeholder="Ex: Robótica Educacional"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              style={{
-                width: '100%', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9375rem'
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-              Descrição Resumida
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Breve resumo sobre o projeto..."
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              style={{
-                width: '100%', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9375rem'
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-              Objetivo
-            </label>
-            <textarea
-              rows={2}
-              placeholder="Objetivos pedagógicos ou sociais do projeto..."
-              value={objetivo}
-              onChange={(e) => setObjetivo(e.target.value)}
-              style={{
-                width: '100%', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9375rem'
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-              Local Principal
-            </label>
-            <input
-              type="text"
-              placeholder="Ex: Laboratório de Informática / Quadra Coberta"
-              value={local}
-              onChange={(e) => setLocal(e.target.value)}
               style={{
                 width: '100%', padding: '0.625rem 0.875rem', borderRadius: 'var(--radius-sm)',
                 border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9375rem'
