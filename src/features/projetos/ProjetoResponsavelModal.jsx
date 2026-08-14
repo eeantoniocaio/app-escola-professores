@@ -77,7 +77,8 @@ export default function ProjetoResponsavelModal({ isOpen, onClose, onSuccess, pr
       onClose();
     } catch (err) {
       console.error('Erro ao salvar responsável:', err);
-      showToast('Erro ao salvar responsável no banco de dados.', 'error');
+      const msg = err?.message || err?.error_description || 'Erro ao salvar responsável no banco de dados.';
+      showToast(`Erro ao salvar responsável: ${msg}`, 'error');
     } finally {
       setSubmitting(false);
     }

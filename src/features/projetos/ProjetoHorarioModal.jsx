@@ -81,7 +81,8 @@ export default function ProjetoHorarioModal({ isOpen, onClose, onSuccess, projet
       onClose();
     } catch (err) {
       console.error('Erro ao salvar horário:', err);
-      showToast('Erro ao salvar horário no banco de dados.', 'error');
+      const msg = err?.message || err?.error_description || 'Erro ao salvar horário no banco de dados.';
+      showToast(`Erro ao salvar horário: ${msg}`, 'error');
     } finally {
       setSubmitting(false);
     }
