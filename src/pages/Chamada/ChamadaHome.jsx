@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useChamadaContext } from './context/ChamadaContext';
 import { Users, ChevronRight, FileText } from 'lucide-react';
 import ReportModal from '../../components/chamada/ReportModal';
 
 export default function ChamadaHome() {
-    const { classes, loadingClasses } = useChamadaContext();
+    const { classes, loadingClasses, preloadAllAttendance } = useChamadaContext();
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+    // Trigger preloading when component mounts or classes change
+    useEffect(() => {
+        if (!loadingClasses && classes.length > 0) {
+            const today = new Date().toISOString().split('T')[0];
+            preloadAllAttendance(today);
+        }
+    }, [loadingClasses, classes, preloadAllAttendance]);
 
     if (loadingClasses) {
         return (

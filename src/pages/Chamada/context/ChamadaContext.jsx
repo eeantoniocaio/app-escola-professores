@@ -52,11 +52,20 @@ export const ChamadaProvider = ({ children }) => {
     }, [turmas]);
 
     // 2. Carrega a lista de alunos e presenças da planilha Google Sheets
-    const fetchAttendance = useCallback(async (className, date) => {
+    const fetchAttendance = useCallback(async (className, date, forceRemote = false) => {
         const key = `${className}_${date}`;
-        
-        // Se já temos os dados no estado local, não precisa buscar novamente
-        if (classAttendance[key]) return;
+
+        // Se já temos no estado, não faz nada
+        if (classAttendance[key] && !forceRemote) return;
+
+        // Tenta carregar do cache primeiro se não for forçado remotamente
+        if (!forceRemote) {
+            const cached = getCachedAttendance(className, date);
+            if (cached) {
+                setClassAttendance(prev => ({ ...prev, [key]: cached }));
+                // Se temos cache, não precisamos mostrar carregando intenso no UI, mas podemos tentar atualizar em background
+            }
+        }
 
         setLoadingAttendance(prev => ({ ...prev, [key]: true }));
         try {
@@ -66,6 +75,8 @@ export const ChamadaProvider = ({ children }) => {
                     ...prev,
                     [key]: data.students
                 }));
+                // Atualiza o cache local
+                cacheAttendance(className, date, data.students);
 
                 // Se a coluna de data ainda não existir na planilha OU se não houver nenhuma marcação (coluna vazia),
                 // inicializa em lote com "C" (Presente) para todos
@@ -81,8 +92,11 @@ export const ChamadaProvider = ({ children }) => {
                 }
             }
         } catch (error) {
-            console.error(`Erro ao carregar chamada de ${className} na data ${date}:`, error);
-            throw error; // Re-throw para que o componente trate a mensagem de erro
+            // Se falhou mas temos cache, a gente já carregou anteriormente. Se não, trata como erro.
+            if (!classAttendance[key]) {
+                console.error(`Erro ao carregar chamada de ${className} na data ${date}:`, error);
+                throw error;
+            }
         } finally {
             setLoadingAttendance(prev => ({ ...prev, [key]: false }));
         }
@@ -150,6 +164,16 @@ export const ChamadaProvider = ({ children }) => {
         }
     };
 
+    // 4. Pré-carrega todas as turmas em background
+    const preloadAllAttendance = useCallback(async (date) => {
+        if (!classes || classes.length === 0) return;
+
+        console.log("Iniciando pré-carregamento de todas as turmas...");
+        // Carrega em paralelo (pode ajustar para limitar a concorrência se necessário)
+        await Promise.allSettled(classes.map(cls => fetchAttendance(cls.name, date)));
+        console.log("Pré-carregamento concluído.");
+    }, [classes, fetchAttendance]);
+
     return (
         <ChamadaContext.Provider value={{
             classes,
@@ -157,7 +181,8 @@ export const ChamadaProvider = ({ children }) => {
             loadingClasses,
             loadingAttendance,
             fetchAttendance,
-            toggleAttendance
+            toggleAttendance,
+            preloadAllAttendance
         }}>
             {children}
         </ChamadaContext.Provider>
