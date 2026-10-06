@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { getClassAttendanceData, saveClassAttendanceData } from '../../../services/attendanceService';
+import { addToSyncQueue, getSyncQueue, removeFromQueue } from '../../../services/offlineSyncService';
 
 const ChamadaContext = createContext(undefined);
 
@@ -11,6 +12,33 @@ export const ChamadaProvider = ({ children }) => {
     const [loadingAttendance, setLoadingAttendance] = useState({}); // Key: `${className}_${date}`, Value: boolean
 
     const loadingClasses = loadingData;
+
+    // Processa a fila offline quando a internet voltar
+    useEffect(() => {
+        const handleOnline = async () => {
+            const queue = getSyncQueue();
+            if (queue.length > 0) {
+                console.log("Conexão restaurada! Sincronizando chamadas offline...", queue.length);
+                for (const item of queue) {
+                    try {
+                        await saveClassAttendanceData(item.sheetName, item.date, item.records);
+                        removeFromQueue(item.sheetName, item.date);
+                    } catch (err) {
+                        console.error('Falha ao sincronizar item da fila offline no background:', err);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('online', handleOnline);
+
+        // Tenta processar assim que o app carregar, caso tenha algo na fila e esteja online
+        if (navigator.onLine) {
+            handleOnline();
+        }
+
+        return () => window.removeEventListener('online', handleOnline);
+    }, []);
 
     // Sync classes from the global provider (already sorted pedagogically)
     useEffect(() => {
@@ -64,7 +92,7 @@ export const ChamadaProvider = ({ children }) => {
     const toggleAttendance = async (className, studentRA, studentDIG, date, nextStatus) => {
         const key = `${className}_${date}`;
         const studentsList = classAttendance[key] || [];
-        
+
         // Encontrar o aluno correspondente
         const studentIndex = studentsList.findIndex(s => s.ra === studentRA && s.dig === studentDIG);
         if (studentIndex === -1) return;
@@ -87,28 +115,38 @@ export const ChamadaProvider = ({ children }) => {
         });
 
         try {
+            if (!navigator.onLine) {
+                throw new Error('OFFLINE_MODE');
+            }
             // Envia gravação para a planilha do Google via Apps Script
             const updatedRecord = { ra: studentRA, dig: studentDIG, status: nextStatus };
             await saveClassAttendanceData(className, date, [updatedRecord]);
         } catch (error) {
             console.error("Erro ao gravar presença na planilha Google:", error);
-            
-            // Em caso de erro, desfaz a atualização otimista (rollback)
-            setClassAttendance(prev => {
-                const updatedList = [...(prev[key] || [])];
-                if (updatedList[studentIndex]) {
-                    updatedList[studentIndex] = {
-                        ...updatedList[studentIndex],
-                        status: currentStatus
+
+            const isNetworkError = !navigator.onLine || error.message === 'OFFLINE_MODE' || error.message?.toLowerCase().includes('fetch') || error.message?.toLowerCase().includes('network') || error.message?.toLowerCase().includes('falha ao salvar');
+
+            if (isNetworkError) {
+                const updatedRecord = { ra: studentRA, dig: studentDIG, status: nextStatus };
+                addToSyncQueue(className, date, [updatedRecord]);
+                throw { offlineSaved: true, message: "Sem internet! Presença salva no aparelho (sincronizará depois)." };
+            } else {
+                // Em caso de erro de negócio, desfaz a atualização otimista (rollback)
+                setClassAttendance(prev => {
+                    const updatedList = [...(prev[key] || [])];
+                    if (updatedList[studentIndex]) {
+                        updatedList[studentIndex] = {
+                            ...updatedList[studentIndex],
+                            status: currentStatus
+                        };
+                    }
+                    return {
+                        ...prev,
+                        [key]: updatedList
                     };
-                }
-                return {
-                    ...prev,
-                    [key]: updatedList
-                };
-            });
-            
-            throw error; // Repassa o erro para o componente disparar o Toast
+                });
+                throw error; // Repassa o erro para o componente
+            }
         }
     };
 

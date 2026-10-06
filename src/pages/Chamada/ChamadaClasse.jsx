@@ -41,7 +41,11 @@ export default function ChamadaClasse() {
             await toggleAttendance(classId, student.ra, student.dig, date, nextStatus);
             showToast(`Frequência de ${student.name} salva!`, 'success');
         } catch (error) {
-            showToast(`Falha ao salvar chamada de ${student.name}`, 'error');
+            if (error.offlineSaved) {
+                showToast(error.message, 'warning');
+            } else {
+                showToast(`Falha ao salvar chamada de ${student.name}`, 'error');
+            }
         } finally {
             setSavingIds(prev => {
                 const newSet = new Set(prev);
