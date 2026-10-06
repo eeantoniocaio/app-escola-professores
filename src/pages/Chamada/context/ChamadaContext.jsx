@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useGlobalData } from '../../../app/providers/GlobalDataProvider';
 import { getClassAttendanceData, saveClassAttendanceData } from '../../../services/attendanceService';
-import { addToSyncQueue, getSyncQueue, removeFromQueue } from '../../../services/offlineSyncService';
+import { addToSyncQueue, getSyncQueue, removeFromQueue, cacheAttendance, getCachedAttendance } from '../../../services/offlineSyncService';
 
 const ChamadaContext = createContext(undefined);
 
