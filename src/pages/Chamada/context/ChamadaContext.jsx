@@ -71,6 +71,19 @@ export const ChamadaProvider = ({ children }) => {
         try {
             const data = await getClassAttendanceData(className, date);
             if (data && data.students) {
+                // Mescla com alterações pendentes na fila (caso o background sync ainda não tenha acabado)
+                const queue = getSyncQueue();
+                const pendingForThis = queue.find(q => q.sheetName === className && q.date === date);
+
+                if (pendingForThis) {
+                    pendingForThis.records.forEach(pendingRecord => {
+                        const idx = data.students.findIndex(s => s.ra === pendingRecord.ra && s.dig === pendingRecord.dig);
+                        if (idx >= 0) {
+                            data.students[idx].status = pendingRecord.status;
+                        }
+                    });
+                }
+
                 setClassAttendance(prev => ({
                     ...prev,
                     [key]: data.students
@@ -114,19 +127,18 @@ export const ChamadaProvider = ({ children }) => {
         const currentStatus = studentsList[studentIndex].status;
 
         // Atualização Otimista no Estado React (Atualização visual imediata)
-        setClassAttendance(prev => {
-            const updatedList = [...(prev[key] || [])];
-            if (updatedList[studentIndex]) {
-                updatedList[studentIndex] = {
-                    ...updatedList[studentIndex],
-                    status: nextStatus
-                };
-            }
-            return {
-                ...prev,
-                [key]: updatedList
+        const updatedList = [...(studentsList || [])];
+        if (updatedList[studentIndex]) {
+            updatedList[studentIndex] = {
+                ...updatedList[studentIndex],
+                status: nextStatus
             };
-        });
+        }
+
+        setClassAttendance(prev => ({
+            ...prev,
+            [key]: updatedList
+        }));
 
         try {
             if (!navigator.onLine) {
@@ -135,6 +147,9 @@ export const ChamadaProvider = ({ children }) => {
             // Envia gravação para a planilha do Google via Apps Script
             const updatedRecord = { ra: studentRA, dig: studentDIG, status: nextStatus };
             await saveClassAttendanceData(className, date, [updatedRecord]);
+
+            // Atualiza o cache local para refletir a mudança online também
+            cacheAttendance(className, date, updatedList);
         } catch (error) {
             console.error("Erro ao gravar presença na planilha Google:", error);
 
@@ -143,20 +158,24 @@ export const ChamadaProvider = ({ children }) => {
             if (isNetworkError) {
                 const updatedRecord = { ra: studentRA, dig: studentDIG, status: nextStatus };
                 addToSyncQueue(className, date, [updatedRecord]);
+
+                // Grava no cache para que a alteração sobreviva a um recarregamento da página (F5) enquanto offline
+                cacheAttendance(className, date, updatedList);
+
                 throw { offlineSaved: true, message: "Sem internet! Presença salva no aparelho (sincronizará depois)." };
             } else {
                 // Em caso de erro de negócio, desfaz a atualização otimista (rollback)
                 setClassAttendance(prev => {
-                    const updatedList = [...(prev[key] || [])];
-                    if (updatedList[studentIndex]) {
-                        updatedList[studentIndex] = {
-                            ...updatedList[studentIndex],
+                    const fallbackList = [...(prev[key] || [])];
+                    if (fallbackList[studentIndex]) {
+                        fallbackList[studentIndex] = {
+                            ...fallbackList[studentIndex],
                             status: currentStatus
                         };
                     }
                     return {
                         ...prev,
-                        [key]: updatedList
+                        [key]: fallbackList
                     };
                 });
                 throw error; // Repassa o erro para o componente
