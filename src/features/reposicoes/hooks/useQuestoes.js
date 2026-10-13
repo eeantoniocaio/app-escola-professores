@@ -54,5 +54,18 @@ export function useQuestoes() {
     }
   };
 
-  return { questoes, loading, addQuestao, updateQuestao, deleteQuestao, refreshQuestoes: fetchQuestoes };
+  const deleteManyQuestoes = async (ids) => {
+    if (!ids || ids.length === 0) return false;
+    const { error } = await supabase.from('questoes').delete().in('id', ids);
+    if (error) {
+      showToast('Erro ao excluir questões', 'error');
+      return false;
+    } else {
+      setQuestoes(prev => prev.filter(q => !ids.includes(q.id)));
+      showToast(`${ids.length} questão(ões) excluída(s).`, 'info');
+      return true;
+    }
+  };
+
+  return { questoes, loading, addQuestao, updateQuestao, deleteQuestao, deleteManyQuestoes, refreshQuestoes: fetchQuestoes };
 }

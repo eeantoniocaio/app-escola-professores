@@ -38,7 +38,7 @@ export default function EnvioQuestoes() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { userRole, userName, authLoading } = useAuth();
-  const { questoes, addQuestao, deleteQuestao, updateQuestao } = useQuestoes();
+  const { questoes, addQuestao, deleteQuestao, deleteManyQuestoes, updateQuestao } = useQuestoes();
   const { professores, disciplinas } = useGlobalData();
   const [showModal, setShowModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -1176,7 +1176,7 @@ export default function EnvioQuestoes() {
           color: 'white',
           animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           maxWidth: '90%',
-          width: '550px',
+          width: '700px',
           boxSizing: 'border-box'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -1214,6 +1214,33 @@ export default function EnvioQuestoes() {
               onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}
             >
               Limpar
+            </button>
+            <button
+              onClick={async () => {
+                if (window.confirm(`Tem certeza que deseja excluir ${selectedQuestionIds.length} questão(ões)?`)) {
+                  const ok = await deleteManyQuestoes(selectedQuestionIds);
+                  if (ok) handleClearSelection();
+                }
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.65rem 1.25rem',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+                transition: 'transform 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              🗑 Excluir Selecionadas
             </button>
             <button
               onClick={() => setShowPrintModal(true)}
