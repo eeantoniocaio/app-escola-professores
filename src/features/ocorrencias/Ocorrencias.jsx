@@ -1,21 +1,24 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { AlertTriangle, CheckCircle2, Check, X, ChevronRight, ChevronLeft } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Check, X, ChevronRight, ChevronLeft, Loader } from 'lucide-react'
 import { useOcorrencias } from './hooks/useOcorrencias'
 import { useGlobalData } from '../../app/providers/GlobalDataProvider'
 import { useAuth } from '../../app/providers/AuthProvider'
+import { fetchStudentNamesByClass } from '../../services/googleSheetsService'
 
 const EMPTY_FORM = { professor: '', disciplina: '', data: '', turma: '', aula: '', descricao: '', alunos: [], acao_professor: '' }
 
 export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }) {
   const { addOcorrencia, updateOcorrencia } = useOcorrencias();
-  const { professores, turmas, alunos, disciplinas } = useGlobalData();
+  const { professores, turmas, disciplinas } = useGlobalData();
   const { userRole, userName } = useAuth();
-  
+
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
   const [success, setSuccess] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
+  const [alunosDaTurma, setAlunosDaTurma] = useState([])
+  const [loadingAlunos, setLoadingAlunos] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -48,13 +51,26 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen, ocorrenciaToEdit, userRole, userName]);
 
-  // Alunos da turma selecionada no formulário
-  const alunosDaTurma = useMemo(
-    () => (alunos || [])
-      .filter(a => a && a.turma === form.turma && a.nome)
-      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '')),
-    [alunos, form.turma]
-  )
+  // Busca os alunos do Google Sheets quando a turma é selecionada
+  useEffect(() => {
+    if (!form.turma) {
+      setAlunosDaTurma([])
+      return
+    }
+    let cancelled = false
+    setLoadingAlunos(true)
+    fetchStudentNamesByClass(form.turma)
+      .then(nomes => {
+        if (!cancelled) setAlunosDaTurma(nomes)
+      })
+      .catch(() => {
+        if (!cancelled) setAlunosDaTurma([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingAlunos(false)
+      })
+    return () => { cancelled = true }
+  }, [form.turma])
 
   const toggleAluno = useCallback((nome) => {
     setForm(prev => ({
@@ -300,16 +316,23 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
                       </span>
                     )}
                   </label>
-                  {alunosDaTurma.length === 0 ? (
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>Nenhum aluno cadastrado para esta turma.</p>
+                  {loadingAlunos ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                      <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                      Carregando alunos da planilha...
+                    </div>
+                  ) : alunosDaTurma.length === 0 ? (
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                      Nenhum aluno encontrado para esta turma.
+                    </p>
                   ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                      {alunosDaTurma.map(a => {
-                        const isSelected = form.alunos.includes(a.nome)
+                      {alunosDaTurma.map(nome => {
+                        const isSelected = form.alunos.includes(nome)
                         return (
                           <button
-                            key={a.id} type="button"
-                            onClick={() => toggleAluno(a.nome)}
+                            key={nome} type="button"
+                            onClick={() => toggleAluno(nome)}
                             style={{
                               background: isSelected ? 'var(--color-primary)' : 'var(--bg-card)',
                               color: isSelected ? 'white' : 'var(--text-main)',
@@ -320,7 +343,7 @@ export default function Ocorrencias({ isOpen, onClose, ocorrenciaToEdit = null }
                               boxShadow: isSelected ? 'none' : 'var(--shadow-sm)'
                             }}
                           >
-                            {isSelected && <Check size={14} />} {a.nome}
+                            {isSelected && <Check size={14} />} {nome}
                           </button>
                         )
                       })}

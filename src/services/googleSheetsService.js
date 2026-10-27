@@ -34,6 +34,22 @@ export async function fetchClassAttendance(sheetName, date) {
 }
 
 /**
+ * Fetches only the student name list for a given class (uses today's date as anchor).
+ * Returns an array of student name strings, sorted alphabetically.
+ * @param {string} sheetName - Class name matching a sheet tab (e.g. "6º Ano A")
+ * @returns {Promise<string[]>}
+ */
+export async function fetchStudentNamesByClass(sheetName) {
+  const today = new Date().toISOString().split('T')[0]
+  const data = await fetchClassAttendance(sheetName, today)
+  if (!data || !Array.isArray(data.students)) return []
+  return data.students
+    .map(s => s.name)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+}
+
+/**
  * Saves/Updates attendance records in batch for a given class and date.
  * @param {string} sheetName - Class name matching a sheet tab (e.g. "6º Ano A")
  * @param {string} date - Date in YYYY-MM-DD format
